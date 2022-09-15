@@ -1,0 +1,51 @@
+# META DATA
+# 
+# experiment run at: Fri Aug 26 16:54:16 2022
+# 
+# gamma = 0.99
+# epsilon = 0.05
+# A = 100
+# non_zero_transition = 1
+# upper_reward = 1000
+# action_prob = 1
+# 
+# VARIABLE IN THIS EXPERIMENT
+# Number of states, S, is varied from 50 to 250 with 50 increment
+# 
+# ACTUAL DATA
+# number of states | microseconds
+2501 240
+10001 1785
+22501 5762
+40001 13197
+62501 25582
+2501 245
+10001 1752
+22501 5803
+40001 13351
+62501 25524
+2501 241
+10001 1802
+22501 5762
+40001 13158
+62501 25354
+2501 252
+10001 1767
+22501 5690
+40001 13272
+62501 25397
+2501 242
+10001 1783
+22501 5726
+40001 13334
+62501 25140
+244
+1777.8
+5748.6
+13262.4
+25399.4
+0
+0
+0
+0
+0
