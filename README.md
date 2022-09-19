@@ -5,8 +5,8 @@ Can an infinite-horizon Markov decision process (IHMDP) run robustly to model pa
 -pthread Basic library for threads in C++
 
 ## Algorithms 
-      Value Iteration : value iteration with Initialized lower bound
-      Upper Value Iteration : value iteration with Initialized Upper bound
+      VI : value iteration with Initialized lower bound
+      UVI : value iteration with Initialized Upper bound
       IVI : Interval Value Iteration
       VIH : Value Iteration Heap(Proposed Algorithm)
       VIAE: Value Iteration Action Elimination
