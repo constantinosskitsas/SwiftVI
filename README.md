@@ -5,8 +5,8 @@ Can an infinite-horizon Markov decision process (IHMDP) run robustly to model pa
 -pthread Basic library for threads in C++
 
 ## Algorithms 
-      Value Iteration : value iteration with Initialized lower bound
-      Upper Value Iteration : value iteration with Initialized Upper bound
+      VI : value iteration with Initialized lower bound
+      UVI : value iteration with Initialized Upper bound
       IVI : Interval Value Iteration
       VIH : Value Iteration Heap(Proposed Algorithm)
       VIAE: Value Iteration Action Elimination
@@ -18,7 +18,7 @@ Can an infinite-horizon Markov decision process (IHMDP) run robustly to model pa
 ### How to run experiments :
 g++ -pthread -std=c++17 -o algo_test *.cpp && ./algo_test
 ## Additional Information : 
-The code will be uploaded 15/9/21 and will be refactored until 21/9 so anyone can repeat easily the experiments done in the paper.
+
 ## Reference
 
 Please cite our work in your publications if it helps your research:
