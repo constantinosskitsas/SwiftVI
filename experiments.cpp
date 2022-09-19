@@ -5331,7 +5331,6 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				
 				stringstream_VI << to_string(S) << " " << duration_VI.count() << endl;
 				VI[0][k]+=duration_VI.count();
-				cout<<"VI,"<<duration_VI.count()<<endl;
 				//VIU testing
 				A_type A6 = copy_A(A);
 				auto start_VIU = high_resolution_clock::now();
@@ -5378,7 +5377,6 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				
 				stringstream_BVI << to_string(S) << " " << duration_BVI.count() << endl;
 				VI[3][k]+=duration_BVI.count();
-				cout<<"bvigs,"<< duration_BVI.count()<<endl;
 				A_type A4 = copy_A(A);
 				auto start_VIAE = high_resolution_clock::now();
 				//V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(S, R, A4, P, gamma, epsilon);
@@ -5401,9 +5399,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 
 				stringstream_VIAEH << to_string(S) << " " << duration_VIAEH.count() << endl;
 				VI[5][k]+=duration_VIAEH.count();
-				cout<<"viae,"<<duration_VIAE.count()<<endl;
 				//VIAEHL
-				cout<<"viaeh"<<duration_VIAEH.count()<<endl;
 				A_type A8 = copy_A(A);
 				auto start_VIAEHL = high_resolution_clock::now();
 
@@ -5414,7 +5410,6 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
 				stringstream_VIAEHL << to_string(S) << " " << duration_VIAEHL.count() << endl;
 				VI[6][k]+=duration_VIAEHL.count();
-				cout<<"VIAEHL,"<<duration_VIAEHL.count()<<endl;
 				//BAO
 				A_type A9 = copy_A(A);
 				auto start_BAO = high_resolution_clock::now();
@@ -5434,14 +5429,12 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(S, R, A10, P, gamma, epsilon);
 				vector<double> BAO_approx_solution1 = get<0>(BAO_approx_solution_tuple1);
 				auto stop_BAOSK = high_resolution_clock::now();
-				cout<<"BAOGS,"<<duration_BAO.count()<<endl;
 				
 				auto duration_BAOSK = duration_cast<milliseconds>(stop_BAOSK - start_BAOSK);
 				stringstream_BAON << to_string(S) << " " << duration_BAOSK.count() << endl;
 				VI[8][k]+=duration_BAOSK.count();
-				cout<<"BAOOLDGS,"<<duration_BAOSK.count()<<endl;
 				//They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
-				/*
+				
 				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon)){
 						printf("DIFFERENCE1\n");
 				}
@@ -5467,7 +5460,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 					if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon)){
 						printf("DIFFERENCE8\n");
 				}
-*/
+
 				k++;
 
 		}
