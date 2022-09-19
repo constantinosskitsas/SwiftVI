@@ -63,5 +63,6 @@ void create_data_tables_number_of_actions_VIH_implementations(string filename, i
 void create_data_tables_VMS(string filename,double epsilon,double gamma);
 void create_data_tables_number_of_statesGS(string filename, int S_max, int A_num, double epsilon, double gamma, double upper_reward, double non_zero_transition);
 void create_data_tables_number_GS(string filename,int expnum,int States,int Actions,int SS,int startP,int endP,int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition);
+void create_data_tables_number_GSBO(string filename,int expnum,int States,int Actions,int SS,int startP,int endP,int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition);
 
 #endif

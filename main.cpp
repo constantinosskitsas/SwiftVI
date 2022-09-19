@@ -424,7 +424,7 @@ int main (void){
 			create_data_tables_number_GS(file_prefix_number_of_states,expnum,States,Actions,SS,startP,endP,IncP,  epsilon,  gamma,  upper_reward,  non_zero_transition);
 		//create_data_tables_number_of_statesGS(file_prefix_number_of_states, S_max, A_num, epsilon, gamma, upper_reward, non_zero_transition);
 		else if(NOFexp==4)
-			create_data_tables_number_of_states_best_implementations(file_prefix_number_of_states_best, S_max, A_num, epsilon, gamma, upper_reward, non_zero_transition);
+			create_data_tables_number_GSBO(file_prefix_number_of_states_best, S_max, A_num, epsilon, gamma, upper_reward, non_zero_transition);
 		else if(NOFexp==5)
 			create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
 		//th1.join();
