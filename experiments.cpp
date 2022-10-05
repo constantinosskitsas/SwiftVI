@@ -5215,7 +5215,7 @@ void create_data_tables_number_of_statesGSAll(string filename, int S_max, int A_
 
 
 
-void create_data_tables_number_GS(string filename,int expnum,int States,int Actions,int SS,int startP,int endP,int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition){
+void create_data_tables_number_GS(string filename,int expnum,int States,int Actions,int SS,int StartP,int endP,int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition){
 
 		//the stringstreams to create the test for the files
 		ostringstream stringstream_BVI;
@@ -5255,20 +5255,20 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 
 		//The varying parameters
 		int S_starting_value = 100;
-		int S_finishing_value = S_max;
+		int S_finishing_value = endP;
 		int S_increment = 100;
-		S_finishing_value = 2000;
+		//S_finishing_value = 2000;
 		//hardcoded parameter
 		double action_prob = 1.0;
 		//A_num=100;
 		//write meta data to all stringstreams as first in their respective files
 		
-		write_meta_data_to_dat_file_number_of_states(stringstream_VI, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIU, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_BVI, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIH, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIAE, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIAEH, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VI, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIU, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_BVI, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIAE, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIAEH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
 		float VI[10][20];
 		int S2=0;
 		int k=0;
@@ -5279,25 +5279,32 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 		S=500;
 		 S2=S/10;
 		 S2=100;
-		 A_num=100;
+		 //A_num=100;
 		 S=100;
 		 S2=10;
+		 R_type R1;
+		 A_type Aa1;
+		 P_type P1;
+		 auto MDP= make_tuple(R1,Aa1,P1);
 		for (int iters=0;iters<5;iters++){
 			k=0;
 		for ( int ite = StartP; ite <= endP; ite = ite + IncP){
 				//printf("Beginning iteration %d  S2,  %d, A, S %d = %d\n",iters, S2,A_num,S);
-				
+				//auto MDP ;
 				//GENERATE THE MDP
 				int seed = time(0);
 				//auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
-				if (expnum==1)
-					auto MDP = generate_random_MDP_normal_distributed_rewards(ite, Actions, action_prob, SS, seed, 1000, 10);
+				
+				if (expnum==1){
+					States=ite;
+					 MDP = generate_random_MDP_normal_distributed_rewards(ite, Actions, action_prob, SS, seed, 1000, 10);
+				}
 				else if(expnum==2)
-					auto MDP = generate_random_MDP_normal_distributed_rewards(States, ite, action_prob, SS, seed, 1000, 10);
+					 MDP = generate_random_MDP_normal_distributed_rewards(States, ite, action_prob, SS, seed, 1000, 10);
 				else 
-					auto MDP = generate_random_MDP_normal_distributed_rewards(States, Actions, action_prob, ite, seed, 1000, 10);
+					  MDP = generate_random_MDP_normal_distributed_rewards(States, Actions, action_prob, ite, seed, 1000, 10);
 
-				//auto MDP = RiverSwim(S);
+				//
 				//int xs=90;
 				//auto MDP=Maze(xs,xs,seed);
 				//S=xs*xs+1;
@@ -5324,7 +5331,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A1 = copy_A(A);
 				auto start_VI = high_resolution_clock::now();
 				//cout<<getValue()<<endl;
-				V_type V_approx_solution_tuple = value_iterationGS(S, R, A1, P, gamma, epsilon);
+				V_type V_approx_solution_tuple = value_iterationGS(States, R, A1, P, gamma, epsilon);
                 vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
 				auto stop_VI = high_resolution_clock::now();
 				auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
@@ -5334,7 +5341,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				//VIU testing
 				A_type A6 = copy_A(A);
 				auto start_VIU = high_resolution_clock::now();
-				V_type V_approx_solution_upper_tuple = value_iteration_upperGS(S, R, A6, P, gamma, epsilon);
+				V_type V_approx_solution_upper_tuple = value_iteration_upperGS(States, R, A6, P, gamma, epsilon);
 				vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
 				auto stop_VIU = high_resolution_clock::now();
 				auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
@@ -5347,7 +5354,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A2 = copy_A(A);
 				auto start_VIH = high_resolution_clock::now();
 
-				V_type V_heap_approx_tuple = value_iteration_with_heapGS(S, R, A2, P, gamma, epsilon);
+				V_type V_heap_approx_tuple = value_iteration_with_heapGS(States, R, A2, P, gamma, epsilon);
 				vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
 				auto stop_VIH = high_resolution_clock::now();
 				auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
@@ -5370,7 +5377,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A3 = copy_A(A);
 				auto start_BVI = high_resolution_clock::now();
 
-				V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(S, R, A3, P, gamma, epsilon);
+				V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(States, R, A3, P, gamma, epsilon);
 				vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
 				auto stop_BVI = high_resolution_clock::now();
 				auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
@@ -5379,7 +5386,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				VI[3][k]+=duration_BVI.count();
 				A_type A4 = copy_A(A);
 				auto start_VIAE = high_resolution_clock::now();
-				V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(S, R, A4, P, gamma, epsilon);
+				V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(States, R, A4, P, gamma, epsilon);
 				vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
 
 				auto stop_VIAE = high_resolution_clock::now();
@@ -5391,7 +5398,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A5 = copy_A(A);
 				auto start_VIAEH = high_resolution_clock::now();
 				
-				V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(S, R, A5, P, gamma, epsilon);
+				V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(States, R, A5, P, gamma, epsilon);
 				vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
 
 				auto stop_VIAEH = high_resolution_clock::now();
@@ -5403,7 +5410,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A8 = copy_A(A);
 				auto start_VIAEHL = high_resolution_clock::now();
 
-				V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(S, R, A8, P, gamma, epsilon);
+				V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(States, R, A8, P, gamma, epsilon);
 				vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
 
 				auto stop_VIAEHL = high_resolution_clock::now();
@@ -5414,7 +5421,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A9 = copy_A(A);
 				auto start_BAO = high_resolution_clock::now();
 
-				V_type BAO_approx_solution_tuple = value_iteration_BAOGS(S, R, A9, P, gamma, epsilon);
+				V_type BAO_approx_solution_tuple = value_iteration_BAOGS(States, R, A9, P, gamma, epsilon);
 				vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
 
 				auto stop_BAO = high_resolution_clock::now();
@@ -5426,7 +5433,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A10 = copy_A(A);
 				auto start_BAOSK = high_resolution_clock::now();
 				
-				V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(S, R, A10, P, gamma, epsilon);
+				V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(States, R, A10, P, gamma, epsilon);
 				vector<double> BAO_approx_solution1 = get<0>(BAO_approx_solution_tuple1);
 				auto stop_BAOSK = high_resolution_clock::now();
 				
@@ -5520,25 +5527,28 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 		//A_num=100;
 		//write meta data to all stringstreams as first in their respective files
 		
-		write_meta_data_to_dat_file_number_of_states(stringstream_VI, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIU, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_BVI, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIH, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIAE, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-		write_meta_data_to_dat_file_number_of_states(stringstream_VIAEH, A_num, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, startP, endP, IncP);
+		write_meta_data_to_dat_file_number_of_states(stringstream_BAON, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, startP, endP, IncP);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIAEHL, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, startP, endP, IncP);
 		float VI[10][20];
 		int k=0;
+		R_type R1;
+		 A_type Aa1;
+		 P_type P1;
+		 auto MDP= make_tuple(R1,Aa1,P1);
 		for (int iters=0;iters<5;iters++){
 			k=0;
-		for ( int ite = StartP; ite <= endP; ite = ite + IncP){
+		for ( int ite = startP; ite <= endP; ite = ite + IncP){
 				//printf("Beginning iteration %d  S2,  %d, A, S %d = %d\n",iters, S2,A_num,S);
 				
 				//GENERATE THE MDP
 				int seed = time(0);
 				//auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
-				if (expnum==1)
+				if (expnum==1){
 					auto MDP = generate_random_MDP_normal_distributed_rewards(ite, Actions, action_prob, SS, seed, 1000, 10);
-				else if(expnum==2)
+					States=ite;
+				}else if(expnum==2)
 					auto MDP = generate_random_MDP_normal_distributed_rewards(States, ite, action_prob, SS, seed, 1000, 10);
 				else 
 					auto MDP = generate_random_MDP_normal_distributed_rewards(States, Actions, action_prob, ite, seed, 1000, 10);
@@ -5571,36 +5581,35 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 				//VIH testing
 				A_type A2 = copy_A(A);
 				auto start_VIH = high_resolution_clock::now();
-
-				V_type V_heap_approx_tuple = value_iteration_with_heapGS(S, R, A2, P, gamma, epsilon);
+				V_type V_heap_approx_tuple = value_iteration_with_heapGS(States, R, A2, P, gamma, epsilon);
 				vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
 				auto stop_VIH = high_resolution_clock::now();
 				auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
 				VI[2][k]+=duration_VIH.count();
 				cout<<"VIHGS,"<<duration_VIH.count()<<endl;
-				stringstream_VIH << to_string(S) << " " << duration_VIH.count() << endl;
-
+				stringstream_VIH << to_string(States) << " " << duration_VIH.count() << endl;
+				A_type A8 = copy_A(A);
 				
 				auto start_VIAEHL = high_resolution_clock::now();
 
-				V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(S, R, A8, P, gamma, epsilon);
+				V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(States, R, A8, P, gamma, epsilon);
 				vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
 
 				auto stop_VIAEHL = high_resolution_clock::now();
 				auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
-				stringstream_VIAEHL << to_string(S) << " " << duration_VIAEHL.count() << endl;
+				stringstream_VIAEHL << to_string(States) << " " << duration_VIAEHL.count() << endl;
 				VI[6][k]+=duration_VIAEHL.count();
 				//BAO
 
 				A_type A10 = copy_A(A);
 				auto start_BAOSK = high_resolution_clock::now();
 				
-				V_type BAO_approx_solution_tuple1 = value_iteration_BAOGS(S, R, A10, P, gamma, epsilon);
+				V_type BAO_approx_solution_tuple1 = value_iteration_BAOGS(States, R, A10, P, gamma, epsilon);
 				vector<double> BAO_approx_solution1 = get<0>(BAO_approx_solution_tuple1);
 				auto stop_BAOSK = high_resolution_clock::now();
 				
 				auto duration_BAOSK = duration_cast<milliseconds>(stop_BAOSK - start_BAOSK);
-				stringstream_BAON << to_string(S) << " " << duration_BAOSK.count() << endl;
+				stringstream_BAON << to_string(States) << " " << duration_BAOSK.count() << endl;
 				VI[8][k]+=duration_BAOSK.count();
 				//They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
 

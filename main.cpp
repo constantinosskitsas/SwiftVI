@@ -35,7 +35,7 @@ using namespace std::chrono;
 
 //terminal compilation and running: g++ -pthread -std=gnu++17 -o algo_test *.cpp && ./algo_test
 
-int main (void){
+int main (int argc, char *argv[]){
 
 		time_t time_now = time(0);
 		
@@ -405,6 +405,7 @@ int main (void){
 		int States=500;
 		int Actions=100;
 		int SS=50;
+		std::size_t pos;
 		if(argc >1)
 			NOFexp=std::stoi(argv[1], &pos);
 		if (argc >2)
@@ -421,10 +422,10 @@ int main (void){
 			create_data_tables_VMS(file_prefix_numberVMA, epsilon, gamma);
 		else if(NOFexp==3)
 		//expnum=0 States, 1 Actions, 2 Supported States
-			create_data_tables_number_GS(file_prefix_number_of_states,expnum,States,Actions,SS,startP,endP,IncP,  epsilon,  gamma,  upper_reward,  non_zero_transition);
+			create_data_tables_number_GS(file_prefix_number_of_states,expnum,States,Actions,SS,StartP,EndP,IncP,  epsilon,  gamma,  upper_reward,  non_zero_transition);
 		//create_data_tables_number_of_statesGS(file_prefix_number_of_states, S_max, A_num, epsilon, gamma, upper_reward, non_zero_transition);
 		else if(NOFexp==4)
-			create_data_tables_number_GSBO(file_prefix_number_of_states_best, S_max, A_num, epsilon, gamma, upper_reward, non_zero_transition);
+			create_data_tables_number_GSBO(file_prefix_number_of_states_best,expnum,States,Actions,SS,StartP,EndP,IncP, epsilon, gamma, upper_reward, non_zero_transition);
 		else if(NOFexp==5)
 			create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
 		//th1.join();
