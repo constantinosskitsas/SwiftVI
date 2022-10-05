@@ -5514,7 +5514,6 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 		//the file output objects
 		ofstream output_stream_VIH;
 		ofstream output_stream_VIAEHL;
-
 		ofstream output_stream_BAON;
 		
 		//set the name of the file to write to
@@ -5549,12 +5548,12 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 				int seed = time(0);
 				//auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
 				if (expnum==1){
-					auto MDP = generate_random_MDP_normal_distributed_rewards(ite, Actions, action_prob, SS, seed, 1000, 10);
+					 MDP = generate_random_MDP_normal_distributed_rewards(ite, Actions, action_prob, SS, seed, 1000, 10);
 					States=ite;
 				}else if(expnum==2)
-					auto MDP = generate_random_MDP_normal_distributed_rewards(States, ite, action_prob, SS, seed, 1000, 10);
+					 MDP = generate_random_MDP_normal_distributed_rewards(States, ite, action_prob, SS, seed, 1000, 10);
 				else 
-					auto MDP = generate_random_MDP_normal_distributed_rewards(States, Actions, action_prob, ite, seed, 1000, 10);
+					 MDP = generate_random_MDP_normal_distributed_rewards(States, Actions, action_prob, ite, seed, 1000, 10);
 
 				//auto MDP = RiverSwim(S);
 				//int xs=90;
@@ -5587,6 +5586,8 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 				V_type V_heap_approx_tuple = value_iteration_with_heapGS(States, R, A2, P, gamma, epsilon);
 				vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
 				auto stop_VIH = high_resolution_clock::now();
+
+
 				auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
 				VI[2][k]+=duration_VIH.count();
 				cout<<"VIHGS,"<<duration_VIH.count()<<endl;
