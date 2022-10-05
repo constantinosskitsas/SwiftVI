@@ -4386,17 +4386,18 @@ void create_data_tables_VMS(string filename,double epsilon,double gamma){
 		bool StaA=false;
 		if(filename=="numberVMS")
 			StaA=true;
+		cout<<"i am good"<<StaA<<endl;
 		//string SE,AE;
 		//string SE[5] = new string[5]{"100","200","300","400","500"};
 		//string AE[5]=new string[5]{"2","10","20","30","40"};
 		string SE[5] ={"10S","20S","30S","40S","50S"};
 		//string AE[6]={"2A","10A","20A","30A","40A","50A"};
-		string AE[6]={"10A","20A","30A","40A","50A"};
+		string AE[5]={"10A","20A","30A","40A","50A"};
 		MDP_type MDP;
 		float VI[10][5];
 		int k;
-		for (int iter=0;iter<10;iter++){
-		seed1=seed11[iter%5];
+		for (int iter=0;iter<5;iter++){
+		seed1=seed11[iter];
 		k=0;
 		for (int temp = 0; temp <5; temp = temp + 1){
 				//GENERATE THE MDP
@@ -4411,7 +4412,7 @@ void create_data_tables_VMS(string filename,double epsilon,double gamma){
 				 MDP= readMDPS(seed1,AE[temp]);
 				 S=500;
 				 }
-				printf("Beginning iteration S,iter,seed = %d,%d \n", temp,iter);
+				printf("Beginning iteration iter,seed = %d,%d \n", temp,iter);
 
 				//auto MDP = generate_random_MDP_with_variable_parameters(S, A_num, action_prob, non_zero_transition, upper_reward, seed);
 				R_type R = get<0>(MDP);
@@ -4499,6 +4500,8 @@ void create_data_tables_VMS(string filename,double epsilon,double gamma){
 				//auto duration_BAOSK = duration_cast<milliseconds>(stop_BAOSK - start_BAOSK);
 				cout<<"value_iteration_BAOGS,"<<duration_BAO.count()<<endl;
 				A_type A10 = copy_A(A);
+
+			/*
 				auto start_BAOSK = high_resolution_clock::now();
 				V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(S, R, A10, P, gamma, epsilon);
 				auto stop_BAOSK = high_resolution_clock::now();
@@ -4507,7 +4510,7 @@ void create_data_tables_VMS(string filename,double epsilon,double gamma){
 				auto duration_BAOSK = duration_cast<milliseconds>(stop_BAOSK - start_BAOSK);
 				cout<<"value_iteration_BAOSKGS,"<<duration_BAOSK.count()<<endl;
 				stringstream_BAON << to_string(S) << " " << duration_BAOSK.count() << endl;
-
+*/
 				//They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
 				
 				if (abs_max_diff_vectors(V_approx_solution, V_heap_approx) > (2 * epsilon)){
@@ -4528,10 +4531,10 @@ void create_data_tables_VMS(string filename,double epsilon,double gamma){
 				if (abs_max_diff_vectors(V_approx_solution, V_approx_solution_upper) > (2 * epsilon)){
 						printf("DIFFERENCE1f\n");
 				}
-				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution1) > (2 * epsilon)){
+				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon)){
 						printf("DIFFERENCE1g\n");
 				}
-				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution1) > (2 * epsilon)){
+				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon)){
 						printf("DIFFERENCE1h\n");
 				}
 				if (abs_max_diff_vectors(V_AE_approx_solution, V_AE_H_approx_solution) > (2 * epsilon)){
@@ -4540,35 +4543,35 @@ void create_data_tables_VMS(string filename,double epsilon,double gamma){
 				if (abs_max_diff_vectors(V_bounded_approx_solution, V_approx_solution_upper) > (2 * epsilon)){
 						printf("DIFFERENCE3\n");
 				}
-				if (abs_max_diff_vectors(VIAEHL_approx_solution, BAO_approx_solution1) > (2 * epsilon)){
+				if (abs_max_diff_vectors(VIAEHL_approx_solution, BAO_approx_solution) > (2 * epsilon)){
 						printf("DIFFERENC4E\n");
 				}
-				if (abs_max_diff_vectors(BAO_approx_solution1, BAO_approx_solution1) > (2 * epsilon)){
+				if (abs_max_diff_vectors(BAO_approx_solution, BAO_approx_solution) > (2 * epsilon)){
 						printf("DIFFERENCE5\n");
 				}
-				VI[0][k]+=duration_VI.count();
-				VI[1][k]+=duration_VIU.count();
-				VI[2][k]+=duration_VIH.count();
-				VI[3][k]+=duration_BVI.count();
-				VI[4][k]+=duration_VIAE.count();
-				VI[5][k]+=duration_VIAEH.count();
-				VI[6][k]+=duration_VIAEHL.count();
-				VI[7][k]+=duration_BAO.count();
-				VI[8][k]+=duration_BAOSK.count();
-				k++;
+				VI[0][temp]+=duration_VI.count();
+				VI[1][temp]+=duration_VIU.count();
+				VI[2][temp]+=duration_VIH.count();
+				VI[3][temp]+=duration_BVI.count();
+				VI[4][temp]+=duration_VIAE.count();
+				VI[5][temp]+=duration_VIAEH.count();
+				VI[6][temp]+=duration_VIAEHL.count();
+				VI[7][temp]+=duration_BAO.count();
+				//VI[8][temp]+=duration_BAOSK.count();
+				//k++;
 		}
 			
 		}
 		for (int k=0;k<5;k++){
-		stringstream_VI  << VI[0][k]/50<< endl;
-		stringstream_VIU <<   VI[1][k]/50 << endl;
-		stringstream_VIH <<  VI[2][k]/50 << endl;
-		stringstream_BVI <<  VI[3][k]/50 << endl;
-		stringstream_VIAE <<  VI[4][k]/50 << endl;
-		stringstream_VIAEH <<  VI[5][k]/50 << endl;
-		stringstream_VIAEHL <<  VI[6][k]/50 << endl;
-		stringstream_BAO <<  VI[7][k]/50 << endl;
-		stringstream_BAON <<  VI[8][k]/50 << endl;
+		stringstream_VI  << VI[0][k]/5<< endl;
+		stringstream_VIU <<   VI[1][k]/5 << endl;
+		stringstream_VIH <<  VI[2][k]/5 << endl;
+		stringstream_BVI <<  VI[3][k]/5 << endl;
+		stringstream_VIAE <<  VI[4][k]/5 << endl;
+		stringstream_VIAEH <<  VI[5][k]/5 << endl;
+		stringstream_VIAEHL <<  VI[6][k]/5 << endl;
+		stringstream_BAO <<  VI[7][k]/5 << endl;
+		stringstream_BAON <<  VI[8][k]/5 << endl;
 		//cout<<"writeA"<<endl;
 }
 
@@ -5286,7 +5289,7 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 		 A_type Aa1;
 		 P_type P1;
 		 auto MDP= make_tuple(R1,Aa1,P1);
-		for (int iters=0;iters<5;iters++){
+		for (int iters=0;iters<2;iters++){
 			k=0;
 		for ( int ite = StartP; ite <= endP; ite = ite + IncP){
 				//printf("Beginning iteration %d  S2,  %d, A, S %d = %d\n",iters, S2,A_num,S);
@@ -5433,8 +5436,8 @@ void create_data_tables_number_GS(string filename,int expnum,int States,int Acti
 				A_type A10 = copy_A(A);
 				auto start_BAOSK = high_resolution_clock::now();
 				
-				V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(States, R, A10, P, gamma, epsilon);
-				vector<double> BAO_approx_solution1 = get<0>(BAO_approx_solution_tuple1);
+				//V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(States, R, A10, P, gamma, epsilon);
+				//vector<double> BAO_approx_solution1 = get<0>(BAO_approx_solution_tuple1);
 				auto stop_BAOSK = high_resolution_clock::now();
 				
 				auto duration_BAOSK = duration_cast<milliseconds>(stop_BAOSK - start_BAOSK);
@@ -5516,9 +5519,9 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 		
 		//set the name of the file to write to
 
-		string file_name_VIH = "data_tables/number_of_states/" + filename + "GS_VIHBO.dat";
-		string file_name_VIAEHL = "data_tables/number_of_states/" + filename + "GS_VIAEHLBO.dat";
-		string file_name_BAON = "data_tables/number_of_states/" + filename + "GS_BAONBO.dat";
+		string file_name_VIH = "data_tables/number_of_states_best/" + filename + "GS_VIHBO.dat";
+		string file_name_VIAEHL = "data_tables/number_of_states_best/" + filename + "GS_VIAEHLBO.dat";
+		string file_name_BAON = "data_tables/number_of_states_best/" + filename + "GS_BAONBO.dat";
 
 		//The varying parameters
 
@@ -5537,7 +5540,7 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 		 A_type Aa1;
 		 P_type P1;
 		 auto MDP= make_tuple(R1,Aa1,P1);
-		for (int iters=0;iters<5;iters++){
+		for (int iters=0;iters<2;iters++){
 			k=0;
 		for ( int ite = startP; ite <= endP; ite = ite + IncP){
 				//printf("Beginning iteration %d  S2,  %d, A, S %d = %d\n",iters, S2,A_num,S);
@@ -5574,7 +5577,7 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 							
 								}
 						}*/
-				//cout<<"MDP"<<endl;
+				cout<<"MDP"<<endl;
 				//VI testing
 				//TODO: make method that takes arguments and performs the writing of data, takes filename, MDP etc. as argument
 				
@@ -5628,13 +5631,13 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 		stringstream_VIH <<  VI[2][k]/5 << endl;
 		stringstream_VIAEHL <<  VI[6][k]/5 << endl;
 		stringstream_BAON <<  VI[8][k]/5 << endl;
-		//cout<<"writeA"<<endl;
+		cout<<"writeA"<<endl;
 }
 		//WRITE ALL DATA TO THEIR RESPECTVIE FILES	
 
 		write_stringstream_to_file(stringstream_VIH, output_stream_VIH, file_name_VIH);
 		write_stringstream_to_file(stringstream_VIAEHL, output_stream_VIAEHL, file_name_VIAEHL);
 		write_stringstream_to_file(stringstream_BAON, output_stream_BAON, file_name_BAON);
-		//cout<<"writeF"<<endl;
+		cout<<"writeF"<<endl;
 
 }

@@ -398,36 +398,43 @@ int main (int argc, char *argv[]){
 		//create_data_tables_VMA(file_prefix_numberVMSA, epsilon, gamma);
 		//WAIT FOR ALL THREAD BEFORE EXITING - VERY IMPORTANT!!!!!
 		int StartP=50;
-		int EndP=2000;
+		int EndP=200;
 		int IncP=50;
-		int expnum=0;
+		int expnum=1;
 		int NOFexp=-1;
-		int States=500;
-		int Actions=100;
+		int States=100;
+		int Actions=50;
 		int SS=50;
 		std::size_t pos;
+		cout << "argc " << argc;
 		if(argc >1)
 			NOFexp=std::stoi(argv[1], &pos);
-		if (argc >2)
+		if (argc >2){
 			expnum=std::stoi(argv[2], &pos);
 			States=std::stoi(argv[3], &pos);
 			Actions=std::stoi(argv[4], &pos);
 			SS=std::stoi(argv[5], &pos);
 			StartP=std::stoi(argv[6], &pos);
 			EndP=std::stoi(argv[7], &pos);
-			IncP=std::stoi(argv[8], &pos);
-		if (NOFexp==1)
+			IncP=std::stoi(argv[8], &pos);}
+		cout << "NOFexp " << NOFexp;
+		if (NOFexp==1){
 			create_data_tables_VMS(file_prefix_numberVMS, epsilon, gamma);
-		else if(NOFexp==2)
+		cout<<"end1"<<endl;
+		}else if(NOFexp==2){
 			create_data_tables_VMS(file_prefix_numberVMA, epsilon, gamma);
-		else if(NOFexp==3)
+			cout<<"end2"<<endl;}
+		else if(NOFexp==3){
 		//expnum=0 States, 1 Actions, 2 Supported States
 			create_data_tables_number_GS(file_prefix_number_of_states,expnum,States,Actions,SS,StartP,EndP,IncP,  epsilon,  gamma,  upper_reward,  non_zero_transition);
+			cout<<"end3"<<endl;}
 		//create_data_tables_number_of_statesGS(file_prefix_number_of_states, S_max, A_num, epsilon, gamma, upper_reward, non_zero_transition);
-		else if(NOFexp==4)
+		else if(NOFexp==4){
 			create_data_tables_number_GSBO(file_prefix_number_of_states_best,expnum,States,Actions,SS,StartP,EndP,IncP, epsilon, gamma, upper_reward, non_zero_transition);
+			cout<<"end4"<<endl;}
 		else if(NOFexp==5)
 			create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
+		cout << "NOFexp " << NOFexp;
 		//th1.join();
 		//th2.join();
 		//th3.join();
