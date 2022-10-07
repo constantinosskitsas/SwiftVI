@@ -842,7 +842,7 @@ V_type value_iteration_BAOGSTM(S_type S, R_type R, A_type A, P_type P, double ga
 	{
 		siz = sqrt(S - 1) - 2;
 	}
-	else
+	else if (D3 == 2)
 	{
 		siz = cbrt(S - 1) - 2;
 	}
@@ -856,41 +856,50 @@ V_type value_iteration_BAOGSTM(S_type S, R_type R, A_type A, P_type P, double ga
 	int ya1;
 	int za1;
 	double x2;
-	for (int s = 0; s < S; s++)
+	if (D3 == 0)
 	{
-		if (D3 == 1)
+		for (int s = 0; s < S; s++)
 		{
-			x_curr = s % Xmax;
-			y_curr = s / Xmax;
-			xa1 = abs(x_curr - siz);
-			ya1 = abs(y_curr - siz);
-			za1 = xa1 - 1;
+			V_U[0][s] = (gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
+			A_maxN[s] = A[s].size();
 		}
-		else
-		{
-			int idx = s;
-			z_curr = idx / (Xmax * Xmax);
-			idx -= (z_curr * Xmax * Xmax);
-			y_curr = idx / Xmax;
-			x_curr = idx % Xmax;
-			xa1 = abs(x_curr - siz);
-			ya1 = abs(y_curr - siz);
-			za1 = abs(z_curr - siz);
-		}
-
-		x2 = 0;
-		if (xa1 >= ya1 && xa1 >= za1)
-			x2 = xa1;
-		else if (ya1 >= xa1 && ya1 >= za1)
-			x2 = ya1;
-		else
-			x2 = ya1;
-		V_U[0][s] = -x2 + 10;
-		// V_U[0][s] = (gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
-		A_maxN[s] = A[s].size();
 	}
-	V_U[0][S - 1] = 0.0;
+	else
+	{
+		for (int s = 0; s < S; s++)
+		{
+			if (D3 == 1)
+			{
+				x_curr = s % Xmax;
+				y_curr = s / Xmax;
+				xa1 = abs(x_curr - siz);
+				ya1 = abs(y_curr - siz);
+				za1 = xa1 - 1;
+			}
+			else
+			{
+				int idx = s;
+				z_curr = idx / (Xmax * Xmax);
+				idx -= (z_curr * Xmax * Xmax);
+				y_curr = idx / Xmax;
+				x_curr = idx % Xmax;
+				xa1 = abs(x_curr - siz);
+				ya1 = abs(y_curr - siz);
+				za1 = abs(z_curr - siz);
+			}
 
+			x2 = 0;
+			if (xa1 >= ya1 && xa1 >= za1)
+				x2 = xa1;
+			else if (ya1 >= xa1 && ya1 >= za1)
+				x2 = ya1;
+			else
+				x2 = ya1;
+			V_U[0][s] = -x2 + 10;
+			A_maxN[s] = A[s].size();
+		}
+		V_U[0][S - 1] = 0.0;
+	}
 	// keep track of work done in each iteration in microseconds
 	// start from iteration 1, so put a 0 value into the first iteration as a dummy value
 	vector<microseconds> work_per_iteration(1);

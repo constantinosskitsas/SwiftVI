@@ -6008,10 +6008,11 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 				S = States;
 			}
 			else if (expnum == 2)
-				auto MDP = Maze(ite, ite, seed);
-			else
-				auto MDP = Maze(ite, ite, seed);
-
+			{
+				auto MDP = Maze3d(ite, ite,ite, seed);
+				States = ite * ite*ite + 1;
+				S = States;
+			}
 			// auto MDP = generate_random_MDP_with_variable_parameters(S, A_num, action_prob, non_zero_transition, upper_reward, seed);
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
@@ -6035,7 +6036,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			A_type A1 = copy_A(A);
 			auto start_VI = high_resolution_clock::now();
 			// cout<<getValue()<<endl;
-			V_type V_approx_solution_tuple = value_iterationGS(States, R, A1, P, gamma, epsilon);
+			V_type V_approx_solution_tuple = value_iterationGSTM(States, R, A1, P, gamma, epsilon, expnum);
 			vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
 			auto stop_VI = high_resolution_clock::now();
 			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
@@ -6045,7 +6046,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			// VIU testing
 			A_type A6 = copy_A(A);
 			auto start_VIU = high_resolution_clock::now();
-			V_type V_approx_solution_upper_tuple = value_iteration_upperGS(States, R, A6, P, gamma, epsilon);
+			V_type V_approx_solution_upper_tuple = value_iteration_upperGSTM(States, R, A6, P, gamma, epsilon, expnum);
 			vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
 			auto stop_VIU = high_resolution_clock::now();
 			auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
@@ -6058,7 +6059,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			A_type A2 = copy_A(A);
 			auto start_VIH = high_resolution_clock::now();
 
-			V_type V_heap_approx_tuple = value_iteration_with_heapGS(States, R, A2, P, gamma, epsilon);
+			V_type V_heap_approx_tuple = value_iteration_with_heapGSTM(States, R, A2, P, gamma, epsilon, expnum);
 			vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
 			auto stop_VIH = high_resolution_clock::now();
 			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
@@ -6081,7 +6082,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			A_type A3 = copy_A(A);
 			auto start_BVI = high_resolution_clock::now();
 
-			V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(States, R, A3, P, gamma, epsilon);
+			V_type V_bounded_approx_solution_tuple = bounded_value_iterationGSTM(States, R, A3, P, gamma, epsilon, expnum);
 			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
 			auto stop_BVI = high_resolution_clock::now();
 			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
@@ -6090,7 +6091,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			VI[3][k] += duration_BVI.count();
 			A_type A4 = copy_A(A);
 			auto start_VIAE = high_resolution_clock::now();
-			V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(States, R, A4, P, gamma, epsilon);
+			V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGSTM(States, R, A4, P, gamma, epsilon, expnum);
 			vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
 
 			auto stop_VIAE = high_resolution_clock::now();
@@ -6102,7 +6103,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			A_type A5 = copy_A(A);
 			auto start_VIAEH = high_resolution_clock::now();
 
-			V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(States, R, A5, P, gamma, epsilon);
+			V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGSTM(States, R, A5, P, gamma, epsilon, expnum);
 			vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
 
 			auto stop_VIAEH = high_resolution_clock::now();
@@ -6114,7 +6115,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			A_type A8 = copy_A(A);
 			auto start_VIAEHL = high_resolution_clock::now();
 
-			V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(States, R, A8, P, gamma, epsilon);
+			V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGSTM(States, R, A8, P, gamma, epsilon, expnum);
 			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
 
 			auto stop_VIAEHL = high_resolution_clock::now();
@@ -6125,7 +6126,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			A_type A9 = copy_A(A);
 			auto start_BAO = high_resolution_clock::now();
 
-			V_type BAO_approx_solution_tuple = value_iteration_BAOGS(States, R, A9, P, gamma, epsilon);
+			V_type BAO_approx_solution_tuple = value_iteration_BAOGSTM(States, R, A9, P, gamma, epsilon, expnum);
 			vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
 
 			auto stop_BAO = high_resolution_clock::now();

@@ -487,3 +487,202 @@ V_type bounded_value_iterationGSTest(S_type S, R_type R, A_type A, P_type P, dou
 
 	return result_tuple;
 }
+
+V_type bounded_value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, int D3)
+{
+
+	// Find relevant values from the R parameter
+	auto [r_star_min, r_star_max, r_star_values] = find_all_r_values(R);
+
+	// Initialize with improved upper bound
+	double **V_U = new double *[1];
+	double **V_L = new double *[1];
+	for (int i = 0; i < 1; ++i)
+	{
+		V_U[i] = new double[S];
+		V_L[i] = new double[S];
+	}
+
+	int siz;
+	if (D3 == 1)
+	{
+		siz = sqrt(S - 1) - 2;
+	}
+	else if (D3 == 2)
+	{
+		siz = cbrt(S - 1) - 2;
+	}
+	int Xmax = siz + 2;
+	gamma = 1;
+
+	int x_curr;
+	int y_curr;
+	int z_curr;
+	int xa1;
+	int ya1;
+	int za1;
+	double x2;
+	if (D3 == 0)
+	{
+		for (int s = 0; s < S; s++)
+		{
+			V_U[0][s] = (gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
+			V_L[0][s] = (gamma / (1.0 - gamma)) * r_star_min + r_star_values[s];
+		}
+	}
+	else
+	{
+		for (int s = 0; s < S; s++)
+		{
+			if (D3 == 1)
+			{
+				x_curr = s % Xmax;
+				y_curr = s / Xmax;
+				xa1 = abs(x_curr - siz);
+				ya1 = abs(y_curr - siz);
+				za1 = xa1 - 1;
+			}
+			else
+			{
+				int idx = s;
+				z_curr = idx / (Xmax * Xmax);
+				idx -= (z_curr * Xmax * Xmax);
+				y_curr = idx / Xmax;
+				x_curr = idx % Xmax;
+				xa1 = abs(x_curr - siz);
+				ya1 = abs(y_curr - siz);
+				za1 = abs(z_curr - siz);
+			}
+
+			x2 = 0;
+			if (xa1 >= ya1 && xa1 >= za1)
+				x2 = xa1;
+			else if (ya1 >= xa1 && ya1 >= za1)
+				x2 = ya1;
+			else
+				x2 = ya1;
+			V_U[0][s] = -x2 + 10;
+			V_L[0][s] = -500;
+		}
+		V_U[0][S - 1] = 0.0;
+		V_L[0][S - 1] = 0;
+	}
+
+	// Initialize with improved lower bound
+
+	// Keep track of work done in each iteration in microseconds
+	// Start from iteration 1
+	vector<microseconds> work_per_iteration(1);
+
+	// Init criteria variables to know which value to return based on why the algorithm terminated
+	// Set to true if we have converged!
+	bool bounded_convergence_criteria = false;
+	bool upper_convergence_criteria = false;
+	bool lower_convergence_criteria = false;
+
+	// Pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
+	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
+	const double two_epsilon = 2 * epsilon;
+	const double convergence_bound_precomputed = 0.0005;
+
+	// Keep count of number of iterations
+	int iterations = 0;
+
+	// Record actions eliminated in each iteration
+	// Push empty vector for 0-index. Iterations start with 1
+	vector<vector<pair<int, int>>> actions_eliminated;
+	actions_eliminated.push_back(vector<pair<int, int>>());
+
+	// while any of the criteria are NOT, !, met, run the loop
+	double *V_U_current_iteration = V_U[0];
+	double *V_L_current_iteration = V_L[0];
+
+	while ((!bounded_convergence_criteria) && (!upper_convergence_criteria) && (!lower_convergence_criteria))
+	{
+		bounded_convergence_criteria = true;
+		upper_convergence_criteria = true;
+		lower_convergence_criteria = true;
+		// Increment iteration counter i
+		iterations++;
+
+		// begin timing of this iteration
+		auto start_of_iteration = high_resolution_clock::now();
+
+		// If i is even, then (i & 1) is 0, and the one to change is V[0]
+
+		// for all states in each iteration
+		for (int s = 0; s < S; s++)
+		{
+
+			// initial values to smalles possible
+			double oldVU = V_U_current_iteration[s];
+			double oldVL = V_L_current_iteration[s];
+			// Ranged for loop over all actions in the action set of state s
+			// double Q_max=numeric_limits<double>::min();
+			double Q_max = -100000;
+			for (auto a : A[s])
+			{
+				auto &[P_s_a, P_s_a_nonzero] = P[s][a];
+
+				double R_U_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_U_current_iteration, P_s_a_nonzero);
+				double R_L_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_L_current_iteration, P_s_a_nonzero);
+
+				if (R_U_s_a > Q_max)
+					Q_max = R_U_s_a;
+				if (R_L_s_a > V_L_current_iteration[s])
+				{
+					V_L_current_iteration[s] = R_L_s_a;
+				}
+			}
+			V_U_current_iteration[s] = Q_max;
+
+			if ((V_U_current_iteration[s] - V_L_current_iteration[s]) > two_epsilon)
+				bounded_convergence_criteria = false;
+			if (abs(V_U_current_iteration[s] - oldVU) > convergence_bound_precomputed)
+				upper_convergence_criteria = false;
+			if (abs(V_L_current_iteration[s] - oldVL) > convergence_bound_precomputed)
+				lower_convergence_criteria = false;
+		}
+
+		// see if any of the convergence criteria are met
+		// 1. bounded criteria
+
+		// 3. lower criteria
+
+		// end timing of this iteration and record it in work vector
+		auto end_of_iteration = high_resolution_clock::now();
+		auto duration_of_iteration = duration_cast<microseconds>(end_of_iteration - start_of_iteration);
+		work_per_iteration.push_back(duration_of_iteration);
+	}
+
+	// case return value on which convergence criteria was met
+	vector<double> result(S); // set it so have size S from beginning to use copy
+
+	if (bounded_convergence_criteria)
+	{
+		result = V_upper_lower_average(V_U[0], V_L[0], S);
+	}
+	else if (upper_convergence_criteria)
+	{
+		copy(V_U[0], V_U[0] + S, result.begin());
+	}
+	else if (lower_convergence_criteria)
+	{
+		copy(V_L[0], V_L[0] + S, result.begin());
+	}
+	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
+
+	// DEALLOCATE MEMORY
+	for (int i = 0; i < 1; ++i)
+	{
+		delete[] V_U[i];
+	}
+	delete[] V_U;
+	for (int i = 0; i < 1; ++i)
+	{
+		delete[] V_L[i];
+	}
+	delete[] V_L;
+
+	return result_tuple;
+}
