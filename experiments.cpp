@@ -5642,3 +5642,278 @@ void create_data_tables_number_GSBO(string filename,int expnum,int States,int Ac
 		cout<<"writeF"<<endl;
 
 }
+
+
+void create_data_tables_number_GSTM(string filename,int expnum,int States,int Actions,int SS,int StartP,int endP,int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition){
+
+		//the stringstreams to create the test for the files
+		ostringstream stringstream_BVI;
+		ostringstream stringstream_VI;
+		ostringstream stringstream_VIU;
+		ostringstream stringstream_VIH;
+		ostringstream stringstream_VIHN;
+		ostringstream stringstream_VIAE;
+		ostringstream stringstream_VIAEH;
+		ostringstream stringstream_VIAEHL;
+		ostringstream stringstream_BAO;
+		ostringstream stringstream_BAON;
+
+		//the file output objects
+		ofstream output_stream_BVI;
+		ofstream output_stream_VI;
+		ofstream output_stream_VIU;
+		ofstream output_stream_VIH;
+		ofstream output_stream_VIHN;
+		ofstream output_stream_VIAE;
+		ofstream output_stream_VIAEH;
+		ofstream output_stream_VIAEHL;
+		ofstream output_stream_BAO;
+		ofstream output_stream_BAON;
+		
+		//set the name of the file to write to
+		string file_name_BVI = "data_tables/number_of_states/" + filename + "GS_BVI.dat"; 
+		string file_name_VI = "data_tables/number_of_states/" + filename + "GS_VI.dat";
+		string file_name_VIU = "data_tables/number_of_states/" + filename + "GS_VIU.dat";
+		string file_name_VIH = "data_tables/number_of_states/" + filename + "GS_VIH.dat";
+		string file_name_VIHN = "data_tables/number_of_states/" + filename + "GS_VIHN.dat";
+		string file_name_VIAE = "data_tables/number_of_states/" + filename + "GS_VIAE.dat";
+		string file_name_VIAEH = "data_tables/number_of_states/" + filename + "GS_VIAEH.dat";
+		string file_name_VIAEHL = "data_tables/number_of_states/" + filename + "GS_VIAEHL.dat";
+		string file_name_BAO = "data_tables/number_of_states/" + filename + "GS_BAO.dat";
+		string file_name_BAON = "data_tables/number_of_states/" + filename + "GS_BAON.dat";
+
+		//The varying parameters
+		int S_starting_value = 100;
+		int S_finishing_value = endP;
+		int S_increment = 100;
+		//S_finishing_value = 2000;
+		//hardcoded parameter
+		double action_prob = 1.0;
+		//A_num=100;
+		//write meta data to all stringstreams as first in their respective files
+		
+		write_meta_data_to_dat_file_number_of_states(stringstream_VI, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIU, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_BVI, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIAE, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		write_meta_data_to_dat_file_number_of_states(stringstream_VIAEH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
+		float VI[10][20];
+		int k=0;
+		 R_type R1;
+		 A_type Aa1;
+		 P_type P1;
+		 int S;
+		 auto MDP= make_tuple(R1,Aa1,P1);
+		for (int iters=0;iters<2;iters++){
+			k=0;
+		for ( int ite = StartP; ite <= endP; ite = ite + IncP){
+				//printf("Beginning iteration %d  S2,  %d, A, S %d = %d\n",iters, S2,A_num,S);
+				//auto MDP ;
+				//GENERATE THE MDP
+				int seed = time(0);
+				//auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
+				
+				if (expnum==1){
+					
+					//auto MDP=Maze(xs,xs,seed);
+					auto MDP=Maze(ite,ite,seed);
+					States=ite*ite+1;
+					S=States;
+				}
+				else if(expnum==2)
+					auto MDP=Maze(ite,ite,seed);
+				else 
+					auto MDP=Maze(ite,ite,seed);
+
+
+				//auto MDP = generate_random_MDP_with_variable_parameters(S, A_num, action_prob, non_zero_transition, upper_reward, seed);
+				R_type R = get<0>(MDP);
+				A_type A = get<1>(MDP);
+				P_type P = get<2>(MDP);
+				int counter=0;
+				/*
+				for (int t = 0; t < S; t++) {
+						for (auto a : A[t]) {
+								auto& [P_s_a, P_s_a_nonzero] = P[t][a];
+									for (int k : P_s_a_nonzero) {
+										//cout<<P_s_a[counter]<<"PSA"<<P_s_a_nonzero[counter]<<"P_s_a_nonzero"<< R[t][a]  <<"Rew"<<a<<"A"<<endl;
+										counter++;
+										}
+										counter=0;
+							
+								}
+						}*/
+				//cout<<"MDP"<<endl;
+				//VI testing
+				//TODO: make method that takes arguments and performs the writing of data, takes filename, MDP etc. as argument
+				A_type A1 = copy_A(A);
+				auto start_VI = high_resolution_clock::now();
+				//cout<<getValue()<<endl;
+				V_type V_approx_solution_tuple = value_iterationGS(States, R, A1, P, gamma, epsilon);
+                vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
+				auto stop_VI = high_resolution_clock::now();
+				auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+				
+				stringstream_VI << to_string(States) << " " << duration_VI.count() << endl;
+				VI[0][k]+=duration_VI.count();
+				//VIU testing
+				A_type A6 = copy_A(A);
+				auto start_VIU = high_resolution_clock::now();
+				V_type V_approx_solution_upper_tuple = value_iteration_upperGS(States, R, A6, P, gamma, epsilon);
+				vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
+				auto stop_VIU = high_resolution_clock::now();
+				auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
+				
+				VI[1][k]+=duration_VIU.count();
+				cout<<"VIU,"<< duration_VIU.count()<<endl;
+				stringstream_VIU << to_string(States) << " " << duration_VIU.count() << endl;
+
+				//VIH testing
+				A_type A2 = copy_A(A);
+				auto start_VIH = high_resolution_clock::now();
+
+				V_type V_heap_approx_tuple = value_iteration_with_heapGS(States, R, A2, P, gamma, epsilon);
+				vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
+				auto stop_VIH = high_resolution_clock::now();
+				auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+				VI[2][k]+=duration_VIH.count();
+				cout<<"VIHGS,"<<duration_VIH.count()<<endl;
+				stringstream_VIH << to_string(States) << " " << duration_VIH.count() << endl;
+				//A_type A12 = copy_A(A);
+				auto start_VIHN = high_resolution_clock::now();
+
+				//V_type V_heap_approx_tupleN = value_iteration_VIH_custom(S, R, A12, P, gamma, epsilon);
+				//vector<double> V_heap_approxN = get<0>(V_heap_approx_tuple);
+
+				auto stop_VIHN = high_resolution_clock::now();
+				auto duration_VIHN = duration_cast<milliseconds>(stop_VIHN - start_VIHN);
+
+				//stringstream_VIHN << to_string(A_num) << " " << duration_VIHN.count() << endl;
+				VI[9][k]+=duration_VIHN.count();
+
+				//BVI
+				A_type A3 = copy_A(A);
+				auto start_BVI = high_resolution_clock::now();
+
+				V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(States, R, A3, P, gamma, epsilon);
+				vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
+				auto stop_BVI = high_resolution_clock::now();
+				auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
+				
+				stringstream_BVI << to_string(States) << " " << duration_BVI.count() << endl;
+				VI[3][k]+=duration_BVI.count();
+				A_type A4 = copy_A(A);
+				auto start_VIAE = high_resolution_clock::now();
+				V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(States, R, A4, P, gamma, epsilon);
+				vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
+
+				auto stop_VIAE = high_resolution_clock::now();
+				auto duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
+
+				stringstream_VIAE << to_string(S) << " " << duration_VIAE.count() << endl;
+				VI[4][k]+=duration_VIAE.count();
+				//VIAEH
+				A_type A5 = copy_A(A);
+				auto start_VIAEH = high_resolution_clock::now();
+				
+				V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(States, R, A5, P, gamma, epsilon);
+				vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
+
+				auto stop_VIAEH = high_resolution_clock::now();
+				auto duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
+
+				stringstream_VIAEH << to_string(S) << " " << duration_VIAEH.count() << endl;
+				VI[5][k]+=duration_VIAEH.count();
+				//VIAEHL
+				A_type A8 = copy_A(A);
+				auto start_VIAEHL = high_resolution_clock::now();
+
+				V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(States, R, A8, P, gamma, epsilon);
+				vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
+
+				auto stop_VIAEHL = high_resolution_clock::now();
+				auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
+				stringstream_VIAEHL << to_string(S) << " " << duration_VIAEHL.count() << endl;
+				VI[6][k]+=duration_VIAEHL.count();
+				//BAO
+				A_type A9 = copy_A(A);
+				auto start_BAO = high_resolution_clock::now();
+
+				V_type BAO_approx_solution_tuple = value_iteration_BAOGS(States, R, A9, P, gamma, epsilon);
+				vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
+
+				auto stop_BAO = high_resolution_clock::now();
+				auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
+
+				stringstream_BAO << to_string(S) << " " << duration_BAO.count() << endl;
+				VI[7][k]+=duration_BAO.count();
+
+				A_type A10 = copy_A(A);
+				auto start_BAOSK = high_resolution_clock::now();
+				
+				//V_type BAO_approx_solution_tuple1 = value_iteration_BAOSKGS(States, R, A10, P, gamma, epsilon);
+				//vector<double> BAO_approx_solution1 = get<0>(BAO_approx_solution_tuple1);
+				auto stop_BAOSK = high_resolution_clock::now();
+				
+				auto duration_BAOSK = duration_cast<milliseconds>(stop_BAOSK - start_BAOSK);
+				stringstream_BAON << to_string(S) << " " << duration_BAOSK.count() << endl;
+				VI[8][k]+=duration_BAOSK.count();
+				//They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
+				
+				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon)){
+						printf("DIFFERENCE1\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_heap_approx) > (2 * epsilon)){
+						printf("DIFFERENCE2\n");
+				}
+				
+				if (abs_max_diff_vectors(V_approx_solution, V_AE_H_approx_solution) > (2 * epsilon)){
+						printf("DIFFERENCE3\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_approx_solution_upper) > (2 * epsilon)){
+						printf("DIFFERENCE4\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_bounded_approx_solution) > (2 * epsilon)){
+						printf("DIFFERENCE5\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, VIAEHL_approx_solution) > (2 * epsilon)){
+						printf("DIFFERENCE6\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_AE_approx_solution) > (2 * epsilon)){
+						printf("DIFFERENCE7\n");
+				}
+					if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon)){
+						printf("DIFFERENCE8\n");
+				}
+
+				k++;
+
+		}
+		}
+		for (int k=0;k<20;k++){
+		stringstream_VI  << VI[0][k]/5<< endl;
+		stringstream_VIU <<   VI[1][k]/5 << endl;
+		stringstream_VIH <<  VI[2][k]/5 << endl;
+		stringstream_VIHN <<  VI[9][k]/5 << endl;
+		stringstream_BVI <<  VI[3][k]/5 << endl;
+		stringstream_VIAE <<  VI[4][k]/5 << endl;
+		stringstream_VIAEH <<  VI[5][k]/5 << endl;
+		stringstream_VIAEHL <<  VI[6][k]/5 << endl;
+		stringstream_BAO <<  VI[7][k]/5 << endl;
+		stringstream_BAON <<  VI[8][k]/5 << endl;
+		//cout<<"writeA"<<endl;
+}
+		//WRITE ALL DATA TO THEIR RESPECTVIE FILES	
+		write_stringstream_to_file(stringstream_VI, output_stream_VI, file_name_VI);
+		write_stringstream_to_file(stringstream_VIU, output_stream_VIU, file_name_VIU);
+		write_stringstream_to_file(stringstream_BVI, output_stream_BVI, file_name_BVI);
+		write_stringstream_to_file(stringstream_VIH, output_stream_VIH, file_name_VIH);
+		write_stringstream_to_file(stringstream_VIHN, output_stream_VIHN, file_name_VIHN);
+		write_stringstream_to_file(stringstream_VIAE, output_stream_VIAE, file_name_VIAE);
+		write_stringstream_to_file(stringstream_VIAEH, output_stream_VIAEH, file_name_VIAEH);
+		write_stringstream_to_file(stringstream_VIAEHL, output_stream_VIAEHL, file_name_VIAEHL);
+		write_stringstream_to_file(stringstream_BAO, output_stream_BAO, file_name_BAO);
+		write_stringstream_to_file(stringstream_BAON, output_stream_BAON, file_name_BAON);
+		//cout<<"writeF"<<endl;
+}

@@ -33,4 +33,8 @@ MDP_type RiverSwim(int S);
 MDP_type Maze(int X,int Y, int seed);
 bool check(int pos[],int ra,int siz);
 int posDi(int X1,int Y1,int Swi,int Dir);
+MDP_type Maze3d(int X,int Y,int Z,int seed);
+//int[] to3D( int idx );
+ int to1D( int x, int y, int z,int xMax,int yMax) ;
+
 #endif

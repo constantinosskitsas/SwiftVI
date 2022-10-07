@@ -556,6 +556,8 @@ int posDi(int X1,int Y1,int Swi,int Dir){
 
 	return X1 + Swi*Y1;
 }
+
+
 bool check(int pos[],int ra,int siz){
 	for(int i=0;i<siz;i++)
 		if (pos[i]==ra)
@@ -846,6 +848,562 @@ MDP_type Maze(int X,int Y, int seed){
 								if (ra!=a){
 									cc=cc+1;
 									P_s_a_nonzero_states.push_back(posDi(x_curr,y_curr,X,A_direction[i][ra]));
+									P_s_a.push_back(0.2);
+								}
+							}
+						}
+						P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+						P_s_a.clear();
+						P_s_a_nonzero_states.clear();
+				}
+				P.push_back(P_s);
+				P_s_a.clear();
+				P_s.clear();
+			}
+
+
+		}				
+		P_s_a_nonzero_states.push_back(S);
+		P_s_a.push_back(1);
+		P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+		P.push_back(P_s);
+		//cout<<"hiend"<<endl;
+		MDP_type MDP = make_tuple(R, A, P);
+
+		return MDP;
+}
+
+ int to1D( int x, int y, int z,int xMax,int yMax) {
+    return (z * xMax * yMax) + (y * xMax) + x;
+}
+/*
+ int[] to3D( int idx ) {
+    int z = idx / (xMax * yMax);
+    idx -= (z * xMax * yMax);
+    int y = idx / xMax;
+    int x = idx % xMax;
+    return new int[]{ x, y, z };
+}*/
+
+int posDi3D(int X1,int Y1,int Z1,int Xmax,int Ymax,int Dir){
+	if(Dir==0)
+		X1=X1+1;
+	else if(Dir==1)
+		Y1=Y1+1;
+	else if(Dir==2)
+		X1=X1-1;
+	else if(Dir==3)
+		Y1=Y1-1;
+	else if(Dir==4){
+		Y1=Y1+1;
+		X1=X1+1;
+	}
+	else if(Dir==5){
+		X1=X1-1;
+		Y1=Y1-1;
+	}
+
+	else if(Dir==6){
+		X1=X1-1;
+		Y1=Y1+1;
+	}
+	else if(Dir==7){
+		X1=X1+1;
+		Y1=Y1-1;
+	}
+	else if(Dir==8){
+		X1=X1+1;
+		Z1=Z1+1;}
+	else if(Dir==9){
+		Y1=Y1+1;
+		Z1=Z1+1;}
+	else if(Dir==10){
+		X1=X1-1;
+		Z1=Z1+1;}
+	else if(Dir==11){
+		Y1=Y1-1;
+		Z1=Z1+1;}
+	else if(Dir==12){
+		Y1=Y1+1;
+		X1=X1+1;
+		Z1=Z1+1;
+	}
+	else if(Dir==13){
+		X1=X1-1;
+		Y1=Y1-1;
+		Z1=Z1+1;
+	}
+
+	else if(Dir==14){
+		X1=X1-1;
+		Y1=Y1+1;
+		Z1=Z1+1;
+	}
+	else if(Dir==15){
+		X1=X1+1;
+		Y1=Y1-1;
+		Z1=Z1+1;
+	}
+	else if(Dir==16){
+		X1=X1+1;
+		Z1=Z1-1;}
+	else if(Dir==17){
+		Y1=Y1+1;
+		Z1=Z1-1;}
+	else if(Dir==18){
+		X1=X1-1;
+		Z1=Z1-1;}
+	else if(Dir==19){
+		Y1=Y1-1;
+		Z1=Z1-1;}
+	else if(Dir==20){
+		Y1=Y1+1;
+		X1=X1+1;
+		Z1=Z1-1;
+	}
+	else if(Dir==21){
+		X1=X1-1;
+		Y1=Y1-1;
+		Z1=Z1-1;
+	}
+
+	else if(Dir==22){
+		X1=X1-1;
+		Y1=Y1+1;
+		Z1=Z1-1;
+	}
+	else if(Dir==23){
+		X1=X1+1;
+		Y1=Y1-1;
+		Z1=Z1-1;
+	}
+
+	return (Z1 * Xmax * Ymax) + (Y1 * Xmax) + X1;
+
+}
+
+MDP_type Maze3d(int X,int Y,int Z, int seed){
+	static default_random_engine e(seed);
+	uniform_real_distribution<double> uniform_prob_dist(0,1);
+	double trans_prob = uniform_prob_dist(e);
+	int G_X=X-2;
+	int G_Y=Y-2;
+	int G_Z=Z-2;
+
+	//0->x+1 y+0 East
+	//1->x+0 y+1 NOrth
+	//2->x-1 y+0 West
+	//3->x+0 y-1 South
+	//4->x+1 y+1 North East
+	//5->x-1 y-1 South West
+	//6->x-1 y+1 North West
+	//7->x+1 y-1 South East
+
+	//8->x+1 y+0 z+1 East up
+	//9->x+0 y+1 z+1 NOrth up
+	//10->x-1 y+0 z+1 West up
+	//11->x+0 y-1 z+1 South up
+	//12->x+1 y+1 z+1 North East up
+	//13->x-1 y-1 z+1 South West up
+	//14->x-1 y+1 z+1 North West up
+	//15->x+1 y-1 z+1 South East up
+
+	//16->x+1 y+0 z-1 East down
+	//17->x+0 y+1 z-1 NOrth down
+	//18->x-1 y+0 z-1 West down
+	//19->x+0 y-1 z-1 South down
+	//20->x+1 y+1 z-1 North East down
+	//21->x-1 y-1 z-1 South West down
+	//22->x-1 y+1 z-1 North West down
+	//23->x+1 y-1 z-1 South East down
+	 
+	double cP[24];
+	vector<int> A_s;
+	vector<int> A_sD;
+	A_type A;
+	A_type A_direction;
+	int S=X*Y*Z;
+	int x_curr=-1;
+	int y_curr=-1;
+	int z_curr=-1;
+	int idx=-1;
+	int counter=0;
+	float pi=0.10;
+	//float pit1=0.4;
+	//float pit3=0.65;
+	//float pit6=0.85;
+	//float pit10=1;
+	
+	for (int i = 0; i < S; ++i) {
+		z_curr= idx / (X * Y);
+    	 idx -= (z_curr * X * Y);
+    	y_curr = idx / X;
+    	x_curr = idx % X;	
+
+		if (x_curr==G_X && y_curr==G_Y && y_curr==G_Z){
+			A_s.push_back(0);
+			A_sD.push_back(0);
+			A.push_back(A_s);
+			A_direction.push_back(A_sD);
+			A_s.clear();
+			A_sD.clear();
+			continue;
+			}
+		//0->x+1 y+0 East
+		counter=0;
+		while (counter<2){
+			for (int j=0;j<24;j++)
+				cP[j]=uniform_prob_dist(e);
+		if (x_curr+1<X && cP[1]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(0);
+			counter++;
+		}
+		//1->x+0 y+1 NOrth
+
+		if (y_curr+1<Y && cP[2]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(1);
+			counter++;
+		}
+		//2->x-1 y+0 West
+		if (x_curr-1>0 && cP[3]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(2);
+			counter++;
+		}
+		//3->x+0 y-1 South
+		if (y_curr-1>0 && cP[4]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(3);
+			counter++;
+		}
+		//4->x+1 y+1 North East
+		  if (x_curr+1<X && y_curr+1<Y && cP[5]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(4);
+			counter++;
+		}
+		//5->x-1 y-1 South West
+		if (x_curr-1>0 && y_curr-1>0 && cP[6]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(5);
+			counter++;
+		}
+		//6->x-1 y+1 North West
+		if (x_curr-1>0 && y_curr+1<Y && cP[7]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(6);
+			counter++;
+		}
+		//7->x+1 y-1 South East
+		if (x_curr+1<X && y_curr-1>0 && cP[0]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(7);
+			counter++;
+
+		}
+		
+		if (x_curr+1<X && z_curr+1<Z &&cP[8]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(8);
+			counter++;
+		}
+		//1->x+0 y+1 NOrth
+
+		if (y_curr+1<Y && z_curr+1<Z && cP[9]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(9);
+			counter++;
+		}
+		//2->x-1 y+0 West
+		if (x_curr-1>0 && z_curr+1<Z && cP[10]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(10);
+			counter++;
+		}
+		//3->x+0 y-1 South
+		if (y_curr-1>0 && z_curr+1<Z && cP[11]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(11);
+			counter++;
+		}
+		//4->x+1 y+1 North East
+		  if (x_curr+1<X && z_curr+1<Z &&  y_curr+1<Y && cP[12]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(12);
+			counter++;
+		}
+		//5->x-1 y-1 South West
+		if (x_curr-1>0 && z_curr+1<Z && y_curr-1>0 && cP[13]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(13);
+			counter++;
+		}
+		//6->x-1 y+1 North West
+		if (x_curr-1>0 && z_curr+1<Z && y_curr+1<Y && cP[14]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(14);
+			counter++;
+		}
+		//7->x+1 y-1 South East
+		if (x_curr+1<X && z_curr+1<Z && y_curr-1>0 && cP[15]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(15);
+			counter++;
+
+		}
+			if (x_curr+1<X && z_curr-1>0 &&cP[16]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(16);
+			counter++;
+		}
+		//1->x+0 y+1 NOrth
+
+		if (y_curr+1<Y && z_curr-1>0 && cP[17]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(17);
+			counter++;
+		}
+		//2->x-1 y+0 West
+		if (x_curr-1>0 && z_curr-1>0 && cP[18]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(18);
+			counter++;
+		}
+		//3->x+0 y-1 South
+		if (y_curr-1>0 && z_curr-1>0 && cP[19]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(19);
+			counter++;
+		}
+		//4->x+1 y+1 North East
+		  if (x_curr+1<X && z_curr-1>0 &&  y_curr+1<Y && cP[20]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(20);
+			counter++;
+		}
+		//5->x-1 y-1 South West
+		if (x_curr-1>0 && z_curr-1>0 && y_curr-1>0 && cP[21]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(21);
+			counter++;
+		}
+		//6->x-1 y+1 North West
+		if (x_curr-1>0 && z_curr-1>0 && y_curr+1<Y && cP[22]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(22);
+			counter++;
+		}
+		//7->x+1 y-1 South East
+		if (x_curr+1<X && z_curr-1>0 && y_curr-1>0 && cP[23]>pi){
+			A_s.push_back(counter);
+			A_sD.push_back(23);
+			counter++;
+		}
+		}
+
+		
+		A.push_back(A_s);
+		A_direction.push_back(A_sD);
+		A_s.clear();
+		A_sD.clear();
+
+		}
+
+		A_s.push_back(0);
+		A_sD.push_back(0);
+		A.push_back(A_s);
+		A_direction.push_back(A_sD);
+
+
+	float pit1=0.4;
+	float pit2=0.50;
+	float pit3=0.7;
+	float pit4=0.7;
+	float pit5=0.70;
+	float pit6=0.70;
+	float pit7=0.9;
+	float pit8=0.9;
+	float pit9=0.9;
+	float pit10=1;
+
+/*
+	float pit1=0.1;
+	float pit2=0.20;
+	float pit3=0.30;
+	float pit4=0.40;
+	float pit5=0.5;
+	float pit6=0.60;
+	float pit7=0.7;
+	float pit8=0.8;
+	float pit9=0.9;
+	float pit10=1;*/
+		//Create R
+		R_type R;
+			int metrw=0;
+			int metrw1=0;
+		for (int i = 0; i < S; ++i){
+			vector<double> R_s;
+			z_curr= idx / (X * Y);
+    		idx -= (z_curr * X * Y);
+    		y_curr = idx / X;
+    		x_curr = idx % X;	
+		if (x_curr==G_X && y_curr==G_Y && z_curr==G_Z){
+			R_s.push_back(0);
+			}
+			else{
+				/*if (uniform_prob_dist(e)<0.05){ 
+					for (auto a : A[i]) {
+						R_s.push_back(-X);
+						metrw1++;
+					}
+					}	
+					else{
+						for (auto a : A[i]) {
+						R_s.push_back(-1);
+						metrw++;
+					}
+					}
+				*/
+				for (auto a : A[i]) {
+					if (uniform_prob_dist(e)<pit1){
+						R_s.push_back(-1);
+						metrw1++;
+					}	
+					else if (uniform_prob_dist(e)<pit2)
+					{R_s.push_back(-1);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit3)
+					{R_s.push_back(-3);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit4)
+					{R_s.push_back(-3);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit5)
+					{R_s.push_back(-5);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit6)
+					{R_s.push_back(-5);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit7)
+					{R_s.push_back(-7);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit8)
+					{R_s.push_back(-7);
+					metrw++;}
+					else if (uniform_prob_dist(e)<pit9)
+					{R_s.push_back(-7);
+					metrw++;}
+					else {R_s.push_back(-10);
+					metrw++;}
+					
+				}
+			}
+
+				R.push_back(R_s);
+		}
+		//cout<<"traps"<<metrw<<endl;
+		//cout<<"normal"<<metrw1<<endl;
+		vector<double> R_s;
+		R_s.push_back(0);
+		R.push_back(R_s);
+
+
+
+		P_type P ;
+		vector<pair<vector<double>, vector<int> > > P_s;
+		vector<int> P_s_a_nonzero_states;
+		//vector<double> P_s_a(4, double(0));
+		vector<double> P_s_a;
+
+		//0->x+1 y+0 East
+		//1->x+0 y+1 NOrth
+		//2->x-1 y+0 West
+		//3->x+0 y-1 South
+		//4->x+1 y+1 North East
+		//5->x-1 y-1 South West
+		//6->x-1 y+1 North West
+		//7->x+1 y-1 South East
+		for (int i = 0; i < S; ++i) {
+				//we now fix state s
+
+			z_curr= idx / (X * Y);
+    		idx -= (z_curr * X * Y);
+    		y_curr = idx / X;
+    		x_curr = idx % X;	
+			if (x_curr==G_X && y_curr==G_Y && z_curr==G_Z){
+				P_s_a_nonzero_states.push_back(S);
+				P_s_a.push_back(1);
+				P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+				P.push_back(P_s);
+				P_s_a_nonzero_states.clear();
+				P_s_a.clear();
+				P_s.clear();
+			}
+			else{
+				for (auto a : A[i]) {
+						P_s_a_nonzero_states.push_back(posDi3D(x_curr,y_curr,z_curr,X,Y,A_direction[i][a]));
+						P_s_a.push_back(0.8);
+						if (A[i].size()>5){
+							int cc=0;
+							int pos[5]={-1,-1,-1,-1,-1};
+							while(cc<5){
+								int ra=rand()%A[i].size();
+								if (ra!=a && check(pos,ra,4)){
+									pos[cc]=ra;
+									cc=cc+1;
+									P_s_a_nonzero_states.push_back(posDi3D(x_curr,y_curr,z_curr,X,Y,A_direction[i][ra]));
+									P_s_a.push_back(0.04);
+								}
+							}
+
+						}else if (A[i].size()==5){
+							int cc=0;
+							int pos[4]={-1,-1,-1,-1};
+							while(cc<4){
+								int ra=rand()%A[i].size();
+								if (ra!=a && check(pos,ra,4)){
+									pos[cc]=ra;
+									cc=cc+1;
+									P_s_a_nonzero_states.push_back(posDi3D(x_curr,y_curr,z_curr,X,Y,A_direction[i][ra]));
+									P_s_a.push_back(0.05);
+								}
+							}
+
+						}else if (A[i].size()==4 ){
+							int cc=0;
+							int pos[3]={-1,-1,-1};
+							while(cc<3){
+								int ra=rand()%A[i].size();
+								if (ra!=a && check(pos,ra,3)){
+									pos[cc]=ra;
+									cc=cc+1;
+									P_s_a_nonzero_states.push_back(posDi3D(x_curr,y_curr,z_curr,X,Y,A_direction[i][ra]));
+									if (cc==1)
+										P_s_a.push_back(0.1);
+									else P_s_a.push_back(0.05);
+								}
+							}
+						}else if (A[i].size()==3 ){
+							int cc=0;
+							int pos[2]={-1,-1};
+							while(cc<2){
+								int ra=rand()%A[i].size();
+								if (ra!=a && check(pos,ra,2)){
+									pos[cc]=ra;
+									cc=cc+1;
+									P_s_a_nonzero_states.push_back(posDi3D(x_curr,y_curr,z_curr,X,Y,A_direction[i][ra]));
+									P_s_a.push_back(0.1);
+								}
+							}
+						}else if (A[i].size()==2){
+							int cc=0;
+							while(cc<1){
+								int ra=rand()%A[i].size();
+								if (ra!=a){
+									cc=cc+1;
+									P_s_a_nonzero_states.push_back(posDi3D(x_curr,y_curr,z_curr,X,Y,A_direction[i][ra]));
 									P_s_a.push_back(0.2);
 								}
 							}

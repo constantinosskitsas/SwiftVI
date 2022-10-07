@@ -434,7 +434,11 @@ int main (int argc, char *argv[]){
 			cout<<"end4"<<endl;}
 		else if(NOFexp==5)
 			create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
+		else if (NOFexp==6)
+			create_data_tables_number_GSTM(file_prefix_number_of_states_best,expnum,States,Actions,SS,StartP,EndP,IncP, epsilon, gamma, upper_reward, non_zero_transition);
+
 		cout << "NOFexp " << NOFexp;
+
 		//th1.join();
 		//th2.join();
 		//th3.join();
