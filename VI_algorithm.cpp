@@ -243,7 +243,15 @@ V_type value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma,
 		if (D3 == 0)
 			V[0][s] = (gamma / (1.0 - gamma)) * r_star_min + r_star_values[s];
 		else
+		{
+			//int x_curr=s%Xmax;
+			//int y_curr=s/Xmax;
+			//double x1= sqrt( pow( abs(x_curr-siz),2)+pow(abs(y_curr-siz),2));
 			V[0][s] = -500;
+			//V[0][s] = -x1*5-10;
+			gamma=1;
+		}
+			
 	}
 	if (D3 != 0)
 		V[0][S - 1] = 0;
@@ -305,7 +313,7 @@ V_type value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma,
 	}
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
-
+	
 	// DEALLOCATE MEMORY
 	for (int i = 0; i < 1; ++i)
 	{

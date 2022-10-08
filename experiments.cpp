@@ -5954,16 +5954,16 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 	ofstream output_stream_BAON;
 
 	// set the name of the file to write to
-	string file_name_BVI = "data_tables/number_of_states/" + filename + "GS_BVI.dat";
-	string file_name_VI = "data_tables/number_of_states/" + filename + "GS_VI.dat";
-	string file_name_VIU = "data_tables/number_of_states/" + filename + "GS_VIU.dat";
-	string file_name_VIH = "data_tables/number_of_states/" + filename + "GS_VIH.dat";
-	string file_name_VIHN = "data_tables/number_of_states/" + filename + "GS_VIHN.dat";
-	string file_name_VIAE = "data_tables/number_of_states/" + filename + "GS_VIAE.dat";
-	string file_name_VIAEH = "data_tables/number_of_states/" + filename + "GS_VIAEH.dat";
-	string file_name_VIAEHL = "data_tables/number_of_states/" + filename + "GS_VIAEHL.dat";
-	string file_name_BAO = "data_tables/number_of_states/" + filename + "GS_BAO.dat";
-	string file_name_BAON = "data_tables/number_of_states/" + filename + "GS_BAON.dat";
+	string file_name_BVI = "data_tables/number_of_states/" + filename + "TMGS_BVI.dat";
+	string file_name_VI = "data_tables/number_of_states/" + filename + "TMGS_VI.dat";
+	string file_name_VIU = "data_tables/number_of_states/" + filename + "TMGS_VIU.dat";
+	string file_name_VIH = "data_tables/number_of_states/" + filename + "TMGS_VIH.dat";
+	string file_name_VIHN = "data_tables/number_of_states/" + filename + "TMGS_VIHN.dat";
+	string file_name_VIAE = "data_tables/number_of_states/" + filename + "TMGS_VIAE.dat";
+	string file_name_VIAEH = "data_tables/number_of_states/" + filename + "TMGS_VIAEH.dat";
+	string file_name_VIAEHL = "data_tables/number_of_states/" + filename + "TMGS_VIAEHL.dat";
+	string file_name_BAO = "data_tables/number_of_states/" + filename + "TMGS_BAO.dat";
+	string file_name_BAON = "data_tables/number_of_states/" + filename + "TMGS_BAON.dat";
 
 	// The varying parameters
 	int S_starting_value = 100;
@@ -5998,25 +5998,30 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			// GENERATE THE MDP
 			int seed = time(0);
 			// auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
-
+			cout<<"hi1"<<endl;
 			if (expnum == 1)
 			{
 
 				// auto MDP=Maze(xs,xs,seed);
-				auto MDP = Maze(ite, ite, seed);
+				 MDP = Maze(ite, ite, seed);
 				States = ite * ite + 1;
 				S = States;
+				cout<<"hi2"<<endl;
 			}
 			else if (expnum == 2)
 			{
-				auto MDP = Maze3d(ite, ite,ite, seed);
+				 MDP = Maze3d(ite, ite,ite, seed);
 				States = ite * ite*ite + 1;
 				S = States;
+				cout<<"hi3"<<endl;
+				cout<<S<<endl;
+
 			}
 			// auto MDP = generate_random_MDP_with_variable_parameters(S, A_num, action_prob, non_zero_transition, upper_reward, seed);
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
 			P_type P = get<2>(MDP);
+			cout<<"hi4"<<endl;
 			int counter = 0;
 			/*
 			for (int t = 0; t < S; t++) {
@@ -6043,6 +6048,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 
 			stringstream_VI << to_string(States) << " " << duration_VI.count() << endl;
 			VI[0][k] += duration_VI.count();
+			cout << "VI," << duration_VI.count() << endl;
 			// VIU testing
 			A_type A6 = copy_A(A);
 			auto start_VIU = high_resolution_clock::now();
@@ -6054,7 +6060,6 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			VI[1][k] += duration_VIU.count();
 			cout << "VIU," << duration_VIU.count() << endl;
 			stringstream_VIU << to_string(States) << " " << duration_VIU.count() << endl;
-
 			// VIH testing
 			A_type A2 = copy_A(A);
 			auto start_VIH = high_resolution_clock::now();
@@ -6086,7 +6091,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
 			auto stop_BVI = high_resolution_clock::now();
 			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
-
+			cout << "BVI," << duration_BVI.count() << endl;
 			stringstream_BVI << to_string(States) << " " << duration_BVI.count() << endl;
 			VI[3][k] += duration_BVI.count();
 			A_type A4 = copy_A(A);
@@ -6099,6 +6104,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 
 			stringstream_VIAE << to_string(S) << " " << duration_VIAE.count() << endl;
 			VI[4][k] += duration_VIAE.count();
+			cout << "VIAE," << duration_VIAE.count() << endl;
 			// VIAEH
 			A_type A5 = copy_A(A);
 			auto start_VIAEH = high_resolution_clock::now();
@@ -6111,6 +6117,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 
 			stringstream_VIAEH << to_string(S) << " " << duration_VIAEH.count() << endl;
 			VI[5][k] += duration_VIAEH.count();
+			cout << "VIAEH," << duration_VIAEH.count() << endl;
 			// VIAEHL
 			A_type A8 = copy_A(A);
 			auto start_VIAEHL = high_resolution_clock::now();
@@ -6122,6 +6129,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
 			stringstream_VIAEHL << to_string(S) << " " << duration_VIAEHL.count() << endl;
 			VI[6][k] += duration_VIAEHL.count();
+			cout << "VIAEHL," << duration_VIAEHL.count() << endl;
 			// BAO
 			A_type A9 = copy_A(A);
 			auto start_BAO = high_resolution_clock::now();
@@ -6133,6 +6141,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
 
 			stringstream_BAO << to_string(S) << " " << duration_BAO.count() << endl;
+			cout << "BAO," << duration_BAO.count() << endl;
 			VI[7][k] += duration_BAO.count();
 
 			A_type A10 = copy_A(A);

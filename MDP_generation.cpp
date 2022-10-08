@@ -1166,6 +1166,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 
 	for (int i = 0; i < S; ++i)
 	{
+		idx=i;
 		z_curr = idx / (X * Y);
 		idx -= (z_curr * X * Y);
 		y_curr = idx / X;
@@ -1183,8 +1184,8 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 		}
 		// 0->x+1 y+0 East
 		counter = 0;
-		while (counter < 2)
-		{
+		//while (counter < 2)
+		//{
 			for (int j = 0; j < 24; j++)
 				cP[j] = uniform_prob_dist(e);
 			if (x_curr + 1 < X && cP[1] > pi)
@@ -1356,7 +1357,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 				A_sD.push_back(23);
 				counter++;
 			}
-		}
+		//}
 
 		A.push_back(A_s);
 		A_direction.push_back(A_sD);
@@ -1397,6 +1398,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 	int metrw1 = 0;
 	for (int i = 0; i < S; ++i)
 	{
+		idx=i;
 		vector<double> R_s;
 		z_curr = idx / (X * Y);
 		idx -= (z_curr * X * Y);
@@ -1501,7 +1503,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 	for (int i = 0; i < S; ++i)
 	{
 		// we now fix state s
-
+			idx=i;
 		z_curr = idx / (X * Y);
 		idx -= (z_curr * X * Y);
 		y_curr = idx / X;

@@ -253,7 +253,7 @@ V_type value_iteration_upperGSTM(S_type S, R_type R, A_type A, P_type P, double 
 		siz = cbrt(S - 1) - 2;
 	}
 	int Xmax = siz + 2;
-	gamma = 1;
+	
 
 	int x_curr;
 	int y_curr;
@@ -299,10 +299,12 @@ V_type value_iteration_upperGSTM(S_type S, R_type R, A_type A, P_type P, double 
 			else if (ya1 >= xa1 && ya1 >= za1)
 				x2 = ya1;
 			else
-				x2 = ya1;
-			V[0][s] = -x2 + 10;
+				x2 = za1;
+			V[0][s] = -x2 +10;
+			V[0][s] = 0;
 		}
 		V[0][S - 1] = 0.0;
+		gamma = 1;
 	}
 
 	// record actions eliminated in each iteration, where a pair is (state, action)
@@ -360,6 +362,7 @@ V_type value_iteration_upperGSTM(S_type S, R_type R, A_type A, P_type P, double 
 		work_per_iteration.push_back(duration_of_iteration);
 		actions_eliminated.push_back(move(actions_eliminated_in_iteration));
 	}
+	cout<<iterations<<endl;
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
 

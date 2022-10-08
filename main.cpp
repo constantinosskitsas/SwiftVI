@@ -395,11 +395,11 @@ int main(int argc, char *argv[])
 	// string file_prefix_numberVMSA = "numberVMA";
 	// create_data_tables_VMA(file_prefix_numberVMSA, epsilon, gamma);
 	// WAIT FOR ALL THREAD BEFORE EXITING - VERY IMPORTANT!!!!!
-	int StartP = 50;
-	int EndP = 200;
-	int IncP = 50;
-	int expnum = 1;
-	int NOFexp = -1;
+	int StartP = 10;
+	int EndP = 15;
+	int IncP = 5;
+	int expnum = 2;
+	int NOFexp = 6;
 	int States = 100;
 	int Actions = 50;
 	int SS = 50;
@@ -443,8 +443,10 @@ int main(int argc, char *argv[])
 	else if (NOFexp == 5)
 		create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
 	else if (NOFexp == 6)
+	{
 		create_data_tables_number_GSTM(file_prefix_number_of_states_best, expnum, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
-
+		cout << "end4" << endl;
+	}
 	cout << "NOFexp " << NOFexp;
 
 	// th1.join();
