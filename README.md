@@ -1,4 +1,4 @@
-#Time-Efficiency-in-Infinite-Horizon-MDPs
+# Time-Efficiency-in-Infinite-Horizon-MDPs
 ## **Introduction**
 Can an infinite-horizon Markov decision process (IHMDP) run robustly to model parameters and scale to large numbers of actions, states, and supports? These models find application in cases where a decision-making agent acts in an uncertain environment from facility management to healthcare and service provisioning. However, computing optimal policies such an agent should follow by dynamic programming value iteration raises high computational cost. This scalability question has been largely neglected. In this paper, we propose SwiftVI, a suite of algorithms that achieve robust and scalable MDP value iteration via organizing the set of actions for each state in priority queues and utilizing lower and upper bounds for the backup Q-values for actions. Our championed solution prunes the set of actions to be considered for each state utilizing a tight upper bound and a single priority queue. A thorough experimental study under diverse settings confirms that SwiftVI algorithms achieve high efficiency gains robustly to model parameters.
 ## Required Libraries
