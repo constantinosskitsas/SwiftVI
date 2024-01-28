@@ -27,4 +27,4 @@ Please cite our work in your publications if it helps your research:
 The paper is under submission. 
 ```  
 
-The code was implemented in collaboration with Emil Morre Christensen @Dugtoud.
+The code was implemented in collaboration with xxx
