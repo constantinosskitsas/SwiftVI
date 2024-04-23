@@ -29,13 +29,62 @@
 #include "experiments.h"
 #include "stopping_criteria_plot.h"
 #include "VIH_algorithm_custom_heaps.h"
+#include "VIAE_algorithm_improved_bounds.h"
+#include "VIAE_algorithm_old_bounds.h"
+#include "VIAEH_algorithm_lower_bound_approx.h"
+#include "top_action_change_plot.h"
+#include "VIH_actions_touched.h"
+#include "BAO_algorithm.h"
 
 using namespace std;
 using namespace std::chrono;
-
 // terminal compilation and running: g++ -pthread -std=gnu++17 -o algo_test *.cpp && ./algo_test
-
 int main(int argc, char *argv[])
+{
+	time_t time_now = time(0);
+	double epsilon = 0.05;
+	double gamma = 0.99;
+	int S = 100;
+	int A_num = 50;
+	double upper_reward = 1000.0;
+	double action_prob = 1.0;		  // alpha
+	double non_zero_transition = 0.5; // beta
+
+	int expnum = 3;
+	int NOFexp = 7;
+	int States = 30;
+	int Actions = 100;
+	int SS = 50;
+	int StartP = 50;
+	int EndP = 500;
+	int IncP = 50;
+	std::size_t pos;
+
+	string file_prefix_number_of_states_best = "number_of_states_best";
+	string file_prefix_actions_touched = "";
+	string file_prefix_number_of_states = "";
+	int number_of_transitions = 0;
+	double mean = 0;
+	double variance = 0;
+	NOFexp = 11;
+	if (NOFexp == 1 || NOFexp == 2)
+	{
+		VMS(NOFexp, epsilon, gamma);
+	}
+	else if (NOFexp >= 3 && NOFexp <= 8)
+	{
+		// expnum=3 States 4 BO, 5 Actions B0, 6 Supported States 7B0
+		REXP(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
+	}
+	// else if (NOFexp == 5)
+	//	create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
+	else if (NOFexp == 9 || NOFexp == 10 || NOFexp == 11)
+	{
+		GSTM(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
+	}
+}
+
+int main_Emil(int argc, char *argv[])
 {
 
 	time_t time_now = time(0);
@@ -61,7 +110,7 @@ int main(int argc, char *argv[])
 
 	// NUMBER OF STATES AND ACTIONS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	int S_A_max = 500;
 	string file_prefix_number_of_states_and_actions = "number_of_states_and_actions";
 	// create_data_tables_number_of_states_and_actions(file_prefix_number_of_states_and_actions, S_A_max, epsilon, gamma, upper_reward, non_zero_transition);
@@ -70,7 +119,7 @@ int main(int argc, char *argv[])
 
 	// NUMBER OF STATES
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	int S_max = 500;
 	A_num = 100;
 	upper_reward = 1000.0;
@@ -90,7 +139,7 @@ int main(int argc, char *argv[])
 
 	// NUMBER OF STATES - BEST IMPLEMENTATIONS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S_max = 500;
 	A_num = 50;
 	upper_reward = 1000.0;
@@ -101,7 +150,7 @@ int main(int argc, char *argv[])
 
 	// NUMER_OF_ACTIONS EXPERIMENTS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	int A_max = 2000;
 	S = 1000;
 	upper_reward = 1000.0;
@@ -112,7 +161,7 @@ int main(int argc, char *argv[])
 
 	// NUMER_OF_ACTIONS BEST EXPERIMENTS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	A_max = 500;
 	S = 100;
 	upper_reward = 1000.0;
@@ -123,7 +172,7 @@ int main(int argc, char *argv[])
 
 	// REWARD_DIST EXPERIMENTS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	double reward_factor = 1000.0;
 	double reward_prob = 0.5;
 	action_prob = 1.0;
@@ -134,7 +183,7 @@ int main(int argc, char *argv[])
 
 	// NUMER_OF_TRANSITIONS_PROB EXPERIMENTS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 250;
 	A_num = 100;
 	upper_reward = 1000.0;
@@ -146,7 +195,7 @@ int main(int argc, char *argv[])
 
 	// NUMBER OF STATES - ITERATIONS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	int S_max_iterations = 500;
 	A_num = 100;
 	action_prob = 1.0;
@@ -159,7 +208,7 @@ int main(int argc, char *argv[])
 
 	// NUMBER OF TRANSITIONS STATES IN EACH STATE
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 200;
 	A_num = 100;
 	upper_reward = 1000.0;
@@ -172,7 +221,7 @@ int main(int argc, char *argv[])
 
 	// NUMER_OF_ACTIONS - ITERATIONS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_max = 2000;
 	upper_reward = 1000.0;
@@ -184,7 +233,7 @@ int main(int argc, char *argv[])
 
 	// MAX_REWARD
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 100;
 	action_prob = 1.0;
@@ -196,7 +245,7 @@ int main(int argc, char *argv[])
 
 	// NUMER_OF_ACTIONS CONVERGENCE ITERATION EXPERIMENTS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_max = 200;
 	upper_reward = 1000.0;
@@ -208,7 +257,7 @@ int main(int argc, char *argv[])
 
 	// WORK PER ITERATION EXPERIMENT
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 2000;
 	action_prob = 1.0;
@@ -222,7 +271,7 @@ int main(int argc, char *argv[])
 
 	// TOP ACTION CHANGE EXPERIMENT
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 1000;
 	action_prob = 1.0;
@@ -240,7 +289,7 @@ int main(int argc, char *argv[])
 
 	// VARYING VARIANCE IN NORMAL REWARD DISTRIBUTION
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 100;
 	action_prob = 1.0;
@@ -257,7 +306,7 @@ int main(int argc, char *argv[])
 
 	// VARYING VARIANCE IN NORMAL REWARD DISTRIBUTION - VERY SMALL VARIANCE
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 100;
 	action_prob = 1.0;
@@ -274,7 +323,7 @@ int main(int argc, char *argv[])
 
 	// VIH DIFFERENT REWARD DISTRIBUTIONS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 200;
 	A_num = 1000;
 	action_prob = 1.0;
@@ -303,7 +352,7 @@ int main(int argc, char *argv[])
 
 	// VARYING LAMBDA EXPERIMENT - EXPONENTIAL REWARD DISTRIBUTION
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 100;
 	action_prob = 1.0;
@@ -319,7 +368,7 @@ int main(int argc, char *argv[])
 
 	// WORK PER ITERATION EXPERIMENT OF VIAEH IMPLEMENTATIONS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	S = 100;
 	A_num = 2000;
 	action_prob = 1.0;
@@ -376,7 +425,7 @@ int main(int argc, char *argv[])
 
 	// NUMER_OF_ACTIONS BEST EXPERIMENTS
 	time_now = time(0);
-	cout << "experiment run at: " << ctime(&time_now);
+	// cout << "experiment run at: " << ctime(&time_now);
 	A_max = 10000;
 	S = 100;
 	upper_reward = 1000.0;

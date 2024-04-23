@@ -760,6 +760,8 @@ V_type value_iteration_BAOGS(S_type S, R_type R, A_type A, P_type P, double gamm
 					// if (Q_values_s[a]>Q_max)
 					//	Q_max=Q_values_s[a];
 				}
+
+				
 				for (int a = 0; a < sizeO; a++)
 				{
 					if (Q_values_s[a] > Q_max)
@@ -896,6 +898,7 @@ V_type value_iteration_BAOGSTM(S_type S, R_type R, A_type A, P_type P, double ga
 			else
 				x2 = ya1;
 			V_U[0][s] = -x2 + 10;
+			V_U[0][s] = 0;
 			A_maxN[s] = A[s].size();
 		}
 		V_U[0][S - 1] = 0.0;

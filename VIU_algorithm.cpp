@@ -109,7 +109,6 @@ V_type value_iteration_upper(S_type S, R_type R, A_type A, P_type P, double gamm
 			upper_convergence_criteria = false;
 		/*for (int i = 0; i < S; ++i) {
 			if(  V_current_iteration[i]-V_previous_iteration[i]	>0.001)
-				//cout<<V_previous_iteration[i]<<" , "<<V_current_iteration[i]<<endl;
 }*/
 		// end timing of this iteration and record it in work vector
 		auto end_of_iteration = high_resolution_clock::now();
@@ -362,7 +361,6 @@ V_type value_iteration_upperGSTM(S_type S, R_type R, A_type A, P_type P, double 
 		work_per_iteration.push_back(duration_of_iteration);
 		actions_eliminated.push_back(move(actions_eliminated_in_iteration));
 	}
-	cout<<iterations<<endl;
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
 

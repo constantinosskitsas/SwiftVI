@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <unordered_set>
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -1110,6 +1111,122 @@ int posDi3D(int X1, int Y1, int Z1, int Xmax, int Ymax, int Dir)
 
 	return (Z1 * Xmax * Ymax) + (Y1 * Xmax) + X1;
 }
+//always 4 actions-> if we go to wall stay in the same state
+//if we slip to the wall stay in the same state
+MDP_type GridWorld(int X, int Y, int seed)
+{
+	int G_X = X - 1;
+	int G_Y = Y - 1;
+	unordered_set<int> WBoxes;
+	// 0->x+1 y+0 East
+	// 1->x+0 y+1 NOrth
+	// 2->x-1 y+0 West
+	// 3->x+0 y-1 South
+	int wrong_box = 2;
+	int x_curr = -1;
+	int y_curr = -1;
+	int counter;
+	vector<int> A_s;
+	vector<int> A_sD;
+	A_type A;
+	A_type A_direction;
+	for (int i = 0; i < wrong_box; ++i)
+	{
+		int X_wrong = rand() % X;
+		int Y_wrong = rand() % Y;
+		WBoxes.insert((X_wrong + (Y_wrong * X)));
+	}
+	int S = X * Y;
+	for (int i = 0; i < S; i++)
+	{
+		x_curr = i % X;
+		y_curr = i / Y;
+		counter = 0;
+		if (x_curr + 1 < X && WBoxes.count(posDi(x_curr, y_curr, X, 0)) <= 0)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(0);
+			counter++;
+		}
+		if (y_curr + 1 < Y && WBoxes.count(posDi(x_curr, y_curr, X, 1)) <= 0)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(1);
+			counter++;
+		}
+		if (x_curr - 1 >= 0 && WBoxes.count(posDi(x_curr, y_curr, X, 2)) <= 0)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(2);
+			counter++;
+		}
+		if (y_curr - 1 >= 0 && WBoxes.count(posDi(x_curr, y_curr, X, 3)) <= 0)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(3);
+			counter++;
+		}
+
+		A.push_back(A_s);
+		A_direction.push_back(A_sD);
+		A_s.clear();
+		A_sD.clear();
+	}
+	R_type R;
+	for (int i = 0; i < S; i++)
+	{
+		vector<double> R_s;
+		x_curr = i % X;
+		y_curr = i / Y;
+
+		for (auto a : A_direction[i])
+		{
+			if (posDi(x_curr, y_curr, X, a) == S) // make it Goal State
+				R_s.push_back(1);
+			else
+				R_s.push_back(0);
+		}
+		R.push_back(R_s);
+	}
+	P_type P;
+	vector<pair<vector<double>, vector<int>>> P_s;
+	vector<int> P_s_a_nonzero_states;
+	vector<double> P_s_a;
+	double totalP = 0;
+	bool ev = false;
+	for (int i = 0; i < S; ++i)
+	{
+		x_curr = i % X;
+		y_curr = i / Y;
+		for (auto a : A[i])
+		{
+			totalP = 0.7;
+			P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a]));
+			P_s_a.push_back(totalP);
+			for (auto a1 : A[i])
+			{
+				if (a1 == a)
+					continue;
+				if (((A_direction[i][a] + A_direction[i][a1]) % 2) == 1)
+				{
+					P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a1]));
+					totalP = totalP + 0.1;
+					P_s_a.push_back(0.1);
+				}
+			}
+			P_s_a_nonzero_states.push_back(i);
+			P_s_a.push_back(1 - totalP);
+			P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+			P_s_a.clear();
+			P_s_a_nonzero_states.clear();
+		}
+		P.push_back(P_s);
+		P_s_a.clear();
+		P_s.clear();
+	}
+	MDP_type MDP = make_tuple(R, A, P);
+	return MDP;
+}
 
 MDP_type Maze3d(int X, int Y, int Z, int seed)
 {
@@ -1158,7 +1275,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 	int z_curr = -1;
 	int idx = -1;
 	int counter = 0;
-	float pi = 0.10;
+	float pi = 0.10; // remember to make sure that a path to the goal state exists.(however with low probability the chances of no path are small.)
 	// float pit1=0.4;
 	// float pit3=0.65;
 	// float pit6=0.85;
@@ -1166,7 +1283,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 
 	for (int i = 0; i < S; ++i)
 	{
-		idx=i;
+		idx = i;
 		z_curr = idx / (X * Y);
 		idx -= (z_curr * X * Y);
 		y_curr = idx / X;
@@ -1184,179 +1301,179 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 		}
 		// 0->x+1 y+0 East
 		counter = 0;
-		//while (counter < 2)
+		// while (counter < 2)
 		//{
-			for (int j = 0; j < 24; j++)
-				cP[j] = uniform_prob_dist(e);
-			if (x_curr + 1 < X && cP[1] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(0);
-				counter++;
-			}
-			// 1->x+0 y+1 NOrth
+		for (int j = 0; j < 24; j++)
+			cP[j] = uniform_prob_dist(e);
+		if (x_curr + 1 < X && cP[1] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(0);
+			counter++;
+		}
+		// 1->x+0 y+1 NOrth
 
-			if (y_curr + 1 < Y && cP[2] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(1);
-				counter++;
-			}
-			// 2->x-1 y+0 West
-			if (x_curr - 1 > 0 && cP[3] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(2);
-				counter++;
-			}
-			// 3->x+0 y-1 South
-			if (y_curr - 1 > 0 && cP[4] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(3);
-				counter++;
-			}
-			// 4->x+1 y+1 North East
-			if (x_curr + 1 < X && y_curr + 1 < Y && cP[5] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(4);
-				counter++;
-			}
-			// 5->x-1 y-1 South West
-			if (x_curr - 1 > 0 && y_curr - 1 > 0 && cP[6] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(5);
-				counter++;
-			}
-			// 6->x-1 y+1 North West
-			if (x_curr - 1 > 0 && y_curr + 1 < Y && cP[7] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(6);
-				counter++;
-			}
-			// 7->x+1 y-1 South East
-			if (x_curr + 1 < X && y_curr - 1 > 0 && cP[0] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(7);
-				counter++;
-			}
+		if (y_curr + 1 < Y && cP[2] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(1);
+			counter++;
+		}
+		// 2->x-1 y+0 West
+		if (x_curr - 1 > 0 && cP[3] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(2);
+			counter++;
+		}
+		// 3->x+0 y-1 South
+		if (y_curr - 1 > 0 && cP[4] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(3);
+			counter++;
+		}
+		// 4->x+1 y+1 North East
+		if (x_curr + 1 < X && y_curr + 1 < Y && cP[5] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(4);
+			counter++;
+		}
+		// 5->x-1 y-1 South West
+		if (x_curr - 1 > 0 && y_curr - 1 > 0 && cP[6] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(5);
+			counter++;
+		}
+		// 6->x-1 y+1 North West
+		if (x_curr - 1 > 0 && y_curr + 1 < Y && cP[7] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(6);
+			counter++;
+		}
+		// 7->x+1 y-1 South East
+		if (x_curr + 1 < X && y_curr - 1 > 0 && cP[0] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(7);
+			counter++;
+		}
 
-			if (x_curr + 1 < X && z_curr + 1 < Z && cP[8] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(8);
-				counter++;
-			}
-			// 1->x+0 y+1 NOrth
+		if (x_curr + 1 < X && z_curr + 1 < Z && cP[8] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(8);
+			counter++;
+		}
+		// 1->x+0 y+1 NOrth
 
-			if (y_curr + 1 < Y && z_curr + 1 < Z && cP[9] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(9);
-				counter++;
-			}
-			// 2->x-1 y+0 West
-			if (x_curr - 1 > 0 && z_curr + 1 < Z && cP[10] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(10);
-				counter++;
-			}
-			// 3->x+0 y-1 South
-			if (y_curr - 1 > 0 && z_curr + 1 < Z && cP[11] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(11);
-				counter++;
-			}
-			// 4->x+1 y+1 North East
-			if (x_curr + 1 < X && z_curr + 1 < Z && y_curr + 1 < Y && cP[12] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(12);
-				counter++;
-			}
-			// 5->x-1 y-1 South West
-			if (x_curr - 1 > 0 && z_curr + 1 < Z && y_curr - 1 > 0 && cP[13] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(13);
-				counter++;
-			}
-			// 6->x-1 y+1 North West
-			if (x_curr - 1 > 0 && z_curr + 1 < Z && y_curr + 1 < Y && cP[14] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(14);
-				counter++;
-			}
-			// 7->x+1 y-1 South East
-			if (x_curr + 1 < X && z_curr + 1 < Z && y_curr - 1 > 0 && cP[15] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(15);
-				counter++;
-			}
-			if (x_curr + 1 < X && z_curr - 1 > 0 && cP[16] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(16);
-				counter++;
-			}
-			// 1->x+0 y+1 NOrth
+		if (y_curr + 1 < Y && z_curr + 1 < Z && cP[9] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(9);
+			counter++;
+		}
+		// 2->x-1 y+0 West
+		if (x_curr - 1 > 0 && z_curr + 1 < Z && cP[10] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(10);
+			counter++;
+		}
+		// 3->x+0 y-1 South
+		if (y_curr - 1 > 0 && z_curr + 1 < Z && cP[11] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(11);
+			counter++;
+		}
+		// 4->x+1 y+1 North East
+		if (x_curr + 1 < X && z_curr + 1 < Z && y_curr + 1 < Y && cP[12] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(12);
+			counter++;
+		}
+		// 5->x-1 y-1 South West
+		if (x_curr - 1 > 0 && z_curr + 1 < Z && y_curr - 1 > 0 && cP[13] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(13);
+			counter++;
+		}
+		// 6->x-1 y+1 North West
+		if (x_curr - 1 > 0 && z_curr + 1 < Z && y_curr + 1 < Y && cP[14] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(14);
+			counter++;
+		}
+		// 7->x+1 y-1 South East
+		if (x_curr + 1 < X && z_curr + 1 < Z && y_curr - 1 > 0 && cP[15] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(15);
+			counter++;
+		}
+		if (x_curr + 1 < X && z_curr - 1 > 0 && cP[16] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(16);
+			counter++;
+		}
+		// 1->x+0 y+1 NOrth
 
-			if (y_curr + 1 < Y && z_curr - 1 > 0 && cP[17] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(17);
-				counter++;
-			}
-			// 2->x-1 y+0 West
-			if (x_curr - 1 > 0 && z_curr - 1 > 0 && cP[18] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(18);
-				counter++;
-			}
-			// 3->x+0 y-1 South
-			if (y_curr - 1 > 0 && z_curr - 1 > 0 && cP[19] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(19);
-				counter++;
-			}
-			// 4->x+1 y+1 North East
-			if (x_curr + 1 < X && z_curr - 1 > 0 && y_curr + 1 < Y && cP[20] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(20);
-				counter++;
-			}
-			// 5->x-1 y-1 South West
-			if (x_curr - 1 > 0 && z_curr - 1 > 0 && y_curr - 1 > 0 && cP[21] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(21);
-				counter++;
-			}
-			// 6->x-1 y+1 North West
-			if (x_curr - 1 > 0 && z_curr - 1 > 0 && y_curr + 1 < Y && cP[22] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(22);
-				counter++;
-			}
-			// 7->x+1 y-1 South East
-			if (x_curr + 1 < X && z_curr - 1 > 0 && y_curr - 1 > 0 && cP[23] > pi)
-			{
-				A_s.push_back(counter);
-				A_sD.push_back(23);
-				counter++;
-			}
+		if (y_curr + 1 < Y && z_curr - 1 > 0 && cP[17] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(17);
+			counter++;
+		}
+		// 2->x-1 y+0 West
+		if (x_curr - 1 > 0 && z_curr - 1 > 0 && cP[18] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(18);
+			counter++;
+		}
+		// 3->x+0 y-1 South
+		if (y_curr - 1 > 0 && z_curr - 1 > 0 && cP[19] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(19);
+			counter++;
+		}
+		// 4->x+1 y+1 North East
+		if (x_curr + 1 < X && z_curr - 1 > 0 && y_curr + 1 < Y && cP[20] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(20);
+			counter++;
+		}
+		// 5->x-1 y-1 South West
+		if (x_curr - 1 > 0 && z_curr - 1 > 0 && y_curr - 1 > 0 && cP[21] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(21);
+			counter++;
+		}
+		// 6->x-1 y+1 North West
+		if (x_curr - 1 > 0 && z_curr - 1 > 0 && y_curr + 1 < Y && cP[22] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(22);
+			counter++;
+		}
+		// 7->x+1 y-1 South East
+		if (x_curr + 1 < X && z_curr - 1 > 0 && y_curr - 1 > 0 && cP[23] > pi)
+		{
+			A_s.push_back(counter);
+			A_sD.push_back(23);
+			counter++;
+		}
 		//}
 
 		A.push_back(A_s);
@@ -1370,35 +1487,34 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 	A.push_back(A_s);
 	A_direction.push_back(A_sD);
 
-	float pit1 = 0.4;
-	float pit2 = 0.50;
-	float pit3 = 0.7;
-	float pit4 = 0.7;
+	/*float pit1 = 0.3;
+	float pit2 = 0.5;
+	float pit3 = 0.5;
+	float pit4 = 0.5;
 	float pit5 = 0.70;
 	float pit6 = 0.70;
 	float pit7 = 0.9;
 	float pit8 = 0.9;
 	float pit9 = 0.9;
-	float pit10 = 1;
+	float pit10 = 1;*/
 
-	/*
-		float pit1=0.1;
-		float pit2=0.20;
-		float pit3=0.30;
-		float pit4=0.40;
-		float pit5=0.5;
-		float pit6=0.60;
-		float pit7=0.7;
-		float pit8=0.8;
-		float pit9=0.9;
-		float pit10=1;*/
+	float pit1 = 0.1;
+	float pit2 = 0.20;
+	float pit3 = 0.30;
+	float pit4 = 0.40;
+	float pit5 = 0.5;
+	float pit6 = 0.60;
+	float pit7 = 0.7;
+	float pit8 = 0.8;
+	float pit9 = 0.9;
+	float pit10 = 1;
 	// Create R
 	R_type R;
 	int metrw = 0;
 	int metrw1 = 0;
 	for (int i = 0; i < S; ++i)
 	{
-		idx=i;
+		idx = i;
 		vector<double> R_s;
 		z_curr = idx / (X * Y);
 		idx -= (z_curr * X * Y);
@@ -1432,42 +1548,42 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 				}
 				else if (uniform_prob_dist(e) < pit2)
 				{
-					R_s.push_back(-1);
+					R_s.push_back(-1.5);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit3)
 				{
-					R_s.push_back(-3);
+					R_s.push_back(-2);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit4)
 				{
-					R_s.push_back(-3);
+					R_s.push_back(-2.5);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit5)
 				{
-					R_s.push_back(-5);
+					R_s.push_back(-3);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit6)
 				{
-					R_s.push_back(-5);
+					R_s.push_back(-3.5);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit7)
 				{
-					R_s.push_back(-7);
+					R_s.push_back(-4);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit8)
 				{
-					R_s.push_back(-7);
+					R_s.push_back(-4.5);
 					metrw++;
 				}
 				else if (uniform_prob_dist(e) < pit9)
 				{
-					R_s.push_back(-7);
+					R_s.push_back(-5);
 					metrw++;
 				}
 				else
@@ -1503,7 +1619,7 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 	for (int i = 0; i < S; ++i)
 	{
 		// we now fix state s
-			idx=i;
+		idx = i;
 		z_curr = idx / (X * Y);
 		idx -= (z_curr * X * Y);
 		y_curr = idx / X;
@@ -1524,14 +1640,30 @@ MDP_type Maze3d(int X, int Y, int Z, int seed)
 			{
 				P_s_a_nonzero_states.push_back(posDi3D(x_curr, y_curr, z_curr, X, Y, A_direction[i][a]));
 				P_s_a.push_back(0.8);
-				if (A[i].size() > 5)
+				if (A[i].size() > 10)
+				{
+					int cc = 0;
+					int pos[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+					while (cc < 10)
+					{
+						int ra = rand() % A[i].size();
+						if (ra != a && check(pos, ra, 10))
+						{
+							pos[cc] = ra;
+							cc = cc + 1;
+							P_s_a_nonzero_states.push_back(posDi3D(x_curr, y_curr, z_curr, X, Y, A_direction[i][ra]));
+							P_s_a.push_back(0.02);
+						}
+					}
+				}
+				else if (A[i].size() > 5)
 				{
 					int cc = 0;
 					int pos[5] = {-1, -1, -1, -1, -1};
 					while (cc < 5)
 					{
 						int ra = rand() % A[i].size();
-						if (ra != a && check(pos, ra, 4))
+						if (ra != a && check(pos, ra, 5))
 						{
 							pos[cc] = ra;
 							cc = cc + 1;

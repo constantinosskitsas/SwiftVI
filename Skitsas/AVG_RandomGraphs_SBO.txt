@@ -1,0 +1,6 @@
+Exp_ID: 4 States: 30 Actions: 100 S_states: 50 Start_P: 50 endP: 200 IncP: 50
+VIH VIAEHLB BAO
+41.5 69 109.5
+110 138.5 203.5
+294 368 565.5
+270 459 516

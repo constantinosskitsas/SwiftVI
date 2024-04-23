@@ -8,7 +8,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
+#include <chrono>
+#include <ctime>
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
 #include "MDP_generation.h"
@@ -31,7 +32,8 @@ bool cmp_action_value_pairs(const q_action_pair_type &a, q_action_pair_type &b)
 }
 
 V_type value_iteration_with_heap(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
-{
+{   
+
 	// TODO if the arrays has A_max size, then a = A_max hs no entry as 0 is an action. One fix is to make it 1 bigger to have space for this index
 	int A_max = find_max_A(A) + 1;
 
@@ -412,6 +414,7 @@ V_type value_iteration_with_heapGS(S_type S, R_type R, A_type A, P_type P, doubl
 
 V_type value_iteration_with_heapGSTM(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, int D3)
 {
+	//auto start_VIH1 = high_resolution_clock::now();
 	// TODO if the arrays has A_max size, then a = A_max hs no entry as 0 is an action. One fix is to make it 1 bigger to have space for this index
 	int A_max = find_max_A(A) + 1;
 
@@ -481,6 +484,7 @@ V_type value_iteration_with_heapGSTM(S_type S, R_type R, A_type A, P_type P, dou
 			else
 				x2 = ya1;
 			V[0][s] = -x2 + 10;
+			V[0][s] = 0;
 		}
 		V[0][S - 1] = 0.0;
 	}
@@ -538,7 +542,7 @@ V_type value_iteration_with_heapGSTM(S_type S, R_type R, A_type A, P_type P, dou
 	int iterations = 0;
 	bool upper_convergence_criteria = false;
 	double *V_current_iteration = V[0];
-
+	//auto stop_VIH1 = high_resolution_clock::now();
 	while (!upper_convergence_criteria)
 	{
 		upper_convergence_criteria = true;
@@ -619,6 +623,9 @@ V_type value_iteration_with_heapGSTM(S_type S, R_type R, A_type A, P_type P, dou
 	}
 	vector<double> result(V[(0)], V[(0)] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
+	//auto stop_VIH2 = high_resolution_clock::now();
+	//auto duration_VIH1 = duration_cast<milliseconds>(stop_VIH1 - start_VIH1);
+	//auto duration_VIH2 = duration_cast<milliseconds>(stop_VIH2 - start_VIH1);
 
 	// DEALLOCATE MEMORY
 	for (int i = 0; i < 1; ++i)

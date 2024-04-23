@@ -298,7 +298,6 @@ V_type value_iteration_action_eliminationGS(S_type S, R_type R, A_type A, P_type
 		lower_convergence_criteria = true;
 		// Increment iteration counter i
 		iterations++;
-
 		// Record actions eliminated in this iteration over all states
 		vector<pair<int, int>> actions_eliminated_in_iteration;
 
@@ -306,7 +305,6 @@ V_type value_iteration_action_eliminationGS(S_type S, R_type R, A_type A, P_type
 		auto start_of_iteration = high_resolution_clock::now();
 
 		// If i is even, then (i & 1) is 0, and the one to change is V[0]
-
 		// pair<double,double> sm;
 		// for all states in each iteration
 		for (int s = 0; s < S; s++)
@@ -333,10 +331,8 @@ V_type value_iteration_action_eliminationGS(S_type S, R_type R, A_type A, P_type
 				// double Q_U_s_a = R[s][a] + gamma * sm.first;
 				// double Q_L_s_a= R[s][a] + gamma * sm.second;
 				double Q_U_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_U_current_iteration, P_s_a_nonzero);
-
 				// save the value of q^U(s,a)
 				Q_U_s[a_index] = Q_U_s_a;
-
 				double Q_L_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_L_current_iteration, P_s_a_nonzero);
 				if (Q_U_s_a > Q_max)
 					Q_max = Q_U_s_a;
@@ -359,15 +355,15 @@ V_type value_iteration_action_eliminationGS(S_type S, R_type R, A_type A, P_type
 			vector<int> A_s_new;
 
 			// keep actions for next iteration that are NOT eliminated
+			
 			for (int a_index = 0; a_index < A[s].size(); a_index++)
 			{
-
 				// Check of action is to be KEPT for the next iteration
 				if (Q_U_s[a_index] >= V_L_current_iteration[s])
-				{
+				{//AFRT
 					A_s_new.push_back(A[s][a_index]);
 				}
-				else
+				else //AFRT1
 				{
 					actions_eliminated_in_iteration.emplace_back(s, A[s][a_index]);
 				}
@@ -682,6 +678,7 @@ V_type value_iteration_action_eliminationGSTM(S_type S, R_type R, A_type A, P_ty
 			else
 				x2 = ya1;
 			V_U[0][s] = -x2 + 10;
+			V_U[0][s] = 0;
 			V_L[0][s] = -500;
 		}
 		V_U[0][S - 1] = 0.0;

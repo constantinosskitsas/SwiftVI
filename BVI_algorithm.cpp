@@ -562,6 +562,7 @@ V_type bounded_value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, doubl
 			else
 				x2 = ya1;
 			V_U[0][s] = -x2 + 10;
+			V_U[0][s] = 0;
 			V_L[0][s] = -500;
 		}
 		V_U[0][S - 1] = 0.0;

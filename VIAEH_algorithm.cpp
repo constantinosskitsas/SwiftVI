@@ -876,6 +876,7 @@ V_type value_iteration_action_elimination_heapsGS(S_type S, R_type R, A_type A, 
 		iterations++;
 
 		// Record actions eliminated in this iteration over all states
+		//AFRT
 		vector<pair<int, int>> actions_eliminated_in_iteration;
 
 		// begin timing of this iteration
@@ -1180,6 +1181,7 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 			else
 				x2 = ya1;
 			V_U[0][s] = -x2 + 10;
+			V_U[0][s] = 0;
 			V_L[0][s] = -500;
 		}
 		V_U[0][S - 1] = 0.0;
@@ -1197,7 +1199,6 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 	bool bounded_convergence_criteria = false;
 	bool upper_convergence_criteria = false;
 	bool lower_convergence_criteria = false;
-
 	// pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
 	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 	const double two_epsilon = 2 * epsilon;
@@ -1281,7 +1282,6 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 
 	//**********************************************************************
 	// FILL THE HEAPS AS A PREPROCESSING STEP BEFORE ITERATIONS BEGIN
-
 	for (int s = 0; s < S; s++)
 	{
 
@@ -1345,7 +1345,6 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 
 	// keep count of number of iterations
 	int iterations = 0;
-
 	// while any of the criteria are NOT, !, met, run the loop
 	// while NEITHER has converged
 	double *V_U_current_iteration = V_U[0];
@@ -1383,7 +1382,8 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 			// pointers to the indicies arrays of state s
 			int *max_heap_indicies_s = heap_max_indicies[s];
 			int *min_heap_indicies_s = heap_min_indicies[s];
-			double Q_max = numeric_limits<double>::min();
+			//double Q_max = numeric_limits<double>::min();
+			double Q_max =-10000;
 			// keep the rewards from the upper bound for
 			int A_s_size = heap_size[s];
 			double Q_U_s[A_s_size];
@@ -1511,7 +1511,6 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 
 		// see if any of the convergence criteria are met
 		// 1. bounded criteria
-
 		// end timing of this iteration and record it in work vector
 		auto end_of_iteration = high_resolution_clock::now();
 		auto duration_of_iteration = duration_cast<microseconds>(end_of_iteration - start_of_iteration);
@@ -1520,7 +1519,6 @@ V_type value_iteration_action_elimination_heapsGSTM(S_type S, R_type R, A_type A
 	}
 	// case return value on which convergence criteria was met
 	vector<double> result(S); // set it so have size S from beginning to use copy
-
 	if (bounded_convergence_criteria)
 	{
 		result = V_upper_lower_average(V_U[(0)], V_L[(0)], S);

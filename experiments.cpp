@@ -38,6 +38,584 @@
 using namespace std;
 using namespace std::chrono;
 
+void GSTM(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
+{
+	MDP_type MDP;
+	ostringstream string_stream;
+	ostringstream avgstring_stream;
+	ofstream output_stream;
+	ofstream avgoutput_stream;
+
+	// set the name of the file to write to
+	string file_name_VI = "Skitsas//Ter_Maze2D.txt";
+	string file_name_VIAVG = "Skitsas//avgTer_Maze2D.txt";
+	if (expnum == 10)
+	{
+		file_name_VI = "Skitsas//Ter_Maze3D.txt";
+		file_name_VIAVG = "Skitsas//avgTer_Maze3D.txt";
+	}
+	string_stream << "Experiment ID: " << expnum << endl;
+	avgstring_stream << "Experiment ID" << expnum << endl;
+	string_stream << "VI UVI VIH BVI VIAE VIAEH VIAEHLB BAO" << endl;
+	avgstring_stream << "VI UVI VIH BVI VIAE VIAEH VIAEHLB BAO" << endl;
+
+	double action_prob = 1.0;
+	// A_num=100;
+	// write meta data to all stringstreams as first in their respective files
+
+	int repetitions = 10;
+	int siIter = ((endP - StartP) / IncP) + 1;
+	float VI[10][siIter];
+	int k = 0;
+	int S;
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < siIter; j++)
+			VI[i][j] = 0;
+	for (int iters = 0; iters < repetitions; iters++)
+	{
+		k = 0;
+		for (int ite = StartP; ite <= endP; ite = ite + IncP)
+		{
+			// printf("Beginning iteration %d  S2,  %d, A, S %d = %d\n",iters, S2,A_num,S);
+			// auto MDP ;
+			// GENERATE THE MDP
+			int seed = time(0);
+			// auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
+			if (expnum == 9)
+			{
+				MDP = Maze(ite, ite, seed);
+				States = ite * ite + 1;
+				S = States;
+			}
+			else if (expnum == 10)
+			{
+				MDP = Maze3d(ite, ite, ite, seed);
+				States = ite * ite * ite + 1;
+				S = States;
+			}
+			else if (expnum == 11)
+			{
+				ite = 3;
+				MDP = GridWorld(ite, ite, seed);
+				States = ite * ite; //+ 1;
+				S = States;
+			}
+			// auto MDP = generate_random_MDP_with_variable_parameters(S, A_num, action_prob, non_zero_transition, upper_reward, seed);
+			R_type R = get<0>(MDP);
+			A_type A = get<1>(MDP);
+			P_type P = get<2>(MDP);
+			int counter = 0;
+			for (int i = 0; i < S; i++)
+			{cout<<"State "<<i<<endl;
+				for (auto a : A[i]){
+					cout<<"Action "<<a<<endl; 
+					auto &[P_s_a, P_s_a_nonzero] = P[i][a];
+					int k=0;
+					for (int s : P_s_a_nonzero){
+						cout<<"SS state :"<<s<<" Prob :"<<P_s_a[k]<<endl;
+						k++;
+					}
+
+				}
+			}
+			A_type A1 = copy_A(A);
+			auto start_VI = high_resolution_clock::now();
+			V_type V_approx_solution_tuple = value_iterationGSTM(States, R, A1, P, gamma, epsilon, expnum);
+			auto stop_VI = high_resolution_clock::now();
+			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+
+			A_type A6 = copy_A(A);
+			auto start_VIU = high_resolution_clock::now();
+			V_type V_approx_solution_upper_tuple = value_iteration_upperGSTM(States, R, A6, P, gamma, epsilon, expnum);
+			auto stop_VIU = high_resolution_clock::now();
+			auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
+
+			A_type A2 = copy_A(A);
+			auto start_VIH = high_resolution_clock::now();
+			V_type V_heap_approx_tuple = value_iteration_with_heapGSTM(States, R, A2, P, gamma, epsilon, expnum);
+			auto stop_VIH = high_resolution_clock::now();
+			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+
+			// BVI
+			A_type A3 = copy_A(A);
+			auto start_BVI = high_resolution_clock::now();
+			V_type V_bounded_approx_solution_tuple = bounded_value_iterationGSTM(States, R, A3, P, gamma, epsilon, expnum);
+			auto stop_BVI = high_resolution_clock::now();
+			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
+
+			A_type A4 = copy_A(A);
+			auto start_VIAE = high_resolution_clock::now();
+			V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGSTM(States, R, A4, P, gamma, epsilon, expnum);
+			auto stop_VIAE = high_resolution_clock::now();
+			auto duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
+
+			A_type A5 = copy_A(A);
+			auto start_VIAEH = high_resolution_clock::now();
+			V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGSTM(States, R, A5, P, gamma, epsilon, expnum);
+			auto stop_VIAEH = high_resolution_clock::now();
+			auto duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
+
+			A_type A8 = copy_A(A);
+			auto start_VIAEHL = high_resolution_clock::now();
+			V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGSTM(States, R, A8, P, gamma, epsilon, expnum);
+			auto stop_VIAEHL = high_resolution_clock::now();
+			auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
+			// BAO
+			A_type A9 = copy_A(A);
+			auto start_BAO = high_resolution_clock::now();
+			V_type BAO_approx_solution_tuple = value_iteration_BAOGSTM(States, R, A9, P, gamma, epsilon, expnum);
+			auto stop_BAO = high_resolution_clock::now();
+			auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
+
+			vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
+			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
+			vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
+			vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
+			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
+			vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
+			vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
+			vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
+			if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_heap_approx) > (2 * epsilon))
+			{
+				printf("DIFFERENCE2\n");
+			}
+
+			if (abs_max_diff_vectors(V_approx_solution, V_AE_H_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE3\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_approx_solution_upper) > (2 * epsilon))
+			{
+				printf("DIFFERENCE4\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_bounded_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE5\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, VIAEHL_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE6\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_AE_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE7\n");
+			}
+
+			VI[0][k] += duration_VI.count();
+			VI[1][k] += duration_VIU.count();
+			VI[2][k] += duration_VIH.count();
+			VI[3][k] += duration_BVI.count();
+			VI[4][k] += duration_VIAE.count();
+			VI[5][k] += duration_VIAEH.count();
+			VI[6][k] += duration_VIAEHL.count();
+			VI[7][k] += duration_BAO.count();
+			string_stream << duration_VI.count() << " " << duration_VIU.count() << " " << duration_VIH.count() << " " << duration_BVI.count() << " ";
+			string_stream << duration_VIAE.count() << " " << duration_VIAEH.count() << " " << duration_VIAEHL.count() << " " << duration_BAO.count() << endl;
+			k++;
+		}
+	}
+	for (int k = 0; k < siIter; k++)
+	{
+		avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions << " " << VI[2][k] / repetitions << " " << VI[3][k] / repetitions << " " << VI[4][k] / repetitions << " " << VI[5][k] / repetitions << " ";
+		avgstring_stream << VI[6][k] / repetitions << " " << VI[7][k] / repetitions << endl;
+	}
+	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
+	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
+	write_stringstream_to_file(avgstring_stream, avgoutput_stream, file_name_VIAVG);
+}
+
+void REXP(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
+{
+	auto duration_VI = milliseconds(0);
+	V_type V_approx_solution_tuple;
+	auto duration_VIU = milliseconds(0);
+	V_type V_approx_solution_upper_tuple;
+	auto duration_BVI = milliseconds(0);
+	V_type V_bounded_approx_solution_tuple;
+	auto duration_VIAE = milliseconds(0);
+	V_type V_AE_approx_solution_tuple;
+	auto duration_VIAEH = milliseconds(0);
+	V_type V_AE_H_approx_solution_tuple;
+	auto duration_VIH = milliseconds(0);
+	V_type V_heap_approx_tuple;
+	auto duration_VIAEHL = milliseconds(0);
+	V_type VIAEHL_approx_solution_tuple;
+	auto duration_BAO = milliseconds(0);
+	V_type BAO_approx_solution_tuple;
+	int k = 0;
+	int repetitions = 2;
+	ostringstream string_stream;
+	ostringstream avgstring_stream;
+	ofstream output_stream;
+	ofstream avgoutput_stream;
+	string SE[9] = {"0", "0", "0", "S", "SBO", "A", "ABO", "SS", "SSBO"};
+	int S_finishing_value = endP;
+	double action_prob = 1.0;
+	int NE = int((endP - StartP) / IncP) + 1;
+	bool BO = false;
+	if (expnum == 3 || expnum == 5 || expnum == 7)
+	{
+		BO = true;
+	}
+	float VI[10][NE];
+	int seed = time(0);
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < NE; j++)
+			VI[i][j] = 0;
+	MDP_type MDP;
+	string file_name_VI = "Skitsas//RandomGraphs_" + SE[expnum] + ".txt";
+	string file_name_VIAVG = "Skitsas//AVG_RandomGraphs_" + SE[expnum] + ".txt";
+	string_stream << "Exp_ID: " << expnum << " States: " << States << " Actions: " << Actions << " S_states: " << SS << " Start_P: " << StartP << " endP: " << endP << " IncP: " << IncP << endl;
+	avgstring_stream << "Exp_ID: " << expnum << " States: " << States << " Actions: " << Actions << " S_states: " << SS << " Start_P: " << StartP << " endP: " << endP << " IncP: " << IncP << endl;
+	if (BO)
+	{
+		string_stream << "VI UVI BVI VIAE VIAEH ";
+		avgstring_stream << "VI UVI BVI VIAE VIAEH ";
+	}
+
+	string_stream << "VIH VIAEHLB BAO" << endl;
+	avgstring_stream << "VIH VIAEHLB BAO" << endl;
+
+	for (int iters = 0; iters < repetitions; iters++)
+	{
+		k = 0;
+		for (int ite = StartP; ite <= endP; ite = ite + IncP)
+		{
+			if (expnum == 3 || expnum == 4)
+			{
+				States = ite;
+				MDP = generate_random_MDP_normal_distributed_rewards(ite, Actions, action_prob, SS, seed, 1000, 10);
+			}
+			else if (expnum == 5 || expnum == 6)
+				MDP = generate_random_MDP_normal_distributed_rewards(States, ite, action_prob, SS, seed, 1000, 10);
+			else
+				MDP = generate_random_MDP_normal_distributed_rewards(States, Actions, action_prob, ite, seed, 1000, 10);
+			R_type R = get<0>(MDP);
+			A_type A = get<1>(MDP);
+			P_type P = get<2>(MDP);
+			// Print the values of P
+			// std::cout << "Doubles:" << std::endl;
+			// typedef <<pair<vector<double>, vector<int> > > > P_type;
+			double sum = 0;
+			/* for (int i=0;i<P.size();i++) {
+				 for (int j=0;j<P[i].size();j++) {
+					 sum=0;
+					 cout<<"i,j"<<i<<","<<j<<endl;
+					 for (int k=0;k<P[i][j].second.size();k++){
+						 std::cout << P[i][j].first[k] << ", "<<P[i][j].second[k]<<endl;
+						 sum+=(P[i][j].first[k]);
+				 }
+				 if(sum!=1)
+				 cout<<"monaxa etsi tha teliwsoume emis "<<sum<<endl;
+				 }
+				 cout <<"Break" <<endl;
+			 }
+			 cout<<"hi"<<endl;*/
+			cout << States << endl;
+			int counter = 0;
+			if (BO)
+			{
+				A_type A1 = copy_A(A);
+				auto start_VI = high_resolution_clock::now();
+				V_approx_solution_tuple = value_iterationGS(States, R, A1, P, gamma, epsilon);
+				auto stop_VI = high_resolution_clock::now();
+				duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+				// VIU testing
+				A_type A6 = copy_A(A);
+				auto start_VIU = high_resolution_clock::now();
+				V_approx_solution_upper_tuple = value_iteration_upperGS(States, R, A6, P, gamma, epsilon);
+				auto stop_VIU = high_resolution_clock::now();
+				duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
+
+				A_type A3 = copy_A(A);
+				auto start_BVI = high_resolution_clock::now();
+				V_bounded_approx_solution_tuple = bounded_value_iterationGS(States, R, A3, P, gamma, epsilon);
+				auto stop_BVI = high_resolution_clock::now();
+				duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
+			}
+			A_type A4 = copy_A(A);
+			auto start_VIAE = high_resolution_clock::now();
+			V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(States, R, A4, P, gamma, epsilon);
+			auto stop_VIAE = high_resolution_clock::now();
+			duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
+
+			A_type A5 = copy_A(A);
+			auto start_VIAEH = high_resolution_clock::now();
+			V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(States, R, A5, P, gamma, epsilon);
+			auto stop_VIAEH = high_resolution_clock::now();
+			duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
+			// VIAEHL
+
+			A_type A2 = copy_A(A);
+			auto start_VIH = high_resolution_clock::now();
+			V_heap_approx_tuple = value_iteration_with_heapGS(States, R, A2, P, gamma, epsilon);
+			auto stop_VIH = high_resolution_clock::now();
+			duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+
+			A_type A8 = copy_A(A);
+			auto start_VIAEHL = high_resolution_clock::now();
+			VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(States, R, A8, P, gamma, epsilon);
+			auto stop_VIAEHL = high_resolution_clock::now();
+			duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
+			// BAO
+			A_type A9 = copy_A(A);
+			auto start_BAO = high_resolution_clock::now();
+			BAO_approx_solution_tuple = value_iteration_BAOGS(States, R, A9, P, gamma, epsilon);
+			auto stop_BAO = high_resolution_clock::now();
+			duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
+
+			// They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
+			vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
+			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
+			vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
+			if (BO)
+			{
+				vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
+				vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
+				vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
+				vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
+				vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
+
+				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE1\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_heap_approx) > (2 * epsilon))
+				{
+					printf("DIFFERENCE2\n");
+				}
+
+				if (abs_max_diff_vectors(V_approx_solution, V_AE_H_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE3\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_approx_solution_upper) > (2 * epsilon))
+				{
+					printf("DIFFERENCE4\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_bounded_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE5\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, VIAEHL_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE6\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, V_AE_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE7\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE8\n");
+				}
+				VI[0][k] += duration_VI.count();
+				VI[1][k] += duration_VIU.count();
+
+				VI[3][k] += duration_BVI.count();
+				VI[4][k] += duration_VIAE.count();
+				VI[5][k] += duration_VIAEH.count();
+				string_stream << duration_VI.count() << " " << duration_VIU.count() << " " << duration_BVI.count() << " " << duration_VIAE.count() << " " << duration_VIAEH.count() << " ";
+			}
+			VI[2][k] += duration_VIH.count();
+			VI[6][k] += duration_VIAEHL.count();
+			VI[7][k] += duration_BAO.count();
+
+			string_stream << duration_VIH.count() << " " << duration_VIAEHL.count() << " " << duration_BAO.count() << endl;
+			k++;
+		}
+	}
+	for (int k = 0; k < NE; k++)
+	{
+		if (BO)
+		{
+			avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions << " " << VI[3][k] / repetitions << " " << VI[4][k] / repetitions << " " << VI[5][k] / repetitions << " ";
+		}
+		avgstring_stream << VI[2][k] / repetitions << " " << VI[6][k] / repetitions << " " << VI[7][k] / repetitions << endl;
+	}
+	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
+	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
+	write_stringstream_to_file(avgstring_stream, avgoutput_stream, file_name_VIAVG);
+}
+
+void VMS(int NOFexp, double epsilon, double gamma)
+{
+	string seed1 = "X";
+	string seed11[5] = {"1", "2", "3", "4", "5"};
+	int Rseed = 5;
+	int S_starting_value = 50;
+	double action_prob = 1.0;
+	S_type S = 0;
+	string SE[5] = {"10S", "20S", "30S", "40S", "50S"};
+	string AE[5] = {"10A", "20A", "30A", "40A", "50A"};
+	MDP_type MDP;
+	float VI[10][5];
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < 5; j++)
+			VI[i][j] = 0;
+	int k;
+	ostringstream string_stream;
+	ostringstream avgstring_stream;
+	ofstream output_stream;
+	ofstream avgoutput_stream;
+	string file_name_VI = "Skitsas//VMS.txt";
+	string file_name_VIAVG = "Skitsas//VMSavg.txt";
+	if (NOFexp != 1)
+	{
+		string file_name_VI = "Skitsas//VMA.txt";
+		string file_name_VIAVG = "Skitsas//VMAavg.txt";
+	}
+	// int seed = time(0);
+	auto timeS = high_resolution_clock::now();
+	string_stream << "Experiment ID: " << NOFexp << endl;
+	avgstring_stream << "Experiment ID" << NOFexp << endl;
+	string_stream << "VI UVI VIH BVI VIAE VIAEH VIAEHLB BAO" << endl;
+	avgstring_stream << "VI UVI VIH BVI VIAE VIAEH VIAEHLB BAO" << endl;
+	for (int iter = 0; iter < 5; iter++)
+	{
+		seed1 = seed11[iter];
+		k = 0;
+		for (int temp = 0; temp < 5; temp = temp + 1)
+		{
+			// GENERATE THE MDP
+			if (NOFexp == 1)
+			{
+				MDP = readMDPS(seed1, SE[temp]);
+				S = (temp + 1) * 100;
+			}
+			else
+			{
+				MDP = readMDPS(seed1, AE[temp]);
+				S = 500;
+			}
+			R_type R = get<0>(MDP);
+			A_type A = get<1>(MDP);
+			P_type P = get<2>(MDP);
+
+			A_type A1 = copy_A(A);
+			auto start_VI = high_resolution_clock::now();
+			V_type V_approx_solution_tuple = value_iterationGS(S, R, A1, P, gamma, epsilon);
+			auto stop_VI = high_resolution_clock::now();
+			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+
+			// VIU testing
+			A_type A6 = copy_A(A);
+			auto start_VIU = high_resolution_clock::now();
+			V_type V_approx_solution_upper_tuple = value_iteration_upperGS(S, R, A6, P, gamma, epsilon);
+			auto stop_VIU = high_resolution_clock::now();
+			auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
+
+			// VIH testing
+			A_type A2 = copy_A(A);
+			auto start_VIH = high_resolution_clock::now();
+			V_type V_heap_approx_tuple = value_iteration_with_heapGS(S, R, A2, P, gamma, epsilon);
+			auto stop_VIH = high_resolution_clock::now();
+			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+
+			A_type A3 = copy_A(A);
+			auto start_BVI = high_resolution_clock::now();
+			V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(S, R, A3, P, gamma, epsilon);
+			auto stop_BVI = high_resolution_clock::now();
+			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
+
+			A_type A4 = copy_A(A);
+			auto start_VIAE = high_resolution_clock::now();
+			V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(S, R, A4, P, gamma, epsilon);
+			auto stop_VIAE = high_resolution_clock::now();
+			auto duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
+
+			A_type A5 = copy_A(A);
+			auto start_VIAEH = high_resolution_clock::now();
+			V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(S, R, A5, P, gamma, epsilon);
+			auto stop_VIAEH = high_resolution_clock::now();
+			auto duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
+
+			A_type A8 = copy_A(A);
+			auto start_VIAEHL = high_resolution_clock::now();
+			V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(S, R, A8, P, gamma, epsilon);
+			auto stop_VIAEHL = high_resolution_clock::now();
+			auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
+
+			A_type A9 = copy_A(A);
+			auto start_BAO = high_resolution_clock::now();
+			V_type BAO_approx_solution_tuple = value_iteration_BAOGS(S, R, A9, P, gamma, epsilon);
+			auto stop_BAO = high_resolution_clock::now();
+			auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
+
+			// They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
+			// testing
+			vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
+			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
+			vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
+			vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
+			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
+			vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
+			vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
+			vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
+
+			if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1a\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, VIAEHL_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1b\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_AE_H_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1c\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_AE_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1d\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_bounded_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1e\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_heap_approx) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1f\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_approx_solution) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1g\n");
+			}
+			if (abs_max_diff_vectors(V_approx_solution, V_approx_solution_upper) > (2 * epsilon))
+			{
+				printf("DIFFERENCE1g\n");
+			}
+
+			VI[0][temp] += duration_VI.count();
+			VI[1][temp] += duration_VIU.count();
+			VI[2][temp] += duration_VIH.count();
+			VI[3][temp] += duration_BVI.count();
+			VI[4][temp] += duration_VIAE.count();
+			VI[5][temp] += duration_VIAEH.count();
+			VI[6][temp] += duration_VIAEHL.count();
+			VI[7][temp] += duration_BAO.count();
+			string_stream << duration_VI.count() << " " << duration_VIU.count() << " " << duration_VIH.count() << " " << duration_BVI.count() << " ";
+			string_stream << duration_VIAE.count() << " " << duration_VIAEH.count() << " " << duration_VIAEHL.count() << " " << duration_BAO.count() << endl;
+
+			// VI[8][temp]+=duration_BAOSK.count();
+			// k++;
+		}
+	}
+	for (int k = 0; k < 5; k++)
+	{
+		avgstring_stream << VI[0][k] / 5 << " " << VI[1][k] / 5 << " " << VI[2][k] / 5 << " " << VI[3][k] / 5 << " ";
+		avgstring_stream << VI[4][k] / 5 << " " << VI[5][k] / 5 << " " << VI[6][k] / 5 << " " << VI[7][k] / 5 << endl;
+	}
+
+	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
+	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
+	write_stringstream_to_file(avgstring_stream, avgoutput_stream, file_name_VIAVG);
+}
+
 // GENERAL HELPER METHOD TO WRITE DATA TO FILE
 void write_stringstream_to_file(ostringstream &string_stream, ofstream &output_stream, string file_name)
 {
@@ -340,13 +918,11 @@ void create_data_tables_number_of_states(string filename, int S_max, int A_num, 
 			// xs=100;
 			auto MDP = Maze(xs, xs, seed);
 			S = xs * xs + 1;
-			// cout<<"HI"<<endl;
 
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
 			P_type P = get<2>(MDP);
 			int counter = 0;
-			cout << "hola" << endl;
 			for (int t = 0; t < S; t++)
 			{
 				for (auto a : A[t])
@@ -5981,14 +6557,15 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 	write_meta_data_to_dat_file_number_of_states(stringstream_VIH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
 	write_meta_data_to_dat_file_number_of_states(stringstream_VIAE, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
 	write_meta_data_to_dat_file_number_of_states(stringstream_VIAEH, Actions, epsilon, gamma, upper_reward, non_zero_transition, action_prob, S_starting_value, S_finishing_value, S_increment);
-	float VI[10][20];
+	int siIter = ((endP - StartP) / IncP) + 1;
+	float VI[10][siIter];
 	int k = 0;
 	R_type R1;
 	A_type Aa1;
 	P_type P1;
 	int S;
 	auto MDP = make_tuple(R1, Aa1, P1);
-	for (int iters = 0; iters < 2; iters++)
+	for (int iters = 0; iters < 10; iters++)
 	{
 		k = 0;
 		for (int ite = StartP; ite <= endP; ite = ite + IncP)
@@ -5998,30 +6575,26 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			// GENERATE THE MDP
 			int seed = time(0);
 			// auto MDP = generate_random_MDP_exponential_distributed_rewards(S, A_num, 1.0, S, 0.02, seed);
-			cout<<"hi1"<<endl;
+			cout << "ite" << ite << endl;
+			cout << "iters" << iters << endl;
 			if (expnum == 1)
 			{
 
 				// auto MDP=Maze(xs,xs,seed);
-				 MDP = Maze(ite, ite, seed);
+				MDP = Maze(ite, ite, seed);
 				States = ite * ite + 1;
 				S = States;
-				cout<<"hi2"<<endl;
 			}
 			else if (expnum == 2)
 			{
-				 MDP = Maze3d(ite, ite,ite, seed);
-				States = ite * ite*ite + 1;
+				MDP = Maze3d(ite, ite, ite, seed);
+				States = ite * ite * ite + 1;
 				S = States;
-				cout<<"hi3"<<endl;
-				cout<<S<<endl;
-
 			}
 			// auto MDP = generate_random_MDP_with_variable_parameters(S, A_num, action_prob, non_zero_transition, upper_reward, seed);
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
 			P_type P = get<2>(MDP);
-			cout<<"hi4"<<endl;
 			int counter = 0;
 			/*
 			for (int t = 0; t < S; t++) {
@@ -6048,8 +6621,8 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 
 			stringstream_VI << to_string(States) << " " << duration_VI.count() << endl;
 			VI[0][k] += duration_VI.count();
-			cout << "VI," << duration_VI.count() << endl;
-			// VIU testing
+			// cout << "VI," << duration_VI.count() << endl;
+			//  VIU testing
 			A_type A6 = copy_A(A);
 			auto start_VIU = high_resolution_clock::now();
 			V_type V_approx_solution_upper_tuple = value_iteration_upperGSTM(States, R, A6, P, gamma, epsilon, expnum);
@@ -6058,7 +6631,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
 
 			VI[1][k] += duration_VIU.count();
-			cout << "VIU," << duration_VIU.count() << endl;
+			// cout << "VIU," << duration_VIU.count() << endl;
 			stringstream_VIU << to_string(States) << " " << duration_VIU.count() << endl;
 			// VIH testing
 			A_type A2 = copy_A(A);
@@ -6069,7 +6642,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			auto stop_VIH = high_resolution_clock::now();
 			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
 			VI[2][k] += duration_VIH.count();
-			cout << "VIHGS," << duration_VIH.count() << endl;
+			// cout << "VIHGS," << duration_VIH.count() << endl;
 			stringstream_VIH << to_string(States) << " " << duration_VIH.count() << endl;
 			// A_type A12 = copy_A(A);
 			auto start_VIHN = high_resolution_clock::now();
@@ -6091,7 +6664,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
 			auto stop_BVI = high_resolution_clock::now();
 			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
-			cout << "BVI," << duration_BVI.count() << endl;
+			// cout << "BVI," << duration_BVI.count() << endl;
 			stringstream_BVI << to_string(States) << " " << duration_BVI.count() << endl;
 			VI[3][k] += duration_BVI.count();
 			A_type A4 = copy_A(A);
@@ -6104,8 +6677,8 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 
 			stringstream_VIAE << to_string(S) << " " << duration_VIAE.count() << endl;
 			VI[4][k] += duration_VIAE.count();
-			cout << "VIAE," << duration_VIAE.count() << endl;
-			// VIAEH
+			// cout << "VIAE," << duration_VIAE.count() << endl;
+			//  VIAEH
 			A_type A5 = copy_A(A);
 			auto start_VIAEH = high_resolution_clock::now();
 
@@ -6117,8 +6690,8 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 
 			stringstream_VIAEH << to_string(S) << " " << duration_VIAEH.count() << endl;
 			VI[5][k] += duration_VIAEH.count();
-			cout << "VIAEH," << duration_VIAEH.count() << endl;
-			// VIAEHL
+			// cout << "VIAEH," << duration_VIAEH.count() << endl;
+			//  VIAEHL
 			A_type A8 = copy_A(A);
 			auto start_VIAEHL = high_resolution_clock::now();
 
@@ -6129,8 +6702,8 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			auto duration_VIAEHL = duration_cast<milliseconds>(stop_VIAEHL - start_VIAEHL);
 			stringstream_VIAEHL << to_string(S) << " " << duration_VIAEHL.count() << endl;
 			VI[6][k] += duration_VIAEHL.count();
-			cout << "VIAEHL," << duration_VIAEHL.count() << endl;
-			// BAO
+			// cout << "VIAEHL," << duration_VIAEHL.count() << endl;
+			//  BAO
 			A_type A9 = copy_A(A);
 			auto start_BAO = high_resolution_clock::now();
 
@@ -6141,7 +6714,7 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
 
 			stringstream_BAO << to_string(S) << " " << duration_BAO.count() << endl;
-			cout << "BAO," << duration_BAO.count() << endl;
+			// cout << "BAO," << duration_BAO.count() << endl;
 			VI[7][k] += duration_BAO.count();
 
 			A_type A10 = copy_A(A);
@@ -6193,18 +6766,18 @@ void create_data_tables_number_GSTM(string filename, int expnum, int States, int
 			k++;
 		}
 	}
-	for (int k = 0; k < 20; k++)
+	for (int k = 0; k < siIter; k++)
 	{
-		stringstream_VI << VI[0][k] / 5 << endl;
-		stringstream_VIU << VI[1][k] / 5 << endl;
-		stringstream_VIH << VI[2][k] / 5 << endl;
-		stringstream_VIHN << VI[9][k] / 5 << endl;
-		stringstream_BVI << VI[3][k] / 5 << endl;
-		stringstream_VIAE << VI[4][k] / 5 << endl;
-		stringstream_VIAEH << VI[5][k] / 5 << endl;
-		stringstream_VIAEHL << VI[6][k] / 5 << endl;
-		stringstream_BAO << VI[7][k] / 5 << endl;
-		stringstream_BAON << VI[8][k] / 5 << endl;
+		stringstream_VI << VI[0][k] / 10 << endl;
+		stringstream_VIU << VI[1][k] / 10 << endl;
+		stringstream_VIH << VI[2][k] / 10 << endl;
+		stringstream_VIHN << VI[9][k] / 10 << endl;
+		stringstream_BVI << VI[3][k] / 10 << endl;
+		stringstream_VIAE << VI[4][k] / 10 << endl;
+		stringstream_VIAEH << VI[5][k] / 10 << endl;
+		stringstream_VIAEHL << VI[6][k] / 10 << endl;
+		stringstream_BAO << VI[7][k] / 10 << endl;
+		stringstream_BAON << VI[8][k] / 10 << endl;
 		// cout<<"writeA"<<endl;
 	}
 	// WRITE ALL DATA TO THEIR RESPECTVIE FILES

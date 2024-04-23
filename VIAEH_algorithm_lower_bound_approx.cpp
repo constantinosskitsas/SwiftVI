@@ -630,7 +630,7 @@ V_type value_iteration_action_elimination_heaps_lower_bound_approxGS(S_type S, R
 				decrease_max(q_i_s_a, 0, max_heap_s, max_heap_indicies_s, heap_size[s]);
 				index_in_min_heap = min_heap_indicies_s[top_pair_action];
 				decrease_min(q_i_s_a, index_in_min_heap, min_heap_s, min_heap_indicies_s);
-
+				//we change the order in the min heap.
 				// END UPDATE
 				updated_heap_max_top_action = max_heap_s[0].second;
 			}
@@ -1197,6 +1197,7 @@ V_type value_iteration_action_elimination_heaps_lower_bound_approxGSTM(S_type S,
 			else
 				x2 = ya1;
 			V_U[0][s] = -x2 + 10;
+			V_U[0][s] = 0;
 			V_L[0][s] = -500;
 		}
 		V_U[0][S - 1] = 0.0;

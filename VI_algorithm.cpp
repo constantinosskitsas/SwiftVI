@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <memory.h>
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -109,7 +110,6 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 		actions_eliminated.push_back(move(actions_eliminated_in_iteration));
 		/*for (int i = 0; i < S; ++i) {
 			if(V_previous_iteration[i] - V_current_iteration[i]	>0)
-				cout<<"aitaa"<<endl;
 }*/
 	}
 	vector<double> result(V[(iterations & 1)], V[(iterations & 1)] + S);
@@ -125,6 +125,66 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 	return result_tuple;
 }
 
+
+void confidence(double delta,S_type S,int nA,float &**confP,float &**confR,int **Nsa){
+	for (int s=0;s<S;s++){
+		for (int a=0;a<nA;a++){
+			confP[s][a]=sqrt((2*(log(pow(S,2)-2)-log(delta))/max((1,Nsa[s][a]))));
+			confR[s][a]=sqrt(log(2/delta)/(2*max((1,Nsa[s][a]))));
+		}
+	}
+	
+	
+}
+V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m){
+	delta=0.05;
+	m=100;
+	int nA=4;
+	// max(A[0].size();)
+	//or S*4;
+	delta=delta /(2*S*nA*m);
+	int s_state=0;
+	int** Nsa = NULL;
+	float ***hatP= NULL;
+	float **Rsa = NULL;
+	int*** Nsas = NULL;
+	float **hatR = NULL;
+	float **confR = NULL;
+	float **confP = NULL;
+	Nsa = new int *[S];
+	Rsa = new float *[S];
+	hatR = new float *[S];
+	confR = new float *[S];
+	confP = new float *[S];
+
+
+    for (int i = 0; i < S; ++i) {
+        Nsa[i] = new int[nA];
+		Rsa[i] = new float[nA];
+		hatR[i] = new float[nA];
+		confR[i] = new float[nA];
+		confP[i] = new float[nA];
+		memset(Nsa[i], 0, sizeof(int) * nA);
+		memset(Rsa[i], 0, sizeof(float) * nA);
+		memset(hatR[i], 0, sizeof(float) * nA);
+    }
+
+	//	
+	//	self.confP = np.zeros((self.nS, self.nA))
+	
+	for (int i=0;i<S;i++){
+		Nsas[i]=new int*[nA];
+		hatP[i]=new float*[nA];
+		float **hatP= NULL;
+		for (int j=0;j<nA;j++){
+			Nsas[i][j] =new int[S];
+			hatP[i][j] =new float[S];
+			memset(Nsas[i][j],0,sizeof(int)*S);
+			memset(hatP[i][j],0,sizeof(float)*S);
+		}
+	}
+
+}
 V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
 {
 
