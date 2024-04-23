@@ -118,6 +118,7 @@ void GSTM(string filename, int expnum, int States, int Actions, int SS, int Star
 
 				}
 			}
+			return;
 			A_type A1 = copy_A(A);
 			auto start_VI = high_resolution_clock::now();
 			V_type V_approx_solution_tuple = value_iterationGSTM(States, R, A1, P, gamma, epsilon, expnum);

@@ -1142,30 +1142,40 @@ MDP_type GridWorld(int X, int Y, int seed)
 		x_curr = i % X;
 		y_curr = i / Y;
 		counter = 0;
+		
 		if (x_curr + 1 < X && WBoxes.count(posDi(x_curr, y_curr, X, 0)) <= 0)
 		{
-			A_s.push_back(counter);
+			A_s.push_back(0);
 			A_sD.push_back(0);
-			counter++;
+		}else{
+			A_s.push_back(0);
+			A_sD.push_back(-1);
 		}
 		if (y_curr + 1 < Y && WBoxes.count(posDi(x_curr, y_curr, X, 1)) <= 0)
 		{
-			A_s.push_back(counter);
+			A_s.push_back(1);
 			A_sD.push_back(1);
-			counter++;
+		}else{
+			A_s.push_back(1);
+			A_sD.push_back(-1);
 		}
 		if (x_curr - 1 >= 0 && WBoxes.count(posDi(x_curr, y_curr, X, 2)) <= 0)
 		{
-			A_s.push_back(counter);
+			A_s.push_back(2);
 			A_sD.push_back(2);
-			counter++;
+		}else{
+			A_s.push_back(2);
+			A_sD.push_back(-1);
 		}
 		if (y_curr - 1 >= 0 && WBoxes.count(posDi(x_curr, y_curr, X, 3)) <= 0)
 		{
-			A_s.push_back(counter);
+			A_s.push_back(3);
 			A_sD.push_back(3);
-			counter++;
+		}else{
+			A_s.push_back(3);
+			A_sD.push_back(-1);
 		}
+		
 
 		A.push_back(A_s);
 		A_direction.push_back(A_sD);
@@ -1201,21 +1211,31 @@ MDP_type GridWorld(int X, int Y, int seed)
 		for (auto a : A[i])
 		{
 			totalP = 0.7;
+			int pos=posDi(x_curr, y_curr, X, a);
+			if (A_direction[i][a]>=0)
 			P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a]));
+			else{
+			P_s_a_nonzero_states.push_back(i);
+			}
 			P_s_a.push_back(totalP);
 			for (auto a1 : A[i])
 			{
 				if (a1 == a)
 					continue;
-				if (((A_direction[i][a] + A_direction[i][a1]) % 2) == 1)
-				{
-					P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a1]));
-					totalP = totalP + 0.1;
+				
+				if (((A[i][a] + A[i][a1]) % 2) == 1)
+				{if (A_direction[i][a1]<0){
+					P_s_a_nonzero_states.push_back(i);
 					P_s_a.push_back(0.1);
+				}else {
+					P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a1]));
+					//totalP = totalP + 0.1;
+					P_s_a.push_back(0.1);
+					}
 				}
 			}
 			P_s_a_nonzero_states.push_back(i);
-			P_s_a.push_back(1 - totalP);
+			P_s_a.push_back(0.1);
 			P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
 			P_s_a.clear();
 			P_s_a_nonzero_states.clear();

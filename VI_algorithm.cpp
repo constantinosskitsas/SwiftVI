@@ -137,6 +137,23 @@ void confidence(double delta,S_type S,int nA,float **confP,float **confR,int **N
 	
 	
 }
+
+void reset(S_type S,int nA,int ***Nsa,float ***hatP,float **Rsa,int*** Nsas,float **hatR,float **confR,float **confP){
+	for (int i=0;i<S;i++){
+		for (int j=0;j<nA;j++){
+			Rsa[i][j]=0;
+			hatR[i][j]=0;
+			confR[i][j]=0;
+			confP[i][j]=0;
+			for (int k=0;k<S;k++){
+				Nsas[i][j][k]=0;
+				hatP[i][j][k]=0;
+			}
+		}
+	}
+}
+
+
 V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m){
 	delta=0.05;
 	m=100;
@@ -179,14 +196,16 @@ V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon
 		Nsas[i]=new int*[nA];
 		hatP[i]=new float*[nA];
 		for (int j=0;j<nA;j++){
-			Nsas[i][j] =new int[S];
-			hatP[i][j] =new float[S];
+			Nsas[i][j] = new int[S];
+			hatP[i][j] = new float[S];
 			memset(Nsas[i][j],0,sizeof(int)*S);
 			memset(hatP[i][j],0,sizeof(float)*S);
 		}
 	}
 
 }
+
+
 V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
 {
 
