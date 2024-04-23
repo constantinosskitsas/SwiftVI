@@ -126,46 +126,125 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 	return result_tuple;
 }
 
-
-void confidence(double delta,S_type S,int nA,float **confP,float **confR,int **Nsa){
-	for (int s=0;s<S;s++){
-		for (int a=0;a<nA;a++){
-			confP[s][a]=sqrt((2*(log(pow(S,2)-2)-log(delta))/max(1,Nsa[s][a])));
-			confR[s][a]=sqrt(log(2/delta)/(2*max(1,Nsa[s][a])));
+void confidence(double delta, S_type S, int nA, float **confP, float **confR, int **Nsa)
+{
+	for (int s = 0; s < S; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			confP[s][a] = sqrt((2 * (log(pow(S, 2) - 2) - log(delta)) / max(1, Nsa[s][a])));
+			confR[s][a] = sqrt(log(2 / delta) / (2 * max(1, Nsa[s][a])));
 		}
 	}
-	
-	
 }
 
-void reset(S_type S,int nA,int ***Nsa,float ***hatP,float **Rsa,int*** Nsas,float **hatR,float **confR,float **confP){
-	for (int i=0;i<S;i++){
-		for (int j=0;j<nA;j++){
-			Rsa[i][j]=0;
-			hatR[i][j]=0;
-			confR[i][j]=0;
-			confP[i][j]=0;
-			for (int k=0;k<S;k++){
-				Nsas[i][j][k]=0;
-				hatP[i][j][k]=0;
+void reset(S_type S, int nA, int ***Nsa, float ***hatP, float **Rsa, int ***Nsas, float **hatR, float **confR, float **confP)
+{
+	for (int i = 0; i < S; i++)
+	{
+		for (int j = 0; j < nA; j++)
+		{
+			Rsa[i][j] = 0;
+			hatR[i][j] = 0;
+			confR[i][j] = 0;
+			confP[i][j] = 0;
+			for (int k = 0; k < S; k++)
+			{
+				Nsas[i][j][k] = 0;
+				hatP[i][j][k] = 0;
 			}
 		}
 	}
 }
 
+void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
+{
+	float min1 = min(1.0, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
+	vector<double> max_p(S, 0.0);
+	int l = 0;
 
-V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m){
-	delta=0.05;
-	m=100;
-	int nA=4;
+	if (min1 == 1)
+	{
+		max_p[sorted_indices[S - 1]] = 1;
+	}
+	else
+	{
+		vector<double> max_p(self.hatP[s][a].begin(), self.hatP[s][a].end());
+		max_p[sorted_indices[S - 1]] += self.confP[s][a] / 2.0;
+		l = 0;
+		double sum_max_p = 0.0;
+		for (size_t i = 0; i < max_p.size(); ++i)
+		{
+			sum_max_p += max_p[i];
+		}
+		while (sum_max_p > 1.0)
+		{
+			max_p[sorted_indices[l]] = std::max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
+			++l;
+
+			// Recalculate the sum of max_p
+			sum_max_p = 0.0;
+			for (size_t i = 0; i < max_p.size(); ++i)
+			{
+				sum_max_p += max_p[i];
+			}
+		}
+		// max_p[sorted_indices.back()] += self.confP[s * num_actions + a] / 2.0;
+	}
+	return ;
+	//return max_p; --pas it  parameter
+}
+// I got tired and chose vectors for tonight :)
+// we can do together the rest bounds and value iteration
+
+void EVI(S_type S, P_type P, float epsilon, float gamma)
+{
+	int niter = 0;
+	vector<int> sorted_indices(nS);
+	int nS = S;
+	int nA = 4;
+	// Fill the vector with indices
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	vector<int> policy(nS, 0);
+	std::vector<double> V0(nS);
+	for (int i = 0; i < nS; ++i)
+	{
+		V0[i] = 1.0 / (1.0 - gamma);
+	}
+
+	// Initialize V1
+	vector<double> V1(nS, 0.0); // Initialize with zeros
+	epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	while (true)
+	{
+		for (int s = 0; s < nS; s++)
+		{
+			for (int a = 0; a < nA; a++)
+			{
+				maxp = max_proba(sorted_indices, s, a) auto &[P_s_a, P_s_a_nonzero] = P[s][a];
+				double R_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_current_iteration, P_s_a_nonzero);
+				if (a == 0 || R_s_a > V1[s])
+				{
+					V1[s] = temp;
+					policy[s] = a;
+				}
+			}
+		}
+	}
+}
+V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m)
+{
+	delta = 0.05;
+	m = 100;
+	int nA = 4;
 	// max(A[0].size();)
-	//or S*4;
-	delta=delta /(2*S*nA*m);
-	int s_state=0;
-	int** Nsa = NULL;
-	float ***hatP= NULL;
+	// or S*4;
+	delta = delta / (2 * S * nA * m);
+	int s_state = 0;
+	int **Nsa = NULL;
+	float ***hatP = NULL;
 	float **Rsa = NULL;
-	int*** Nsas = NULL;
+	int ***Nsas = NULL;
 	float **hatR = NULL;
 	float **confR = NULL;
 	float **confP = NULL;
@@ -176,10 +255,10 @@ V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon
 	hatR = new float *[S];
 	confR = new float *[S];
 	confP = new float *[S];
-	
 
-    for (int i = 0; i < S; ++i) {
-        Nsa[i] = new int[nA];
+	for (int i = 0; i < S; ++i)
+	{
+		Nsa[i] = new int[nA];
 		Rsa[i] = new float[nA];
 		hatR[i] = new float[nA];
 		confR[i] = new float[nA];
@@ -187,24 +266,24 @@ V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon
 		memset(Nsa[i], 0, sizeof(int) * nA);
 		memset(Rsa[i], 0, sizeof(float) * nA);
 		memset(hatR[i], 0, sizeof(float) * nA);
-    }
-
-	//	
-	//	self.confP = np.zeros((self.nS, self.nA))
-	
-	for (int i=0;i<S;i++){
-		Nsas[i]=new int*[nA];
-		hatP[i]=new float*[nA];
-		for (int j=0;j<nA;j++){
-			Nsas[i][j] = new int[S];
-			hatP[i][j] = new float[S];
-			memset(Nsas[i][j],0,sizeof(int)*S);
-			memset(hatP[i][j],0,sizeof(float)*S);
-		}
 	}
 
-}
+	//
+	//	self.confP = np.zeros((self.nS, self.nA))
 
+	for (int i = 0; i < S; i++)
+	{
+		Nsas[i] = new int *[nA];
+		hatP[i] = new float *[nA];
+		for (int j = 0; j < nA; j++)
+		{
+			Nsas[i][j] = new int[S];
+			hatP[i][j] = new float[S];
+			memset(Nsas[i][j], 0, sizeof(int) * S);
+			memset(hatP[i][j], 0, sizeof(float) * S);
+		}
+	}
+}
 
 V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
 {
@@ -325,14 +404,13 @@ V_type value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma,
 			V[0][s] = (gamma / (1.0 - gamma)) * r_star_min + r_star_values[s];
 		else
 		{
-			//int x_curr=s%Xmax;
-			//int y_curr=s/Xmax;
-			//double x1= sqrt( pow( abs(x_curr-siz),2)+pow(abs(y_curr-siz),2));
+			// int x_curr=s%Xmax;
+			// int y_curr=s/Xmax;
+			// double x1= sqrt( pow( abs(x_curr-siz),2)+pow(abs(y_curr-siz),2));
 			V[0][s] = -500;
-			//V[0][s] = -x1*5-10;
-			gamma=1;
+			// V[0][s] = -x1*5-10;
+			gamma = 1;
 		}
-			
 	}
 	if (D3 != 0)
 		V[0][S - 1] = 0;
@@ -394,7 +472,7 @@ V_type value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma,
 	}
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
-	
+
 	// DEALLOCATE MEMORY
 	for (int i = 0; i < 1; ++i)
 	{
