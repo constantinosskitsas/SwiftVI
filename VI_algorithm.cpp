@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory.h>
+#include <algorithm>
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -126,11 +127,11 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 }
 
 
-void confidence(double delta,S_type S,int nA,float &**confP,float &**confR,int **Nsa){
+void confidence(double delta,S_type S,int nA,float **confP,float **confR,int **Nsa){
 	for (int s=0;s<S;s++){
 		for (int a=0;a<nA;a++){
-			confP[s][a]=sqrt((2*(log(pow(S,2)-2)-log(delta))/max((1,Nsa[s][a]))));
-			confR[s][a]=sqrt(log(2/delta)/(2*max((1,Nsa[s][a]))));
+			confP[s][a]=sqrt((2*(log(pow(S,2)-2)-log(delta))/max(1,Nsa[s][a])));
+			confR[s][a]=sqrt(log(2/delta)/(2*max(1,Nsa[s][a])));
 		}
 	}
 	
@@ -151,12 +152,14 @@ V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon
 	float **hatR = NULL;
 	float **confR = NULL;
 	float **confP = NULL;
+	hatP = new float **[S];
+	Nsas = new int **[S];
 	Nsa = new int *[S];
 	Rsa = new float *[S];
 	hatR = new float *[S];
 	confR = new float *[S];
 	confP = new float *[S];
-
+	
 
     for (int i = 0; i < S; ++i) {
         Nsa[i] = new int[nA];
@@ -175,7 +178,6 @@ V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon
 	for (int i=0;i<S;i++){
 		Nsas[i]=new int*[nA];
 		hatP[i]=new float*[nA];
-		float **hatP= NULL;
 		for (int j=0;j<nA;j++){
 			Nsas[i][j] =new int[S];
 			hatP[i][j] =new float[S];
