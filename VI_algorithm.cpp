@@ -136,15 +136,15 @@ class MBIE {
 	int gamma;
 	// max(A[0].size();)
 	// or S*4;
-	float delta;// = delta / (2 * S * nA * m);
+	double delta;// = delta / (2 * S * nA * m);
 	int s_state;// = 0;
 	int **Nsa;// = NULL;
-	float ***hatP;// = NULL;
-	float **Rsa;// = NULL;
+	double ***hatP;// = NULL;
+	double **Rsa;// = NULL;
 	int ***Nsas;// = NULL;
-	float **hatR;// = NULL;
-	float **confR;// = NULL;
-	float **confP;// = NULL;
+	double **hatR;// = NULL;
+	double **confR;// = NULL;
+	double **confP;// = NULL;
 	vector<double> max_p;
 
 	int current_s;
@@ -160,13 +160,13 @@ class MBIE {
 		// or S*4;
 		delta = delta / (2 * S * nA * m);
 		int s_state = 0;
-		hatP = new float **[S];
+		hatP = new double **[S];
 		Nsas = new int **[S];
 		Nsa = new int *[S];
-		Rsa = new float *[S];
-		hatR = new float *[S];
-		confR = new float *[S];
-		confP = new float *[S];
+		Rsa = new double *[S];
+		hatR = new double *[S];
+		confR = new double *[S];
+		confP = new double *[S];
 
 		vector<double> max_p(nS, 0.0);
 		current_s = 0;
@@ -175,13 +175,13 @@ class MBIE {
 		for (int i = 0; i < S; ++i)
 		{
 			Nsa[i] = new int[nA];
-			Rsa[i] = new float[nA];
-			hatR[i] = new float[nA];
-			confR[i] = new float[nA];
-			confP[i] = new float[nA];
+			Rsa[i] = new double[nA];
+			hatR[i] = new double[nA];
+			confR[i] = new double[nA];
+			confP[i] = new double[nA];
 			memset(Nsa[i], 0, sizeof(int) * nA);
-			memset(Rsa[i], 0, sizeof(float) * nA);
-			memset(hatR[i], 0, sizeof(float) * nA);
+			memset(Rsa[i], 0, sizeof(double) * nA);
+			memset(hatR[i], 0, sizeof(double) * nA);
 		}
 
 		//
@@ -190,20 +190,20 @@ class MBIE {
 		for (int i = 0; i < S; i++)
 		{
 			Nsas[i] = new int *[nA];
-			hatP[i] = new float *[nA];
+			hatP[i] = new double *[nA];
 			for (int j = 0; j < nA; j++)
 			{
 				Nsas[i][j] = new int[S];
-				hatP[i][j] = new float[S];
+				hatP[i][j] = new double[S];
 				memset(Nsas[i][j], 0, sizeof(int) * S);
-				memset(hatP[i][j], 0, sizeof(float) * S);
+				memset(hatP[i][j], 0, sizeof(double) * S);
 			}
 		}
 	}
 	void confidence();
 	void reset(S_type init);
-	void max_proba(S_type S, vector<int> sorted_indices, int s, int a);
-	void EVI(S_type S, P_type P, float epsilon, float gamma);
+	void max_proba(vector<int> sorted_indices, int s, int a);
+	void EVI(double epsilon);
 	void play(S_type S, R_type R);
 };
 
@@ -213,11 +213,11 @@ void MBIE::play(S_type S, R_type R) {
 
 void MBIE::confidence()
 {
-	for (int s = 0; s < S; s++)
+	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			confP[s][a] = sqrt((2 * (log(pow(S, 2) - 2) - log(delta)) / max(1, Nsa[s][a])));
+			confP[s][a] = sqrt((2 * (log(pow(nS, 2) - 2) - log(delta)) / max(1, Nsa[s][a])));
 			confR[s][a] = sqrt(log(2 / delta) / (2 * max(1, Nsa[s][a])));
 		}
 	}
@@ -233,7 +233,7 @@ void MBIE::reset(S_type init)
 			hatR[i][j] = 0;
 			confR[i][j] = 0;
 			confP[i][j] = 0;
-			for (int k = 0; k < S; k++)
+			for (int k = 0; k < nS; k++)
 			{
 				Nsas[i][j][k] = 0;
 				hatP[i][j][k] = 0;
@@ -245,22 +245,22 @@ void MBIE::reset(S_type init)
 
 void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 {
-	float min1 = min(1.0f, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
+	double min1 = min(1.0, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
 	
-	std::fill(std::being(max_p),std::end(max_p),0.0)
+	std::fill(max_p.begin(),max_p.end(),0.0);
 	
 	int l = 0;
 
 	if (min1 == 1)
 	{
-		max_p[sorted_indices[S - 1]] = 1;
+		max_p[sorted_indices[nS - 1]] = 1;
 	}
 	else
 	{	
-		//Mega copy hack
-		max_p.assign(hatP[s], hatP[s] + nA);
+		//Mega copy hack (that may or may not work)
+		max_p.assign(*hatP[s], *hatP[s] + nA);
 		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
-		max_p[sorted_indices[S - 1]] += confP[s][a] / 2.0;
+		max_p[sorted_indices[nS - 1]] += confP[s][a] / 2.0;
 		l = 0;
 		double sum_max_p = 0.0;
 		for (size_t i = 0; i < max_p.size(); ++i)
@@ -286,10 +286,10 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 // I got tired and chose vectors for tonight :)
 // we can do together the rest bounds and value iteration
 
-void MBIE::EVI(float epsilon)
+void MBIE::EVI(double epsilon)
 {
 	int niter = 0;
-	int nS = S;
+	//int nS = S;
 	vector<int> sorted_indices(nS);
 	
 	int nA = 4;
@@ -313,9 +313,9 @@ void MBIE::EVI(float epsilon)
 		{
 			for (int a = 0; a < nA; a++)
 			{
-				max_proba(sorted_indices, s, a)
-				auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
-				double R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V0, P_s_a_nonzero);
+				max_proba(sorted_indices, s, a);
+				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				double R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
 				if (a == 0 || R_s_a > V1[s])
 				{
 					V1[s] = R_s_a;

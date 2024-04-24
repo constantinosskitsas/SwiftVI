@@ -22,6 +22,8 @@ double sum_of_mult_nonzero_only(const vector<double> &V_one, double V_two[], con
 
 double sum_of_mult(const vector<double> &V_one, double V_two[]);
 
+double sum_of_mult(const vector<double> &V_one, const vector<double> &V_two);
+
 double find_max_R(const R_type &R);
 
 vector<double> find_max_R_for_each_state(const R_type &R);

@@ -86,6 +86,17 @@ double sum_of_mult(const vector<double> &V_one, double V_two[])
 	return cum_sum;
 }
 
+// used in MBIE
+double sum_of_mult(const vector<double> &V_one, const vector<double>  &V_two)
+{
+	double cum_sum = double(0);
+	for (int i = 0; i < V_one.size(); ++i)
+	{
+		cum_sum += (V_one[i] * V_two[i]);
+	}
+	return cum_sum;
+}
+
 double find_max_R(const R_type &R)
 {
 	double max_R = numeric_limits<double>::min();
