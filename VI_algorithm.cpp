@@ -127,87 +127,57 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 }
 
 
-class MBIE {
-	public:
-	//delta = 0.05;
-	int m;//; = 100;
-	int nA;// = 4;
-	int nS;
-	double gamma;
-	double epsilon;
+MBIE::MBIE(S_type S, int nA, double gamma, double epsilon, double delta, int m) {
+	delta = delta;
+	m = m;
+	nA = nA; //Assumes the same number of actions for all states
+	nS = S;
+	gamma = gamma;
+	epsilon = epsilon;
 	// max(A[0].size();)
 	// or S*4;
-	double delta;// = delta / (2 * S * nA * m);
-	int s_state;// = 0;
-	int **Nsa;// = NULL;
-	double ***hatP;// = NULL;
-	double **Rsa;// = NULL;
-	int ***Nsas;// = NULL;
-	double **hatR;// = NULL;
-	double **confR;// = NULL;
-	double **confP;// = NULL;
-	vector<double> max_p;
+	delta = delta / (2 * S * nA * m);
+	int s_state = 0;
+	hatP = new double **[S];
+	Nsas = new int **[S];
+	Nsa = new int *[S];
+	Rsa = new double *[S];
+	hatR = new double *[S];
+	confR = new double *[S];
+	confP = new double *[S];
 
-	int current_s;
-	int last_action;
+	vector<double> max_p(nS, 0.0);
+	current_s = 0;
+	last_action = -1;
+	
+	for (int i = 0; i < S; ++i)
+	{
+		Nsa[i] = new int[nA];
+		Rsa[i] = new double[nA];
+		hatR[i] = new double[nA];
+		confR[i] = new double[nA];
+		confP[i] = new double[nA];
+		memset(Nsa[i], 0, sizeof(int) * nA);
+		memset(Rsa[i], 0, sizeof(double) * nA);
+		memset(hatR[i], 0, sizeof(double) * nA);
+	}
 
-	MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m) {
-		delta = 0.05;
-		m = 1000;
-		nA = 4;
-		nS = S;
-		gamma = gamma;
-		epsilon = epsilon;
-		// max(A[0].size();)
-		// or S*4;
-		delta = delta / (2 * S * nA * m);
-		int s_state = 0;
-		hatP = new double **[S];
-		Nsas = new int **[S];
-		Nsa = new int *[S];
-		Rsa = new double *[S];
-		hatR = new double *[S];
-		confR = new double *[S];
-		confP = new double *[S];
+	//
+	//	self.confP = np.zeros((self.nS, self.nA))
 
-		vector<double> max_p(nS, 0.0);
-		current_s = 0;
-		last_action = -1;
-		
-		for (int i = 0; i < S; ++i)
+	for (int i = 0; i < S; i++)
+	{
+		Nsas[i] = new int *[nA];
+		hatP[i] = new double *[nA];
+		for (int j = 0; j < nA; j++)
 		{
-			Nsa[i] = new int[nA];
-			Rsa[i] = new double[nA];
-			hatR[i] = new double[nA];
-			confR[i] = new double[nA];
-			confP[i] = new double[nA];
-			memset(Nsa[i], 0, sizeof(int) * nA);
-			memset(Rsa[i], 0, sizeof(double) * nA);
-			memset(hatR[i], 0, sizeof(double) * nA);
-		}
-
-		//
-		//	self.confP = np.zeros((self.nS, self.nA))
-
-		for (int i = 0; i < S; i++)
-		{
-			Nsas[i] = new int *[nA];
-			hatP[i] = new double *[nA];
-			for (int j = 0; j < nA; j++)
-			{
-				Nsas[i][j] = new int[S];
-				hatP[i][j] = new double[S];
-				memset(Nsas[i][j], 0, sizeof(int) * S);
-				memset(hatP[i][j], 0, sizeof(double) * S);
-			}
+			Nsas[i][j] = new int[S];
+			hatP[i][j] = new double[S];
+			memset(Nsas[i][j], 0, sizeof(int) * S);
+			memset(hatP[i][j], 0, sizeof(double) * S);
 		}
 	}
-	void confidence();
-	void reset(S_type init);
-	void max_proba(vector<int> sorted_indices, int s, int a);
-	vector<int> EVI();
-	std::tuple<int,std::vector<int>> play(int state, double reward);
-};
+}
 
 std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 	//If not first action

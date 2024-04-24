@@ -41,6 +41,9 @@ using namespace std::chrono;
 // terminal compilation and running: g++ -pthread -std=gnu++17 -o algo_test *.cpp && ./algo_test
 int main(int argc, char *argv[])
 {
+	std::cout << "running MBIE" << std::endl;
+	runMBIE();
+	std::cout << "Back to normal" << std::endl;
 	time_t time_now = time(0);
 	double epsilon = 0.05;
 	double gamma = 0.99;
@@ -82,6 +85,7 @@ int main(int argc, char *argv[])
 	{
 		GSTM(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
 	}
+
 }
 
 int main_Emil(int argc, char *argv[])

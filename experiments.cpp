@@ -38,6 +38,49 @@
 using namespace std;
 using namespace std::chrono;
 
+void runMBIE() {
+	std::default_random_engine generator;
+
+	int nS = 5;
+	int nA = 4;
+	double gamma = 0.95;
+	double epsilon = 0.1;
+	double delta = 0.05;
+	int m = 1000;
+
+	int T = 10000;
+	int reps = 4; //replicates
+
+	MDP_type MDP = RiverSwim(nS);
+	R_type R = get<0>(MDP);
+	A_type A = get<1>(MDP);
+	P_type P = get<2>(MDP);
+
+
+	int reward = 0;
+	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
+	for (int rep = 0; rep < reps; rep++) {
+		//Init game
+		int state = 0;
+		MB.reset(state);
+		reward = 0;
+
+		//Run game
+		for (int t = 0; t < T; t++) {
+			//Run MBIE step
+			auto [action, policy] = MB.play(state, reward);
+
+			//Get reward and next step from MDP
+			reward = R[state][action];
+
+			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
+			std::discrete_distribution<int> distribution(P_s_a.begin(),P_s_a.end());
+			state = distribution(generator);
+		}
+	}
+	
+}
+
 void GSTM(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
 {
 	MDP_type MDP;

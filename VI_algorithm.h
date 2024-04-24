@@ -16,6 +16,38 @@
 
 using namespace std;
 
+class MBIE {
+	public:
+	//delta = 0.05;
+	int m;//; = 100;
+	int nA;// = 4;
+	int nS;
+	double gamma;
+	double epsilon;
+	// max(A[0].size();)
+	// or S*4;
+	double delta;// = delta / (2 * S * nA * m);
+	int s_state;// = 0;
+	int **Nsa;// = NULL;
+	double ***hatP;// = NULL;
+	double **Rsa;// = NULL;
+	int ***Nsas;// = NULL;
+	double **hatR;// = NULL;
+	double **confR;// = NULL;
+	double **confP;// = NULL;
+	vector<double> max_p;
+
+	int current_s;
+	int last_action;
+
+	MBIE(S_type S, int nA, double gamma, double epsilon, double delta, int m); 
+	void confidence();
+	void reset(S_type init);
+	void max_proba(vector<int> sorted_indices, int s, int a);
+	vector<int> EVI();
+	std::tuple<int,std::vector<int>> play(int state, double reward);
+};
+
 V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon);
 V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon);
 V_type value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon,int D3);
