@@ -203,7 +203,7 @@ class MBIE {
 	void confidence();
 	void reset(S_type init);
 	void max_proba(vector<int> sorted_indices, int s, int a);
-	void EVI(double epsilon);
+	vector<int> EVI(double epsilon);
 	void play(S_type S, R_type R);
 };
 
@@ -283,10 +283,8 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 	}
 	//max_p has been set
 }
-// I got tired and chose vectors for tonight :)
-// we can do together the rest bounds and value iteration
 
-void MBIE::EVI(double epsilon)
+vector<int> MBIE::EVI(double epsilon)
 {
 	int niter = 0;
 	//int nS = S;
@@ -323,6 +321,30 @@ void MBIE::EVI(double epsilon)
 				}
 			}
 		}
+		// V distance
+		int dist = 0;
+		for (int i = 0; i < nS; i++) 
+		{
+			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
+		}
+		dist = sqrt(dist);
+		
+		if (dist < epsilon) 
+		{
+			return policy;
+		} 
+		else 
+		{
+			V0 = V1; //copy
+			for (int i = 0; i < nS; ++i)
+			{
+				V1[i] = 1.0 / (1.0 - gamma);
+			}
+			//sorted indices
+			iota(sorted_indices.begin(), sorted_indices.end(), 0);
+			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		}
+		// max_iter break would go here 
 	}
 }
 /*V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m)
