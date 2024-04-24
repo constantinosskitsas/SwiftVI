@@ -256,9 +256,11 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 		max_p[sorted_indices[S - 1]] = 1;
 	}
 	else
-	{
-		vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
-		max_p[sorted_indices[nS - 1]] += self.confP[s][a] / 2.0;
+	{	
+		//Mega copy hack
+		max_p.assign(hatP[s], hatP[s] + nA);
+		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
+		max_p[sorted_indices[S - 1]] += confP[s][a] / 2.0;
 		l = 0;
 		double sum_max_p = 0.0;
 		for (size_t i = 0; i < max_p.size(); ++i)
@@ -267,7 +269,7 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 		}
 		while (sum_max_p > 1.0)
 		{
-			max_p[sorted_indices[l]] = std::max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
+			max_p[sorted_indices[l]] = max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
 			++l;
 
 			// Recalculate the sum of max_p
@@ -277,7 +279,7 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 				sum_max_p += max_p[i];
 			}
 		}
-		// max_p[sorted_indices.back()] += self.confP[s * num_actions + a] / 2.0;
+		
 	}
 	//max_p has been set
 }
@@ -303,6 +305,8 @@ void MBIE::EVI(float epsilon)
 	// Initialize V1
 	vector<double> V1(nS, 0.0); // Initialize with zeros
 	epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	double R_s_a=0;
+
 	while (true)
 	{
 		for (int s = 0; s < nS; s++)
