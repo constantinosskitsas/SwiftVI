@@ -157,10 +157,11 @@ void reset(S_type S, int nA, int ***Nsa, float ***hatP, float **Rsa, int ***Nsas
 	}
 }
 
-void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
+void max_proba(S_type S,int nA, vector<int> sorted_indices, int s, int a,float ***hatP,float **confP,vector<double> &max_p)
 {
-	float min1 = min(1.0, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
-	vector<double> max_p(S, 0.0);
+	float minVal=1.0;
+	float min1 = min(minVal, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
+	//vector<double> max_p(S, 0.0);
 	int l = 0;
 
 	if (min1 == 1)
@@ -168,9 +169,10 @@ void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
 		max_p[sorted_indices[S - 1]] = 1;
 	}
 	else
-	{
-		vector<double> max_p(self.hatP[s][a].begin(), self.hatP[s][a].end());
-		max_p[sorted_indices[S - 1]] += self.confP[s][a] / 2.0;
+	{	
+		max_p.assign(hatP[s][a], hatP[s][a] + nA);
+		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
+		max_p[sorted_indices[S - 1]] += confP[s][a] / 2.0;
 		l = 0;
 		double sum_max_p = 0.0;
 		for (size_t i = 0; i < max_p.size(); ++i)
@@ -179,7 +181,7 @@ void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
 		}
 		while (sum_max_p > 1.0)
 		{
-			max_p[sorted_indices[l]] = std::max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
+			max_p[sorted_indices[l]] = max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
 			++l;
 
 			// Recalculate the sum of max_p
@@ -189,19 +191,20 @@ void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
 				sum_max_p += max_p[i];
 			}
 		}
-		// max_p[sorted_indices.back()] += self.confP[s * num_actions + a] / 2.0;
+		
 	}
-	return ;
+	//return 0.0;
 	//return max_p; --pas it  parameter
 }
 // I got tired and chose vectors for tonight :)
 // we can do together the rest bounds and value iteration
 
-void EVI(S_type S, P_type P, float epsilon, float gamma)
+void EVI(S_type S, P_type P, float epsilon, float gamma,float ***hatP,float **confP)
 {
 	int niter = 0;
-	vector<int> sorted_indices(nS);
 	int nS = S;
+	vector<int> sorted_indices(nS);
+	
 	int nA = 4;
 	// Fill the vector with indices
 	iota(sorted_indices.begin(), sorted_indices.end(), 0);
@@ -215,17 +218,22 @@ void EVI(S_type S, P_type P, float epsilon, float gamma)
 	// Initialize V1
 	vector<double> V1(nS, 0.0); // Initialize with zeros
 	epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	double R_s_a=0;
+
 	while (true)
 	{
 		for (int s = 0; s < nS; s++)
 		{
 			for (int a = 0; a < nA; a++)
 			{
-				maxp = max_proba(sorted_indices, s, a) auto &[P_s_a, P_s_a_nonzero] = P[s][a];
-				double R_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_current_iteration, P_s_a_nonzero);
+				vector<double> maxp(nS, 0.0);
+				max_proba(S,nA,sorted_indices, s, a,hatP,confP,maxp) ;
+				//auto &[P_s_a, P_s_a_nonzero] = P[s][a];
+				//double R_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_current_iteration, P_s_a_nonzero);
+				R_s_a=0;
 				if (a == 0 || R_s_a > V1[s])
 				{
-					V1[s] = temp;
+					//V1[s] = temp;
 					policy[s] = a;
 				}
 			}
