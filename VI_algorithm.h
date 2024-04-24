@@ -45,7 +45,9 @@ class MBIE {
 	void reset(S_type init);
 	void max_proba(vector<int> sorted_indices, int s, int a);
 	vector<int> EVI();
+    vector<int> swiftEVI();
 	std::tuple<int,std::vector<int>> play(int state, double reward);
+    std::tuple<int,std::vector<int>> playswift(int state, double reward);
 };
 
 V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon);

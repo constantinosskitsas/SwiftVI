@@ -51,31 +51,46 @@ void runMBIE() {
 	int T = 1000;
 	int reps = 1; //replicates
 
+
 	MDP_type MDP =  ErgodicRiverSwim(5);//GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
+	
+	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
+	vector<double> V_star = get<0>(V_star_return);
 
 	int reward = 0;
+	int swiftreward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
+	MBIE MBswift = MBIE(nS, nA, gamma, epsilon, delta, m);
 	for (int rep = 0; rep < reps; rep++) {
 		//Init game
 		int state = 0;
+		int swiftstate = 0;
 		MB.reset(state);
+		MBswift.reset(swiftstate);
 		reward = 0;
+		swiftreward = 0;
 
 		//Run game
 		for (int t = 0; t < T; t++) {
 			std::cout << t << std::endl;
 			//Run MBIE step
 			auto [action, policy] = MB.play(state, reward);
+			auto [swiftaction, swiftpolicy] = MBswift.playswift(swiftstate, swiftreward);
 
 			//Get reward and next step from MDP
 			reward = R[state][action];
+			swiftreward = R[swiftstate][swiftaction];
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 			std::discrete_distribution<int> distribution(P_s_a.begin(),P_s_a.end());
 			state = distribution(generator);
+
+			auto &[swiftP_s_a, swiftP_s_a_nonzero] = P[swiftstate][swiftaction];
+			std::discrete_distribution<int> distribution2(swiftP_s_a.begin(),swiftP_s_a.end());
+			swiftstate = distribution2(generator);
 		}
 	}
 	

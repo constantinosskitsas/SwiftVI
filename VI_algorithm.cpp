@@ -180,6 +180,40 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	}
 }
 
+std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
+	//If not first action
+	if (last_action >= 0) 
+	{
+		Nsas[current_s][last_action][state] += 1;
+		Rsa[current_s][last_action] += reward;
+	}
+
+	// conduct updates
+	confidence();
+	for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			hatR[s][a] = Rsa[s][a]/max(1, Nsa[s][a]);
+			for (int s2 = 0; s2 < nS; s2++)
+			{
+				hatP[s][a][s2] = Nsas[s][a][s2]/max(1, Nsa[s][a]);		
+			}
+		}
+	}
+	//Estimate equation 6
+	vector<int> policy = swiftEVI();
+	//Follow the most optimistic greedy policy
+	int action = policy[state];
+
+	//Update with choice
+	Nsa[state][action] += 1;
+	current_s = state;
+	last_action = action;
+
+	return {action, policy};
+}
+
 std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 	//If not first action
 	if (last_action >= 0) 
@@ -207,7 +241,7 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 	int action = policy[state];
 
 	//Update with choice
-	Nsa[state, action] += 1;
+	Nsa[state][action] += 1;
 	current_s = state;
 	last_action = action;
 
@@ -221,7 +255,9 @@ void MBIE::confidence()
 		for (int a = 0; a < nA; a++)
 		{
 			confP[s][a] = sqrt((2 * (log(pow(nS, 2) - 2) - log(delta)) / max(1, Nsa[s][a])));
+			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
 			confR[s][a] = sqrt(log(2 / delta) / (2 * max(1, Nsa[s][a])));
+			//std::cout << confR[s][a] << std::endl;
 		}
 	}
 }
@@ -236,6 +272,7 @@ void MBIE::reset(S_type init)
 			hatR[i][j] = 0;
 			confR[i][j] = 0;
 			confP[i][j] = 0;
+			Nsa[i][j] = 0;
 			for (int k = 0; k < nS; k++)
 			{
 				Nsas[i][j][k] = 0;
@@ -286,6 +323,143 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 		
 	}
 	//max_p has been set
+}
+
+vector<int> MBIE::swiftEVI()
+{
+	int max_iter = 20;
+	int niter = 0;
+	//int nS = S;
+	vector<int> sorted_indices(nS);
+	
+	// Fill the vector with indices
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	vector<int> policy(nS, 0);
+	std::vector<double> V0(nS);
+	for (int i = 0; i < nS; i++)
+	{
+		V0[i] = (gamma / (1.0 - gamma))*1+1; //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
+	}
+
+	// Initialize V1
+	vector<double> V1(nS, 1.0); // Initialize with ones
+	double _epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	double temp=0;
+
+	// Heap init
+	q_action_pair_type **s_heaps = new q_action_pair_type *[nS];
+	for (int i = 0; i < nS; ++i)
+	{
+		// s_heaps[i] = new q_action_pair_type[A[i].size()];
+		s_heaps[i] = new q_action_pair_type[nA];
+	}
+
+	int *heap_size = new int[nS];
+
+	for (int s = 0; s < nS; s++)
+	{
+		// Put the initial q(s,a) elements into the heap
+		// fill each one with the maximum value of each action
+		// vector<q_action_pair_type> s_h(A[s].size(),(R_max / (1 - gamma)));
+		q_action_pair_type *s_h = s_heaps[s];
+
+		// for (int a_index = 0; a_index < A[s].size(); a_index++){
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			// get the action of the index
+			//int a = A[s][a_index];
+			//(Currently a is always its index)
+
+			// auto& [P_s_a, P_s_a_nonzero] = P[s][a];
+			// use the even iteration, as this is the one used in the i = 1 iteration, that we want to pre-do
+			// double q_1_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V[0], P_s_a_nonzero);
+			double q_1_s_a = V0[s]; //(gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
+
+			q_action_pair_type q_a_pair = make_pair(q_1_s_a, a_index);
+			s_h[a_index] = q_a_pair;
+		}
+
+		// set the heap size
+		heap_size[s] = nA;
+
+		// make it a heap for this state s
+		make_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+	}
+
+	while (true)
+	{
+		niter++;
+		for (int s = 0; s < nS; s++)
+		{
+			q_action_pair_type *s_h = s_heaps[s];
+			//nt old_action = -1;
+			while (true) {
+				
+				// update the top value
+				int top_action = s_h[0].second;
+				double old = s_h[0].first;
+		
+				//for (int a = 0; a < nA; a++)
+				//{
+				max_proba(sorted_indices, s, top_action);
+				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				double updated_top_action_value = hatR[s][top_action] + confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
+				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+				if (updated_top_action_value != updated_top_action_value) {
+					std::cout << std::endl;
+				} 
+				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+				s_h[heap_size[s] - 1] = updated_pair;
+				push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+
+				int new_action = s_h[0].second;
+				//if (top_action == 0 || temp > V1[s])
+				//{
+				//	V1[s] = temp;
+				//	policy[s] = top_action;
+				//}
+				std::cout << old << "   " << updated_top_action_value << std::endl;
+			
+				if (top_action == new_action) {
+					break;
+				}
+			}
+			V1[s] = s_h[0].first;
+			policy[s] = s_h[0].second;
+		}
+		// V distance
+		int dist = 0;
+		for (int i = 0; i < nS; i++) 
+		{
+			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
+		}
+		dist = sqrt(dist);
+		
+		if (dist < _epsilon) 
+		{
+			return policy;
+		} 
+		else 
+		{
+			//for (int i = 0; i< nS; i++) {
+			//	V0[i] =
+			//}
+			std::swap(V0,V1);
+			//V0 = V1; //copy
+			for (int i = 0; i < nS; i++)
+			{
+				V1[i] = (gamma / (1.0 - gamma))*1+1;
+			}
+			//sorted indices
+			iota(sorted_indices.begin(), sorted_indices.end(), 0);
+			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		}
+		if (max_iter == niter) {
+			std::cout << "Early stop in EVI: "<< dist << "  " << _epsilon  << std::endl;
+			
+			return policy;
+		}
+	}
 }
 
 vector<int> MBIE::EVI()
@@ -450,8 +624,8 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 	// keep count of number of iterations
 	int iterations = 0;
 	bool upper_convergence_criteria = false;
-	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
-	const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
+	//const double convergence_bound_precomputed = 0.0005;
 
 	while (!upper_convergence_criteria)
 	{
