@@ -127,13 +127,13 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 }
 
 
-MBIE::MBIE(S_type S, int nA, double gamma, double epsilon, double delta, int m) {
-	delta = delta;
-	m = m;
-	nA = nA; //Assumes the same number of actions for all states
+MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int _m) {
+	delta = _delta;
+	m = _m;
+	nA = _nA; //Assumes the same number of actions for all states
 	nS = S;
-	gamma = gamma;
-	epsilon = epsilon;
+	gamma = _gamma;
+	epsilon = _epsilon;
 	// max(A[0].size();)
 	// or S*4;
 	delta = delta / (2 * S * nA * m);
@@ -146,12 +146,13 @@ MBIE::MBIE(S_type S, int nA, double gamma, double epsilon, double delta, int m) 
 	confR = new double *[S];
 	confP = new double *[S];
 
-	vector<double> max_p(nS, 0.0);
+	
 	current_s = 0;
 	last_action = -1;
 	
 	for (int i = 0; i < S; ++i)
 	{
+		max_p.push_back(0.0);// (nS, 0.0);
 		Nsa[i] = new int[nA];
 		Rsa[i] = new double[nA];
 		hatR[i] = new double[nA];

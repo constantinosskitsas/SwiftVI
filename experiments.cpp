@@ -41,7 +41,7 @@ using namespace std::chrono;
 void runMBIE() {
 	std::default_random_engine generator;
 
-	int nS = 5;
+	int nS = 5*5;
 	int nA = 4;
 	double gamma = 0.95;
 	double epsilon = 0.1;
@@ -51,7 +51,7 @@ void runMBIE() {
 	int T = 10000;
 	int reps = 4; //replicates
 
-	MDP_type MDP = RiverSwim(nS);
+	MDP_type MDP = GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
@@ -67,6 +67,7 @@ void runMBIE() {
 
 		//Run game
 		for (int t = 0; t < T; t++) {
+			std::cout << t << std::endl;
 			//Run MBIE step
 			auto [action, policy] = MB.play(state, reward);
 
