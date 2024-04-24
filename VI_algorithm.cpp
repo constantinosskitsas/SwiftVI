@@ -133,7 +133,8 @@ class MBIE {
 	int m;//; = 100;
 	int nA;// = 4;
 	int nS;
-	int gamma;
+	double gamma;
+	double epsilon;
 	// max(A[0].size();)
 	// or S*4;
 	double delta;// = delta / (2 * S * nA * m);
@@ -156,6 +157,7 @@ class MBIE {
 		nA = 4;
 		nS = S;
 		gamma = gamma;
+		epsilon = epsilon;
 		// max(A[0].size();)
 		// or S*4;
 		delta = delta / (2 * S * nA * m);
@@ -203,12 +205,42 @@ class MBIE {
 	void confidence();
 	void reset(S_type init);
 	void max_proba(vector<int> sorted_indices, int s, int a);
-	vector<int> EVI(double epsilon);
-	void play(S_type S, R_type R);
+	vector<int> EVI();
+	std::tuple<int,std::vector<int>> play(int state, double reward);
 };
 
-void MBIE::play(S_type S, R_type R) {
+std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
+	//If not first action
+	if (last_action >= 0) 
+	{
+		Nsas[current_s][last_action][state] += 1;
+		Rsa[current_s][last_action] += reward;
+	}
 
+	// conduct updates
+	confidence();
+	for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			hatR[s][a] = Rsa[s][a]/max(1, Nsa[s][a]);
+			for (int s2 = 0; s2 < nS; s2++)
+			{
+				hatP[s][a][s2] = Nsas[s][a][s2]/max(1, Nsa[s][a]);		
+			}
+		}
+	}
+	//Estimate equation 6
+	vector<int> policy = EVI();
+	//Follow the most optimistic greedy policy
+	int action = policy[state];
+
+	//Update with choice
+	Nsa[state, action] += 1;
+	current_s = state;
+	last_action = action;
+
+	return {action, policy};
 }
 
 void MBIE::confidence()
@@ -284,7 +316,7 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 	//max_p has been set
 }
 
-vector<int> MBIE::EVI(double epsilon)
+vector<int> MBIE::EVI()
 {
 	int niter = 0;
 	//int nS = S;
