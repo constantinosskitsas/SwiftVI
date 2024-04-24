@@ -31,6 +31,7 @@ MDP_type generate_random_MDP_exponential_distributed_rewards(int S, int A_num, d
 MDP_type readMDPS(string Rseed, string S);
 P_type P_fixed_size1(int S, int A_num, int num_of_nonzero_transition_states, default_random_engine &e);
 MDP_type RiverSwim(int S);
+MDP_type ErgodicRiverSwim(int S);
 MDP_type Maze(int X, int Y, int seed);
 bool check(int pos[], int ra, int siz);
 int posDi(int X1, int Y1, int Swi, int Dir);

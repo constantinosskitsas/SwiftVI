@@ -136,7 +136,7 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	epsilon = _epsilon;
 	// max(A[0].size();)
 	// or S*4;
-	delta = delta / (2 * S * nA * m);
+	delta = _delta / (2 * S * nA * m);
 	int s_state = 0;
 	hatP = new double **[S];
 	Nsas = new int **[S];
@@ -243,7 +243,8 @@ void MBIE::reset(S_type init)
 			}
 		}
 	}
-	//TODO: init start and last
+	current_s = init;
+	last_action = -1;
 }
 
 void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
@@ -261,7 +262,7 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 	else
 	{	
 		//Mega copy hack (that may or may not work)
-		max_p.assign(*hatP[s], *hatP[s] + nA);
+		max_p.assign(*hatP[s], *hatP[s] + nS);
 		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
 		max_p[sorted_indices[nS - 1]] += confP[s][a] / 2.0;
 		l = 0;
@@ -289,34 +290,35 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 
 vector<int> MBIE::EVI()
 {
+	int max_iter = 20;
 	int niter = 0;
 	//int nS = S;
 	vector<int> sorted_indices(nS);
 	
-	int nA = 4;
 	// Fill the vector with indices
 	iota(sorted_indices.begin(), sorted_indices.end(), 0);
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
-	for (int i = 0; i < nS; ++i)
+	for (int i = 0; i < nS; i++)
 	{
 		V0[i] = 1.0 / (1.0 - gamma);
 	}
 
 	// Initialize V1
 	vector<double> V1(nS, 0.0); // Initialize with zeros
-	epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	double _epsilon = epsilon * (1 - gamma) / (2 * gamma);
 	double R_s_a=0;
 
 	while (true)
 	{
+		niter++;
 		for (int s = 0; s < nS; s++)
 		{
 			for (int a = 0; a < nA; a++)
 			{
 				max_proba(sorted_indices, s, a);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
-				double R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
 				if (a == 0 || R_s_a > V1[s])
 				{
 					V1[s] = R_s_a;
@@ -332,14 +334,18 @@ vector<int> MBIE::EVI()
 		}
 		dist = sqrt(dist);
 		
-		if (dist < epsilon) 
+		if (dist < _epsilon) 
 		{
 			return policy;
 		} 
 		else 
 		{
-			V0 = V1; //copy
-			for (int i = 0; i < nS; ++i)
+			//for (int i = 0; i< nS; i++) {
+			//	V0[i] =
+			//}
+			std::swap(V0,V1);
+			//V0 = V1; //copy
+			for (int i = 0; i < nS; i++)
 			{
 				V1[i] = 1.0 / (1.0 - gamma);
 			}
@@ -347,7 +353,11 @@ vector<int> MBIE::EVI()
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);
 			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
 		}
-		// max_iter break would go here 
+		if (max_iter == niter) {
+			std::cout << "Early stop in EVI: "<< dist << "  " << _epsilon  << std::endl;
+			
+			return policy;
+		}
 	}
 }
 /*V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m)

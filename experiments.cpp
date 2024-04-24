@@ -41,21 +41,20 @@ using namespace std::chrono;
 void runMBIE() {
 	std::default_random_engine generator;
 
-	int nS = 5*5;
-	int nA = 4;
-	double gamma = 0.95;
+	int nS = 5;
+	int nA = 2;
+	double gamma = 0.92;
 	double epsilon = 0.1;
 	double delta = 0.05;
-	int m = 1000;
+	int m = 1;
 
-	int T = 10000;
-	int reps = 4; //replicates
+	int T = 1000;
+	int reps = 1; //replicates
 
-	MDP_type MDP = GridWorld(5, 5, 1337);
+	MDP_type MDP =  ErgodicRiverSwim(5);//GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
-
 
 	int reward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);

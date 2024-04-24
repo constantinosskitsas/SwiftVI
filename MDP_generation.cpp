@@ -478,6 +478,103 @@ MDP_type readMDPS(string Rseed, string S)
 	return MDP;
 }
 
+
+MDP_type ErgodicRiverSwim(int S)
+{
+	// Create R
+	R_type R;
+	vector<double> R_s0;
+	R_s0.push_back(0.05);
+	R_s0.push_back(0);
+	R.push_back(R_s0);
+	for (int i = 1; i < S - 1; ++i)
+	{
+		vector<double> R_s;
+		for (int j = 0; j < 2; ++j)
+		{
+			R_s.push_back(0);
+		}
+		R.push_back(R_s);
+	}
+	R_s0.clear();
+	R_s0.push_back(0);
+	R_s0.push_back(1);
+	R.push_back(R_s0);
+
+	// create A
+	A_type A;
+	vector<int> A_s;
+	A_s.push_back(0);
+	A_s.push_back(1);
+	for (int i = 0; i < S; ++i)
+	{
+		A.push_back(A_s);
+	}
+
+	P_type P;
+	vector<pair<vector<double>, vector<int>>> P_s;
+	vector<int> P_s_a_nonzero_states;
+	// vector<double> P_s_a(2, double(0));
+	vector<double> P_s_a;
+	P_s_a_nonzero_states.push_back(0);
+	P_s_a_nonzero_states.push_back(1);
+	P_s_a.push_back(0.95);
+	P_s_a.push_back(0.05);
+	P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+	P_s_a_nonzero_states.clear();
+	P_s_a.clear();
+	P_s_a_nonzero_states.push_back(0);
+	P_s_a.push_back(0.6);
+	P_s_a_nonzero_states.push_back(1);
+	P_s_a.push_back(0.4);
+	P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+	P.push_back(P_s);
+	P_s_a_nonzero_states.clear();
+	P_s_a.clear();
+	P_s.clear();
+
+	for (int i = 1; i < S - 1; ++i)
+	{
+		// we now fix state s
+
+		P_s_a_nonzero_states.push_back(i - 1);
+		P_s_a_nonzero_states.push_back(i + 1);
+		P_s_a.push_back(0.95);
+		P_s_a.push_back(0.05);
+		P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+		P_s_a_nonzero_states.clear();
+		P_s_a.clear();
+		P_s_a_nonzero_states.push_back(i - 1);
+		P_s_a.push_back(0.05);
+		P_s_a_nonzero_states.push_back(i);
+		P_s_a.push_back(0.55);
+		P_s_a_nonzero_states.push_back(i + 1);
+		P_s_a.push_back(0.40);
+		P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+		P.push_back(P_s);
+
+		P_s_a_nonzero_states.clear();
+		P_s_a.clear();
+		P_s.clear();
+	}
+
+	P_s_a_nonzero_states.push_back(S - 2);
+	P_s_a.push_back(1);
+	P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+	P_s_a_nonzero_states.clear();
+	P_s_a.clear();
+	P_s_a_nonzero_states.push_back(S - 1);
+	P_s_a.push_back(0.6);
+	P_s_a_nonzero_states.push_back(S - 2);
+	P_s_a.push_back(0.4);
+	P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+	P.push_back(P_s);
+
+	MDP_type MDP = make_tuple(R, A, P);
+
+	return MDP;
+}
+
 MDP_type RiverSwim(int S)
 {
 	// Create R
@@ -1210,19 +1307,19 @@ MDP_type GridWorld(int X, int Y, int seed)
 		y_curr = i / Y;
 		for (auto a : A[i])
 		{
-			totalP = 0.7;
-			int pos=posDi(x_curr, y_curr, X, a);
-			if (A_direction[i][a]>=0)
-			P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a]));
-			else{
-			P_s_a_nonzero_states.push_back(i);
-			}
-			P_s_a.push_back(totalP);
 			for (auto a1 : A[i])
 			{
-				if (a1 == a)
+				if (a1 == a){
+					int pos=posDi(x_curr, y_curr, X, a);
+					if (A_direction[i][a]>=0)
+					P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a]));
+					else{
+					P_s_a_nonzero_states.push_back(i);
+					}
+					P_s_a.push_back(0.7);
 					continue;
-				
+				}
+					
 				if (((A[i][a] + A[i][a1]) % 2) == 1)
 				{if (A_direction[i][a1]<0){
 					P_s_a_nonzero_states.push_back(i);
