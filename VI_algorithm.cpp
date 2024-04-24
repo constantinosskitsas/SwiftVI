@@ -126,7 +126,92 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 	return result_tuple;
 }
 
-void confidence(double delta, S_type S, int nA, float **confP, float **confR, int **Nsa)
+
+class MBIE {
+	public:
+	//delta = 0.05;
+	int m;//; = 100;
+	int nA;// = 4;
+	int nS;
+	int gamma;
+	// max(A[0].size();)
+	// or S*4;
+	float delta;// = delta / (2 * S * nA * m);
+	int s_state;// = 0;
+	int **Nsa;// = NULL;
+	float ***hatP;// = NULL;
+	float **Rsa;// = NULL;
+	int ***Nsas;// = NULL;
+	float **hatR;// = NULL;
+	float **confR;// = NULL;
+	float **confP;// = NULL;
+	vector<double> max_p;
+
+	int current_s;
+	int last_action;
+
+	MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m) {
+		delta = 0.05;
+		m = 1000;
+		nA = 4;
+		nS = S;
+		gamma = gamma;
+		// max(A[0].size();)
+		// or S*4;
+		delta = delta / (2 * S * nA * m);
+		int s_state = 0;
+		hatP = new float **[S];
+		Nsas = new int **[S];
+		Nsa = new int *[S];
+		Rsa = new float *[S];
+		hatR = new float *[S];
+		confR = new float *[S];
+		confP = new float *[S];
+
+		vector<double> max_p(nS, 0.0);
+		current_s = 0;
+		last_action = -1;
+		
+		for (int i = 0; i < S; ++i)
+		{
+			Nsa[i] = new int[nA];
+			Rsa[i] = new float[nA];
+			hatR[i] = new float[nA];
+			confR[i] = new float[nA];
+			confP[i] = new float[nA];
+			memset(Nsa[i], 0, sizeof(int) * nA);
+			memset(Rsa[i], 0, sizeof(float) * nA);
+			memset(hatR[i], 0, sizeof(float) * nA);
+		}
+
+		//
+		//	self.confP = np.zeros((self.nS, self.nA))
+
+		for (int i = 0; i < S; i++)
+		{
+			Nsas[i] = new int *[nA];
+			hatP[i] = new float *[nA];
+			for (int j = 0; j < nA; j++)
+			{
+				Nsas[i][j] = new int[S];
+				hatP[i][j] = new float[S];
+				memset(Nsas[i][j], 0, sizeof(int) * S);
+				memset(hatP[i][j], 0, sizeof(float) * S);
+			}
+		}
+	}
+	void confidence();
+	void reset(S_type init);
+	void max_proba(S_type S, vector<int> sorted_indices, int s, int a);
+	void EVI(S_type S, P_type P, float epsilon, float gamma);
+	void play(S_type S, R_type R);
+};
+
+void MBIE::play(S_type S, R_type R) {
+
+}
+
+void MBIE::confidence()
 {
 	for (int s = 0; s < S; s++)
 	{
@@ -138,9 +223,9 @@ void confidence(double delta, S_type S, int nA, float **confP, float **confR, in
 	}
 }
 
-void reset(S_type S, int nA, int ***Nsa, float ***hatP, float **Rsa, int ***Nsas, float **hatR, float **confR, float **confP)
+void MBIE::reset(S_type init)
 {
-	for (int i = 0; i < S; i++)
+	for (int i = 0; i < nS; i++)
 	{
 		for (int j = 0; j < nA; j++)
 		{
@@ -155,12 +240,15 @@ void reset(S_type S, int nA, int ***Nsa, float ***hatP, float **Rsa, int ***Nsas
 			}
 		}
 	}
+	//TODO: init start and last
 }
 
-void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
+void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 {
-	float min1 = min(1.0, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
-	vector<double> max_p(S, 0.0);
+	float min1 = min(1.0f, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
+	
+	std::fill(std::being(max_p),std::end(max_p),0.0)
+	
 	int l = 0;
 
 	if (min1 == 1)
@@ -169,8 +257,8 @@ void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
 	}
 	else
 	{
-		vector<double> max_p(self.hatP[s][a].begin(), self.hatP[s][a].end());
-		max_p[sorted_indices[S - 1]] += self.confP[s][a] / 2.0;
+		vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
+		max_p[sorted_indices[nS - 1]] += self.confP[s][a] / 2.0;
 		l = 0;
 		double sum_max_p = 0.0;
 		for (size_t i = 0; i < max_p.size(); ++i)
@@ -191,17 +279,17 @@ void max_proba(S_type S, vector<int> sorted_indices, int s, int a)
 		}
 		// max_p[sorted_indices.back()] += self.confP[s * num_actions + a] / 2.0;
 	}
-	return ;
-	//return max_p; --pas it  parameter
+	//max_p has been set
 }
 // I got tired and chose vectors for tonight :)
 // we can do together the rest bounds and value iteration
 
-void EVI(S_type S, P_type P, float epsilon, float gamma)
+void MBIE::EVI(float epsilon)
 {
 	int niter = 0;
-	vector<int> sorted_indices(nS);
 	int nS = S;
+	vector<int> sorted_indices(nS);
+	
 	int nA = 4;
 	// Fill the vector with indices
 	iota(sorted_indices.begin(), sorted_indices.end(), 0);
@@ -221,18 +309,19 @@ void EVI(S_type S, P_type P, float epsilon, float gamma)
 		{
 			for (int a = 0; a < nA; a++)
 			{
-				maxp = max_proba(sorted_indices, s, a) auto &[P_s_a, P_s_a_nonzero] = P[s][a];
-				double R_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_current_iteration, P_s_a_nonzero);
+				max_proba(sorted_indices, s, a)
+				auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				double R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V0, P_s_a_nonzero);
 				if (a == 0 || R_s_a > V1[s])
 				{
-					V1[s] = temp;
+					V1[s] = R_s_a;
 					policy[s] = a;
 				}
 			}
 		}
 	}
 }
-V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m)
+/*V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, double delta, int m)
 {
 	delta = 0.05;
 	m = 100;
@@ -283,7 +372,7 @@ V_type MBIE(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon
 			memset(hatP[i][j], 0, sizeof(float) * S);
 		}
 	}
-}
+}*/
 
 V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
 {
