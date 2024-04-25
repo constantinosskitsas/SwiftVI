@@ -38,27 +38,27 @@
 using namespace std;
 using namespace std::chrono;
 
-void runSwiftMBIE()
+void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 {
 	std::default_random_engine generator;
 
-	int nS = 5;
-	int nA = 2;
+	int nS = S;
+	int nA = _nA;
 	double gamma = 0.92;
 	double epsilon = 0.1;
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 1000;
+	int T = 10000;
 	int reps = 1; // replicates
 
-	MDP_type MDP = ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
+	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
 
-	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
-	vector<double> V_star = get<0>(V_star_return);
+	//V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
+	//vector<double> V_star = get<0>(V_star_return);
 
 	int reward = 0;
 	int swiftreward = 0;
@@ -73,7 +73,10 @@ void runSwiftMBIE()
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			std::cout << t << std::endl;
+			//if (t%100 == 0) {
+			//	std::cout << "MBIEH " << t << std::endl;
+			//}
+			//std::cout << t << std::endl;
 			// Run MBIE step
 			auto [action, policy] = MB.playswift(state, reward);
 			// Get reward and next step from MDP
@@ -86,27 +89,27 @@ void runSwiftMBIE()
 	}
 }
 
-void runMBIE()
+void runMBIE(MDP_type mdp, int S, int _nA)
 {
 	std::default_random_engine generator;
 
-	int nS = 5;
-	int nA = 2;
+	int nS = S;
+	int nA = _nA;
 	double gamma = 0.92;
 	double epsilon = 0.1;
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 1000;
+	int T = 10000;
 	int reps = 1; // replicates
 
-	MDP_type MDP = ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
+	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
 
-	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
-	vector<double> V_star = get<0>(V_star_return);
+	//V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
+	//vector<double> V_star = get<0>(V_star_return);
 
 	int reward = 0;
 	int swiftreward = 0;
@@ -125,7 +128,10 @@ void runMBIE()
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			std::cout << t << std::endl;
+			//if (t%100 == 0) {
+			//	std::cout << "MBIE " << t << std::endl;
+			//}
+			//std::cout << t << std::endl;
 			// Run MBIE step
 			auto [action, policy] = MB.play(state, reward);
 			auto [swiftaction, swiftpolicy] = MBswift.playswift(swiftstate, swiftreward);
@@ -157,24 +163,26 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH" << endl;
 	avgstring_stream << "MBVI MBVIH" << endl;
-	int repetitions = 10;
+	int repetitions = 5;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
-	float VI[10][siIter];
+	float VI[2][siIter];
 	int k = 0;
 	int S;
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 2; i++)
 		for (int j = 0; j < siIter; j++)
 			VI[i][j] = 0;
 
 	for (int iters = 0; iters < repetitions; iters++)
 	{
 		k = 0;
-		for (int ite = StartP; ite = endP; ite = ite + IncP)
+		for (int ite = StartP; ite <= endP; ite = ite + IncP)
 		{
+			std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 			int seed = time(0);
-			MDP = ErgodicRiverSwim(ite);
+			MDP = GridWorld(ite,ite,123); //Maze(ite,ite,123);// (ite);
 			S = ite;
+			int nA = 4;
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
 			P_type P = get<2>(MDP);
@@ -183,18 +191,21 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 
 			A_type A1 = copy_A(A);
 			auto start_VI = high_resolution_clock::now();
-			runMBIE();
+			runMBIE(MDP, S, nA);
 			auto stop_VI = high_resolution_clock::now();
 			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
 
 
 			A_type A2 = copy_A(A);
 			auto start_VIH = high_resolution_clock::now();
-			void runSwiftMBIE();
+			runSwiftMBIE(MDP, S, nA);
 			auto stop_VIH = high_resolution_clock::now();
 			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+			//std::cout << k << "  " << ite << std::endl;
 			VI[0][k] += duration_VI.count();
+			//std::cout << k << std::endl;
 			VI[1][k] += duration_VIH.count();
+			//std::cout << k << std::endl;
 			string_stream << duration_VI.count() << " " << duration_VIH.count() <<endl;
 			k++;
 		}

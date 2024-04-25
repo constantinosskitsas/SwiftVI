@@ -405,9 +405,9 @@ vector<int> MBIE::swiftEVI()
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
 				double updated_top_action_value = hatR[s][top_action] + confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
 				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
-				if (updated_top_action_value != updated_top_action_value) {
-					std::cout << std::endl;
-				} 
+				//if (updated_top_action_value != updated_top_action_value) {
+				//	std::cout << std::endl;
+				//} 
 				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
 				s_h[heap_size[s] - 1] = updated_pair;
 				push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
@@ -418,7 +418,7 @@ vector<int> MBIE::swiftEVI()
 				//	V1[s] = temp;
 				//	policy[s] = top_action;
 				//}
-				std::cout << old << "   " << updated_top_action_value << std::endl;
+				//std::cout << old << "   " << updated_top_action_value << std::endl;
 			
 				if (top_action == new_action) {
 					break;
@@ -475,7 +475,7 @@ vector<int> MBIE::EVI()
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = 1.0 / (1.0 - gamma);
+		V0[i] = (gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 	}
 
 	// Initialize V1
@@ -521,7 +521,7 @@ vector<int> MBIE::EVI()
 			//V0 = V1; //copy
 			for (int i = 0; i < nS; i++)
 			{
-				V1[i] = 1.0 / (1.0 - gamma);
+				V1[i] = (gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 			}
 			//sorted indices
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);

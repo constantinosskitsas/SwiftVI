@@ -1227,12 +1227,22 @@ MDP_type GridWorld(int X, int Y, int seed)
 	vector<int> A_sD;
 	A_type A;
 	A_type A_direction;
-	for (int i = 0; i < wrong_box; ++i)
+	/*for (int i = 0; i < wrong_box; ++i)
 	{
 		int X_wrong = rand() % X;
 		int Y_wrong = rand() % Y;
 		WBoxes.insert((X_wrong + (Y_wrong * X)));
-	}
+	}*/
+	WBoxes.insert(0+(Y/2)*X);
+	WBoxes.insert(X-1+(Y/2)*X);
+	WBoxes.insert(X/2+0);
+	WBoxes.insert((X/2)+((Y-1)*X));
+	int dd=(X/2)+((Y/2)*X);
+	WBoxes.insert(dd);
+	WBoxes.insert(dd+1);
+	WBoxes.insert(dd-1);
+	WBoxes.insert(dd-X*1);
+	WBoxes.insert(dd+X*1);
 	int S = X * Y;
 	for (int i = 0; i < S; i++)
 	{
@@ -1288,7 +1298,7 @@ MDP_type GridWorld(int X, int Y, int seed)
 
 		for (auto a : A_direction[i])
 		{
-			if (posDi(x_curr, y_curr, X, a) == S) // make it Goal State
+			if (posDi(x_curr, y_curr, X, a) == S-1) // make it Goal State
 				R_s.push_back(1);
 			else
 				R_s.push_back(0);

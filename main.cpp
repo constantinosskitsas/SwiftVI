@@ -41,9 +41,9 @@ using namespace std::chrono;
 // terminal compilation and running: g++ -pthread -std=gnu++17 -o algo_test *.cpp && ./algo_test
 int main(int argc, char *argv[])
 {
-	std::cout << "running MBIE" << std::endl;
-	runMBIE();
-	std::cout << "Back to normal" << std::endl;
+	//std::cout << "running MBIE" << std::endl;
+	//runMBIE();
+	//std::cout << "Back to normal" << std::endl;
 	time_t time_now = time(0);
 	double epsilon = 0.05;
 	double gamma = 0.99;
@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 	int States = 30;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 50;
+	int StartP = 100;
 	int EndP = 500;
-	int IncP = 50;
+	int IncP = 100;
 	std::size_t pos;
 
 	string file_prefix_number_of_states_best = "number_of_states_best";
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	int number_of_transitions = 0;
 	double mean = 0;
 	double variance = 0;
-	NOFexp = 11;
+	NOFexp = 12;
 	if (NOFexp == 1 || NOFexp == 2)
 	{
 		VMS(NOFexp, epsilon, gamma);
