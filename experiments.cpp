@@ -38,7 +38,8 @@
 using namespace std;
 using namespace std::chrono;
 
-void runSwiftMBIE() {
+void runSwiftMBIE()
+{
 	std::default_random_engine generator;
 
 	int nS = 5;
@@ -49,43 +50,44 @@ void runSwiftMBIE() {
 	int m = 1;
 
 	int T = 1000;
-	int reps = 1; //replicates
+	int reps = 1; // replicates
 
-
-	MDP_type MDP =  ErgodicRiverSwim(5);//GridWorld(5, 5, 1337);
+	MDP_type MDP = ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
-	
+
 	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
 	vector<double> V_star = get<0>(V_star_return);
 
 	int reward = 0;
 	int swiftreward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
-	for (int rep = 0; rep < reps; rep++) {
-		//Init game
+	for (int rep = 0; rep < reps; rep++)
+	{
+		// Init game
 		int state = 0;
 		MB.reset(state);
 		reward = 0;
 
-		//Run game
-		for (int t = 0; t < T; t++) {
+		// Run game
+		for (int t = 0; t < T; t++)
+		{
 			std::cout << t << std::endl;
-			//Run MBIE step
+			// Run MBIE step
 			auto [action, policy] = MB.playswift(state, reward);
-			//Get reward and next step from MDP
+			// Get reward and next step from MDP
 			reward = R[state][action];
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-			std::discrete_distribution<int> distribution(P_s_a.begin(),P_s_a.end());
+			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = distribution(generator);
 		}
 	}
-	
 }
 
-void runMBIE() {
+void runMBIE()
+{
 	std::default_random_engine generator;
 
 	int nS = 5;
@@ -96,14 +98,13 @@ void runMBIE() {
 	int m = 1;
 
 	int T = 1000;
-	int reps = 1; //replicates
+	int reps = 1; // replicates
 
-
-	MDP_type MDP =  ErgodicRiverSwim(5);//GridWorld(5, 5, 1337);
+	MDP_type MDP = ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
-	
+
 	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
 	vector<double> V_star = get<0>(V_star_return);
 
@@ -111,8 +112,9 @@ void runMBIE() {
 	int swiftreward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
 	MBIE MBswift = MBIE(nS, nA, gamma, epsilon, delta, m);
-	for (int rep = 0; rep < reps; rep++) {
-		//Init game
+	for (int rep = 0; rep < reps; rep++)
+	{
+		// Init game
 		int state = 0;
 		int swiftstate = 0;
 		MB.reset(state);
@@ -120,29 +122,91 @@ void runMBIE() {
 		reward = 0;
 		swiftreward = 0;
 
-		//Run game
-		for (int t = 0; t < T; t++) {
+		// Run game
+		for (int t = 0; t < T; t++)
+		{
 			std::cout << t << std::endl;
-			//Run MBIE step
+			// Run MBIE step
 			auto [action, policy] = MB.play(state, reward);
 			auto [swiftaction, swiftpolicy] = MBswift.playswift(swiftstate, swiftreward);
 
-			//Get reward and next step from MDP
+			// Get reward and next step from MDP
 			reward = R[state][action];
 			swiftreward = R[swiftstate][swiftaction];
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-			std::discrete_distribution<int> distribution(P_s_a.begin(),P_s_a.end());
+			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = distribution(generator);
 
 			auto &[swiftP_s_a, swiftP_s_a_nonzero] = P[swiftstate][swiftaction];
-			std::discrete_distribution<int> distribution2(swiftP_s_a.begin(),swiftP_s_a.end());
+			std::discrete_distribution<int> distribution2(swiftP_s_a.begin(), swiftP_s_a.end());
 			swiftstate = distribution2(generator);
 		}
 	}
-	
 }
+void RLRS(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
+{
+	MDP_type MDP;
+	ostringstream string_stream;
+	ostringstream avgstring_stream;
+	ofstream output_stream;
+	ofstream avgoutput_stream;
+	string file_name_VI = "Skitsas//RLRS.txt";
+	string file_name_VIAVG = "Skitsas//avgRLRS.txt";
+	string_stream << "Experiment ID: " << expnum << endl;
+	avgstring_stream << "Experiment ID" << expnum << endl;
+	string_stream << "MBVI MBVIH" << endl;
+	avgstring_stream << "MBVI MBVIH" << endl;
+	int repetitions = 10;
+	int siIter = ((endP - StartP) / IncP) + 1;
+	// int siIter= 5;
+	float VI[10][siIter];
+	int k = 0;
+	int S;
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < siIter; j++)
+			VI[i][j] = 0;
 
+	for (int iters = 0; iters < repetitions; iters++)
+	{
+		k = 0;
+		for (int ite = StartP; ite = endP; ite = ite + IncP)
+		{
+			int seed = time(0);
+			MDP = ErgodicRiverSwim(ite);
+			S = ite;
+			R_type R = get<0>(MDP);
+			A_type A = get<1>(MDP);
+			P_type P = get<2>(MDP);
+			int counter = 0;
+
+
+			A_type A1 = copy_A(A);
+			auto start_VI = high_resolution_clock::now();
+			runMBIE();
+			auto stop_VI = high_resolution_clock::now();
+			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+
+
+			A_type A2 = copy_A(A);
+			auto start_VIH = high_resolution_clock::now();
+			void runSwiftMBIE();
+			auto stop_VIH = high_resolution_clock::now();
+			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+			VI[0][k] += duration_VI.count();
+			VI[1][k] += duration_VIH.count();
+			string_stream << duration_VI.count() << " " << duration_VIH.count() <<endl;
+			k++;
+		}
+	}
+	for (int k = 0; k < siIter; k++)
+	{
+		avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions <<  endl;
+	}
+	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
+	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
+	write_stringstream_to_file(avgstring_stream, avgoutput_stream, file_name_VIAVG);
+}
 void GSTM(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
 {
 	MDP_type MDP;
@@ -211,16 +275,18 @@ void GSTM(string filename, int expnum, int States, int Actions, int SS, int Star
 			P_type P = get<2>(MDP);
 			int counter = 0;
 			for (int i = 0; i < S; i++)
-			{cout<<"State "<<i<<endl;
-				for (auto a : A[i]){
-					cout<<"Action "<<a<<endl; 
+			{
+				cout << "State " << i << endl;
+				for (auto a : A[i])
+				{
+					cout << "Action " << a << endl;
 					auto &[P_s_a, P_s_a_nonzero] = P[i][a];
-					int k=0;
-					for (int s : P_s_a_nonzero){
-						cout<<"SS state :"<<s<<" Prob :"<<P_s_a[k]<<endl;
+					int k = 0;
+					for (int s : P_s_a_nonzero)
+					{
+						cout << "SS state :" << s << " Prob :" << P_s_a[k] << endl;
 						k++;
 					}
-
 				}
 			}
 			return;

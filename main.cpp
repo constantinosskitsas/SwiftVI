@@ -84,6 +84,8 @@ int main(int argc, char *argv[])
 	else if (NOFexp == 9 || NOFexp == 10 || NOFexp == 11)
 	{
 		GSTM(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
+	}else if (NOFexp==12){
+		RLRS(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
 	}
 
 }
