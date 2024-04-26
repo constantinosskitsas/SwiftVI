@@ -478,7 +478,6 @@ MDP_type readMDPS(string Rseed, string S)
 	return MDP;
 }
 
-
 MDP_type ErgodicRiverSwim(int S)
 {
 	// Create R
@@ -1208,18 +1207,20 @@ int posDi3D(int X1, int Y1, int Z1, int Xmax, int Ymax, int Dir)
 
 	return (Z1 * Xmax * Ymax) + (Y1 * Xmax) + X1;
 }
-//always 4 actions-> if we go to wall stay in the same state
-//if we slip to the wall stay in the same state
-MDP_type GridWorld(int X, int Y, int seed)
+// always 4 actions-> if we go to wall stay in the same state
+// if we slip to the wall stay in the same state
+MDP_type GridWorld(int X, int Y, int seed, int wrong_box)
 {
 	int G_X = X - 1;
 	int G_Y = Y - 1;
 	unordered_set<int> WBoxes;
+	int S = X * Y;
+	int goalState= S - 1;
 	// 0->x+1 y+0 East
 	// 1->x+0 y+1 NOrth
 	// 2->x-1 y+0 West
 	// 3->x+0 y-1 South
-	int wrong_box = 2;
+	// int wrong_box = 2;
 	int x_curr = -1;
 	int y_curr = -1;
 	int counter;
@@ -1227,34 +1228,58 @@ MDP_type GridWorld(int X, int Y, int seed)
 	vector<int> A_sD;
 	A_type A;
 	A_type A_direction;
-	/*for (int i = 0; i < wrong_box; ++i)
+	if (wrong_box > 0)
 	{
-		int X_wrong = rand() % X;
-		int Y_wrong = rand() % Y;
-		WBoxes.insert((X_wrong + (Y_wrong * X)));
-	}*/
-	WBoxes.insert(0+(Y/2)*X);
-	WBoxes.insert(X-1+(Y/2)*X);
-	WBoxes.insert(X/2+0);
-	WBoxes.insert((X/2)+((Y-1)*X));
-	int dd=(X/2)+((Y/2)*X);
-	WBoxes.insert(dd);
-	WBoxes.insert(dd+1);
-	WBoxes.insert(dd-1);
-	WBoxes.insert(dd-X*1);
-	WBoxes.insert(dd+X*1);
-	int S = X * Y;
+		
+		for (int i = 0; i < wrong_box; ++i)
+		{
+			int X_wrong = rand() % X;
+			int Y_wrong = rand() % Y;
+			WBoxes.insert((X_wrong + (Y_wrong * X)));
+		}
+		//lets assume that terminal state has left/riht/up/down
+		if(WBoxes.count(goalState-1) > 0 && WBoxes.count(goalState+1)>0&& WBoxes.count(goalState+X)>0 && WBoxes.count(goalState-X)>0){
+			int validBox = rand() % 4;
+			if (validBox==0)
+				WBoxes.erase(goalState-1);
+			else if(validBox==1)
+				WBoxes.erase(goalState+1);
+			else if (validBox==2)
+				WBoxes.erase(goalState+X);
+			else 
+				WBoxes.erase(goalState-X);
+		}
+		//this does not quarantine that a path exists from source to target.
+	}
+	else
+	{	int scaling=1;
+		WBoxes.insert(0 + (Y / 2) * X);
+		WBoxes.insert(X - 1 + (Y / 2) * X);
+		WBoxes.insert(X / 2 + 0);
+		WBoxes.insert((X / 2) + ((Y - 1) * X));
+		int dd = (X / 2) + ((Y / 2) * X);
+		for (int j=0;j<scaling;j++){
+		WBoxes.insert(dd);
+		WBoxes.insert(dd + j);
+		WBoxes.insert(dd - j);
+		WBoxes.insert(dd - X * j);
+		WBoxes.insert(dd + X * j);
+		}
+	}
+
+	
 	for (int i = 0; i < S; i++)
 	{
 		x_curr = i % X;
 		y_curr = i / Y;
 		counter = 0;
-		
 		if (x_curr + 1 < X && WBoxes.count(posDi(x_curr, y_curr, X, 0)) <= 0)
 		{
 			A_s.push_back(0);
 			A_sD.push_back(0);
-		}else{
+		}
+		else
+		{
 			A_s.push_back(0);
 			A_sD.push_back(-1);
 		}
@@ -1262,7 +1287,9 @@ MDP_type GridWorld(int X, int Y, int seed)
 		{
 			A_s.push_back(1);
 			A_sD.push_back(1);
-		}else{
+		}
+		else
+		{
 			A_s.push_back(1);
 			A_sD.push_back(-1);
 		}
@@ -1270,7 +1297,9 @@ MDP_type GridWorld(int X, int Y, int seed)
 		{
 			A_s.push_back(2);
 			A_sD.push_back(2);
-		}else{
+		}
+		else
+		{
 			A_s.push_back(2);
 			A_sD.push_back(-1);
 		}
@@ -1278,11 +1307,12 @@ MDP_type GridWorld(int X, int Y, int seed)
 		{
 			A_s.push_back(3);
 			A_sD.push_back(3);
-		}else{
+		}
+		else
+		{
 			A_s.push_back(3);
 			A_sD.push_back(-1);
 		}
-		
 
 		A.push_back(A_s);
 		A_direction.push_back(A_sD);
@@ -1298,7 +1328,7 @@ MDP_type GridWorld(int X, int Y, int seed)
 
 		for (auto a : A_direction[i])
 		{
-			if (posDi(x_curr, y_curr, X, a) == S-1) // make it Goal State
+			if (posDi(x_curr, y_curr, X, a) == S - 1) // make it Goal State
 				R_s.push_back(1);
 			else
 				R_s.push_back(0);
@@ -1319,25 +1349,31 @@ MDP_type GridWorld(int X, int Y, int seed)
 		{
 			for (auto a1 : A[i])
 			{
-				if (a1 == a){
-					int pos=posDi(x_curr, y_curr, X, a);
-					if (A_direction[i][a]>=0)
-					P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a]));
-					else{
-					P_s_a_nonzero_states.push_back(i);
+				if (a1 == a)
+				{
+					int pos = posDi(x_curr, y_curr, X, a);
+					if (A_direction[i][a] >= 0)
+						P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a]));
+					else
+					{
+						P_s_a_nonzero_states.push_back(i);
 					}
 					P_s_a.push_back(0.7);
 					continue;
 				}
-					
+
 				if (((A[i][a] + A[i][a1]) % 2) == 1)
-				{if (A_direction[i][a1]<0){
-					P_s_a_nonzero_states.push_back(i);
-					P_s_a.push_back(0.1);
-				}else {
-					P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a1]));
-					//totalP = totalP + 0.1;
-					P_s_a.push_back(0.1);
+				{
+					if (A_direction[i][a1] < 0)
+					{
+						P_s_a_nonzero_states.push_back(i);
+						P_s_a.push_back(0.1);
+					}
+					else
+					{
+						P_s_a_nonzero_states.push_back(posDi(x_curr, y_curr, X, A_direction[i][a1]));
+						// totalP = totalP + 0.1;
+						P_s_a.push_back(0.1);
 					}
 				}
 			}
