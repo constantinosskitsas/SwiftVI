@@ -180,7 +180,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 		{
 			std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 			int seed = time(0);
-			MDP = GridWorld(ite,ite,123); //Maze(ite,ite,123);// (ite);
+			MDP = GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
 			S = ite;
 			int nA = 4;
 			R_type R = get<0>(MDP);
@@ -276,7 +276,7 @@ void GSTM(string filename, int expnum, int States, int Actions, int SS, int Star
 			else if (expnum == 11)
 			{
 				ite = 3;
-				MDP = GridWorld(ite, ite, seed);
+				MDP = GridWorld(ite, ite, seed, 0);
 				States = ite * ite; //+ 1;
 				S = States;
 			}
