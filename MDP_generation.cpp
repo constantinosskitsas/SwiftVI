@@ -1252,13 +1252,14 @@ MDP_type GridWorld(int X, int Y, int seed, int wrong_box)
 		//this does not quarantine that a path exists from source to target.
 	}
 	else
-	{	int scaling=1;
+	{
+		//int scaling=wrong_box*-1;
 		WBoxes.insert(0 + (Y / 2) * X);
 		WBoxes.insert(X - 1 + (Y / 2) * X);
 		WBoxes.insert(X / 2 + 0);
 		WBoxes.insert((X / 2) + ((Y - 1) * X));
 		int dd = (X / 2) + ((Y / 2) * X);
-		for (int j=0;j<scaling;j++){
+		for (int j=wrong_box;j<=-1;j++){
 		WBoxes.insert(dd);
 		WBoxes.insert(dd + j);
 		WBoxes.insert(dd - j);
