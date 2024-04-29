@@ -89,8 +89,8 @@ double sum_of_mult(const vector<double> &V_one, double V_two[])
 // used in MBIE
 double sum_of_mult(const vector<double> &V_one, const vector<double>  &V_two)
 {
-	double cum_sum = double(0);
-	for (int i = 0; i < V_one.size(); ++i)
+	double cum_sum = 0.0;
+	for (int i = 0; i < V_one.size(); i++)
 	{
 		cum_sum += (V_one[i] * V_two[i]);
 	}

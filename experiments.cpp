@@ -41,6 +41,7 @@ using namespace std::chrono;
 void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 {
 	std::default_random_engine generator;
+	generator.seed(1337);
 
 	int nS = S;
 	int nA = _nA;
@@ -49,7 +50,7 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 10000;
+	int T = 100000;
 	int reps = 1; // replicates
 
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
@@ -57,41 +58,51 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
 
-	//V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
+	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
 	//vector<double> V_star = get<0>(V_star_return);
 
-	int reward = 0;
-	int swiftreward = 0;
+	double reward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
+	vector<double> step_vector(nS,0.0); 
 	for (int rep = 0; rep < reps; rep++)
 	{
 		// Init game
 		int state = 0;
 		MB.reset(state);
 		reward = 0;
-
+		vector<int> _policy(state, 0);
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			//if (t%100 == 0) {
-			//	std::cout << "MBIEH " << t << std::endl;
-			//}
+			/*if (t%100 == 0) {
+				std::cout << "MBIEH " << t << std::endl;
+			}*/
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			auto [action, policy] = MB.playswift(state, reward);
 			// Get reward and next step from MDP
 			reward = R[state][action];
-
+			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
+
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
-			state = distribution(generator);
+			state = P_s_a_nonzero[distribution(generator)];
+
+			_policy=policy;
 		}
+
+		std::cout << "SwiftMBIE policy:  ";
+		for (int i: _policy) {
+			std::cout << i;
+		}	
+		 std::cout << std::endl;
 	}
 }
 
 void runMBIE(MDP_type mdp, int S, int _nA)
 {
 	std::default_random_engine generator;
+	generator.seed(1337);
 
 	int nS = S;
 	int nA = _nA;
@@ -111,43 +122,45 @@ void runMBIE(MDP_type mdp, int S, int _nA)
 	//V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
 	//vector<double> V_star = get<0>(V_star_return);
 
-	int reward = 0;
-	int swiftreward = 0;
+	double reward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
-	MBIE MBswift = MBIE(nS, nA, gamma, epsilon, delta, m);
+	//MBIE MBswift = MBIE(nS, nA, gamma, epsilon, delta, m);
 	for (int rep = 0; rep < reps; rep++)
 	{
 		// Init game
 		int state = 0;
 		int swiftstate = 0;
 		MB.reset(state);
-		MBswift.reset(swiftstate);
+		//MBswift.reset(swiftstate);
 		reward = 0;
-		swiftreward = 0;
+		//swiftreward = 0;
 
+		vector<int> _policy(state, 0);
+		vector<double> step_vector(nS,0.0);
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			//if (t%100 == 0) {
-			//	std::cout << "MBIE " << t << std::endl;
-			//}
+			/*if (t%100 == 0) {
+				std::cout << "MBIE " << t << std::endl;
+			}*/
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			auto [action, policy] = MB.play(state, reward);
-			auto [swiftaction, swiftpolicy] = MBswift.playswift(swiftstate, swiftreward);
-
 			// Get reward and next step from MDP
 			reward = R[state][action];
-			swiftreward = R[swiftstate][swiftaction];
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
-			state = distribution(generator);
 
-			auto &[swiftP_s_a, swiftP_s_a_nonzero] = P[swiftstate][swiftaction];
-			std::discrete_distribution<int> distribution2(swiftP_s_a.begin(), swiftP_s_a.end());
-			swiftstate = distribution2(generator);
+			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
+			state = P_s_a_nonzero[distribution(generator)];
+			_policy=policy;
 		}
+		std::cout << "MBIE policy: ";
+		for (int i: _policy) {
+			std::cout << i;
+		}	
+		std::cout << std::endl;
+		//std::cout << "\n##################################\n########################" << std::endl;
 	}
 }
 void RLRS(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
@@ -163,7 +176,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH" << endl;
 	avgstring_stream << "MBVI MBVIH" << endl;
-	int repetitions = 5;
+	int repetitions = 1;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
 	float VI[2][siIter];
@@ -180,9 +193,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 		{
 			std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 			int seed = time(0);
-			MDP = GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+			MDP = ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
 			S = ite;
-			int nA = 4;
+			int nA = 2;
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
 			P_type P = get<2>(MDP);

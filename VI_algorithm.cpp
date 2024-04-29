@@ -137,7 +137,6 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	// max(A[0].size();)
 	// or S*4;
 	delta = _delta / (2 * S * nA * m);
-	int s_state = 0;
 	hatP = new double **[S];
 	Nsas = new int **[S];
 	Nsa = new int *[S];
@@ -145,6 +144,7 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	hatR = new double *[S];
 	confR = new double *[S];
 	confP = new double *[S];
+	cnt = 0;
 
 	
 	current_s = 0;
@@ -159,8 +159,8 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 		confR[i] = new double[nA];
 		confP[i] = new double[nA];
 		memset(Nsa[i], 0, sizeof(int) * nA);
-		memset(Rsa[i], 0, sizeof(double) * nA);
-		memset(hatR[i], 0, sizeof(double) * nA);
+		memset(Rsa[i], 0.0, sizeof(double) * nA);
+		memset(hatR[i], 0.0, sizeof(double) * nA);
 	}
 
 	//
@@ -175,15 +175,17 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 			Nsas[i][j] = new int[S];
 			hatP[i][j] = new double[S];
 			memset(Nsas[i][j], 0, sizeof(int) * S);
-			memset(hatP[i][j], 0, sizeof(double) * S);
+			memset(hatP[i][j], 0.0, sizeof(double) * S);
 		}
 	}
 }
 
 std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
+	//std::cout << state << " " << reward << std::endl;
 	//If not first action
 	if (last_action >= 0) 
 	{
+		cnt++;
 		Nsas[current_s][last_action][state] += 1;
 		Rsa[current_s][last_action] += reward;
 	}
@@ -194,10 +196,10 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			hatR[s][a] = Rsa[s][a]/max(1, Nsa[s][a]);
+			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
-				hatP[s][a][s2] = Nsas[s][a][s2]/max(1, Nsa[s][a]);		
+				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
 		}
 	}
@@ -215,9 +217,11 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 }
 
 std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
+	//std::cout << state << " " << reward << std::endl;
 	//If not first action
 	if (last_action >= 0) 
-	{
+	{	
+		cnt++;
 		Nsas[current_s][last_action][state] += 1;
 		Rsa[current_s][last_action] += reward;
 	}
@@ -228,10 +232,10 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			hatR[s][a] = Rsa[s][a]/max(1, Nsa[s][a]);
+			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
-				hatP[s][a][s2] = Nsas[s][a][s2]/max(1, Nsa[s][a]);		
+				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
 		}
 	}
@@ -254,9 +258,9 @@ void MBIE::confidence()
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			confP[s][a] = sqrt((2 * (log(pow(nS, 2) - 2) - log(delta)) / max(1, Nsa[s][a])));
+			confP[s][a] = sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
-			confR[s][a] = sqrt(log(2 / delta) / (2 * max(1, Nsa[s][a])));
+			confR[s][a] = sqrt(log(2.0 / delta) / (double) (2 * max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << std::endl;
 		}
 	}
@@ -268,54 +272,66 @@ void MBIE::reset(S_type init)
 	{
 		for (int j = 0; j < nA; j++)
 		{
-			Rsa[i][j] = 0;
-			hatR[i][j] = 0;
-			confR[i][j] = 0;
-			confP[i][j] = 0;
+			Rsa[i][j] = 0.0;
+			hatR[i][j] = 0.0;
+			confR[i][j] = 0.0;
+			confP[i][j] = 0.0;
 			Nsa[i][j] = 0;
 			for (int k = 0; k < nS; k++)
 			{
 				Nsas[i][j][k] = 0;
-				hatP[i][j][k] = 0;
+				hatP[i][j][k] = 0.0;
 			}
 		}
 	}
 	current_s = init;
 	last_action = -1;
+	cnt = 0;
 }
 
 void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 {
-	double min1 = min(1.0, hatP[s][a][sorted_indices[s - 1]] + confP[s][a] / 2);
+	double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);
 	
 	std::fill(max_p.begin(),max_p.end(),0.0);
 	
-	int l = 0;
 
 	if (min1 == 1)
 	{
-		max_p[sorted_indices[nS - 1]] = 1;
+		max_p[sorted_indices[nS - 1]] = 1.0;
 	}
 	else
 	{	
+		
+		for (int i = 0; i < nS; i++){
+			max_p[i] = hatP[s][a][i];
+			//if (hatP[s][a][i] != 0) {
+			//	std::cout << s << " " << i << "  " << hatP[s][a][i] << std::endl;
+			//}
+		}
 		//Mega copy hack (that may or may not work)
-		max_p.assign(*hatP[s], *hatP[s] + nS);
+		//std::copy(hatP[s][a], hatP[s][a]+nS,max_p.begin());
+		//max_p.assign(*hatP[s][a], *hatP[s][a] + nS);
 		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
+		
 		max_p[sorted_indices[nS - 1]] += confP[s][a] / 2.0;
-		l = 0;
+		//std::cout << hatP[s][a][sorted_indices[nS - 1]] << std::endl;
+		//std::cout << std::endl;
+		
+		int l = 0;
 		double sum_max_p = 0.0;
-		for (size_t i = 0; i < max_p.size(); ++i)
+		for (int i = 0; i < max_p.size(); i++)
 		{
 			sum_max_p += max_p[i];
 		}
 		while (sum_max_p > 1.0)
 		{
 			max_p[sorted_indices[l]] = max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
-			++l;
+			l++;
 
 			// Recalculate the sum of max_p
 			sum_max_p = 0.0;
-			for (size_t i = 0; i < max_p.size(); ++i)
+			for (int i = 0; i < max_p.size(); i++)
 			{
 				sum_max_p += max_p[i];
 			}
@@ -323,6 +339,10 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 		
 	}
 	//max_p has been set
+	//for (auto i: max_p) {
+	//	std::cout << i << " ";
+	//}
+	//std::cout << std::endl;
 }
 
 vector<int> MBIE::swiftEVI()
@@ -338,17 +358,17 @@ vector<int> MBIE::swiftEVI()
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = (gamma / (1.0 - gamma))*1+1; //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
 	}
 
 	// Initialize V1
 	vector<double> V1(nS, 1.0); // Initialize with ones
-	double _epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
 	double temp=0;
 
 	// Heap init
 	q_action_pair_type **s_heaps = new q_action_pair_type *[nS];
-	for (int i = 0; i < nS; ++i)
+	for (int i = 0; i < nS; i++)
 	{
 		// s_heaps[i] = new q_action_pair_type[A[i].size()];
 		s_heaps[i] = new q_action_pair_type[nA];
@@ -393,20 +413,31 @@ vector<int> MBIE::swiftEVI()
 		{
 			q_action_pair_type *s_h = s_heaps[s];
 			//nt old_action = -1;
+			//std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
+			//std::cout << s_h[1].first << "  " << s_h[1].second << std::endl;
+			//std::cout << std::endl;
 			while (true) {
 				
 				// update the top value
 				int top_action = s_h[0].second;
 				double old = s_h[0].first;
 		
-				//for (int a = 0; a < nA; a++)
-				//{
+				/*for (int l = 0; l < nS; l++)
+				{
+					std::cout << sorted_indices[l] << " ";
+				}
+				std::cout << std::endl;*/
+				//std::cout << top_action << st
 				max_proba(sorted_indices, s, top_action);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+
 				double updated_top_action_value = hatR[s][top_action] + confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
 				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+				/*if (cnt >= 119) {
+			    	std::cout << updated_top_action_value << "  " << hatR[s][top_action] << "  " << confR[s][top_action] << std::endl;;
+				}*/
 				//if (updated_top_action_value != updated_top_action_value) {
-				//	std::cout << std::endl;
+				//	std::cout << std::endlR_s_a;
 				//} 
 				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
 				s_h[heap_size[s] - 1] = updated_pair;
@@ -418,15 +449,41 @@ vector<int> MBIE::swiftEVI()
 				//	V1[s] = temp;
 				//	policy[s] = top_action;
 				//}
-				//std::cout << old << "   " << updated_top_action_value << std::endl;
-			
+				if (updated_top_action_value > old) {
+			    	std::cout << "ILLEGAL UPGRADE " << cnt << std::endl;
+					std::cout << "New val: " << updated_top_action_value <<"\n";
+					std::cout << "Old val: " << old <<"\n";
+					std::cout << "hatR: " << hatR[s][top_action] << "  confR: " << confR[s][top_action] << "\n";
+					std::cout << " Max_r bonus: " << sqrt(log(2.0 / delta))/2.0 << "\n";
+					std::cout << " v2" << sqrt(log(2.0 / delta) / (double) (2));
+					std::cout << "nsa: " << Nsa[s][top_action] <<" delta: " << delta <<  "\n";
+					std::cout << "Max proba sum: ";
+					double sum_max_p = 0.0;
+					for (int i = 0; i < max_p.size(); i++)
+					{
+						sum_max_p += max_p[i];
+					}
+					std::cout << sum_max_p << std::endl;
+
+					//std::cout <<"old val: " << old << " new val: "  << updated_top_action_value << std::endl;
+					//std::cout <<"old: " << top_action << " new: "  << new_action << std::endl;
+				}
+				
 				if (top_action == new_action) {
 					break;
 				}
 			}
 			V1[s] = s_h[0].first;
+			/*if (cnt >= 119) {
+				std::cout << cnt << " " << s << " " << s_h[0].first << "  " << s_h[0].second << std::endl;
+			}*/
+			/*std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
+			std::cout << s_h[1].first << "  " << s_h[1].second << std::endl;
+			std::cout << std::endl;*/
 			policy[s] = s_h[0].second;
 		}
+		
+
 		// V distance
 		int dist = 0;
 		for (int i = 0; i < nS; i++) 
@@ -444,15 +501,36 @@ vector<int> MBIE::swiftEVI()
 			//for (int i = 0; i< nS; i++) {
 			//	V0[i] =
 			//}
+			
 			std::swap(V0,V1);
 			//V0 = V1; //copy
-			for (int i = 0; i < nS; i++)
+			/*for (int i = 0; i < nS; i++)
 			{
-				V1[i] = (gamma / (1.0 - gamma))*1+1;
-			}
+				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2; //(gamma / (1.0 - gamma))*1+1;
+			}*/
 			//sorted indices
+			/*std::cout << std::endl;
+			std::cout << "cnt: " << cnt << "| ";
+			for (auto i: V0) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;
+			for (auto i: sorted_indices) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;*/
+		
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);
 			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+			
+			/*std::cout << std::endl;
+			for (auto i: sorted_indices) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;
+			std::cout << std::endl;
+			std::cout << std::endl;*/
+
 		}
 		if (max_iter == niter) {
 			std::cout << "Early stop in EVI: "<< dist << "  " << _epsilon  << std::endl;
@@ -475,12 +553,12 @@ vector<int> MBIE::EVI()
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = (gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 	}
 
 	// Initialize V1
-	vector<double> V1(nS, 0.0); // Initialize with zeros
-	double _epsilon = epsilon * (1 - gamma) / (2 * gamma);
+	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
 	double R_s_a=0;
 
 	while (true)
@@ -490,16 +568,34 @@ vector<int> MBIE::EVI()
 		{
 			for (int a = 0; a < nA; a++)
 			{
+				/*for (int l = 0; l < nS; l++)
+				{
+					std::cout << sorted_indices[l] << " ";
+				}
+				std::cout << std::endl;*/
 				max_proba(sorted_indices, s, a);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
 				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				/*if (cnt > 110) {
+					std::cout << R_s_a << "  " << hatR[s][a] << "  " << confR[s][a] << std::endl;;
+				}*/
 				if (a == 0 || R_s_a > V1[s])
 				{
 					V1[s] = R_s_a;
 					policy[s] = a;
 				}
 			}
+			/*if (cnt > 110) {
+				std::cout << cnt << " " << s << " "  << V1[s] << "  " << policy[s] << std::endl;
+			}
+			std::cout << std::endl;*/
 		}
+		/*std::cout << "cnt: " << cnt << "| ";
+		for (auto i: V1) {
+			std::cout << i << " " ;
+		}
+		std::cout << std::endl;*/
+		
 		// V distance
 		int dist = 0;
 		for (int i = 0; i < nS; i++) 
@@ -507,9 +603,10 @@ vector<int> MBIE::EVI()
 			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
 		}
 		dist = sqrt(dist);
-		
+		//std::cout << dist << std::endl;
 		if (dist < _epsilon) 
 		{
+			//std::cout << niter << std::endl;
 			return policy;
 		} 
 		else 
@@ -519,10 +616,10 @@ vector<int> MBIE::EVI()
 			//}
 			std::swap(V0,V1);
 			//V0 = V1; //copy
-			for (int i = 0; i < nS; i++)
+			/*for (int i = 0; i < nS; i++)
 			{
-				V1[i] = (gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
-			}
+				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+			}*/
 			//sorted indices
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);
 			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
@@ -621,6 +718,9 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 	// start from iteration 1
 	vector<microseconds> work_per_iteration(1);
 
+	//policy
+	vector<int> policy(S, 0);
+
 	// keep count of number of iterations
 	int iterations = 0;
 	bool upper_convergence_criteria = false;
@@ -655,6 +755,7 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 				if (R_s_a > V_current_iteration[s])
 				{
 					V_current_iteration[s] = R_s_a;
+					policy[s] = a;
 				}
 			}
 			if (abs(oldV - V_current_iteration[s]) > convergence_bound_precomputed)
@@ -669,6 +770,12 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 	}
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
+
+	std::cout << "V_star policy: ";
+	for (int i: policy) {
+		std::cout << i;
+	}
+	std::cout << std::endl;
 
 	// DEALLOCATE MEMORY
 	for (int i = 0; i < 1; ++i)

@@ -36,6 +36,7 @@ class MBIE {
 	double **confR;// = NULL;
 	double **confP;// = NULL;
 	vector<double> max_p;
+	int cnt = 0;
 
 	int current_s;
 	int last_action;

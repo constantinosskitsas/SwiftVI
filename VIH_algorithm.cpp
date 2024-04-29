@@ -27,7 +27,11 @@ using namespace std::chrono;
 // returns true if the first argument is less than the second.
 bool cmp_action_value_pairs(const q_action_pair_type &a, q_action_pair_type &b)
 {
-	return a.first <= b.first;
+	if (a.first == b.first) {
+		return a.second > b.second;
+	} else {
+		return a.first < b.first;
+	}
 	// return a.first < b.first;
 }
 
