@@ -7,3 +7,5 @@ algo_test
 algo_test1
 algo_test.exe
 *.exe
+pyplotfiles/*.txt
+pyplotfiles/*.pdf

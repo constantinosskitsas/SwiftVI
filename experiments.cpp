@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <math.h>
+#include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -50,8 +51,8 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 100000;
-	int reps = 1; // replicates
+	int T = 10000;
+	int reps = 10; // replicates
 
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
@@ -59,7 +60,13 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 	P_type P = get<2>(MDP);
 
 	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
-	//vector<double> V_star = get<0>(V_star_return);
+	vector<double> V_star = get<0>(V_star_return);
+	
+	std::vector<std::vector<double>> v_opt(reps, std::vector<double>(T, 0.0));
+	std::vector<std::vector<double>> v_pol(reps, std::vector<double>(T, 0.0));
+
+	std::vector<std::vector<double>> v_opt_e(reps, std::vector<double>(T, 0.0));
+	std::vector<std::vector<double>> v_pol_e(reps, std::vector<double>(T, 0.0));
 
 	double reward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
@@ -85,6 +92,30 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
+			//Get V for current policy
+			Eigen::MatrixXd P_pi(nS, nS);
+			Eigen::VectorXd R_pi(nS);
+			for (int s = 0; s < nS; s++) {
+
+				std::vector<double> p_row(nS,0.0);
+				auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
+				for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
+					p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+				}
+				P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
+				R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
+			}
+			Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
+			Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
+			
+			v_opt[rep][t]=V_star[state];
+			v_pol[rep][t]=V_pol[state];
+
+			v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
+			v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
+
+
+
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = P_s_a_nonzero[distribution(generator)];
 
@@ -96,6 +127,84 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 			std::cout << i;
 		}	
 		 std::cout << std::endl;
+	}
+	//Export tracked data for plotting
+	std::stringstream filename;
+	filename << "pyplotfiles/swiftmbie_v_opt_" << nS << "_" << nA <<".txt";
+	ofstream topython;
+
+	topython.open(filename.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_opt[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_opt[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+	std::stringstream filename1;
+	filename1 << "pyplotfiles/swiftmbie_v_pol_" << nS << "_" << nA <<".txt";
+	topython.open(filename1.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_pol[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_pol[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+	std::stringstream filename2;
+	filename2 << "pyplotfiles/swiftmbie_v_pol_e" << nS << "_" << nA <<".txt";
+
+	topython.open(filename2.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_pol_e[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_pol_e[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+
+	std::stringstream filename3;
+	filename3 << "pyplotfiles/swiftmbie_v_opt_e" << nS << "_" << nA <<".txt";
+	//std::cout << filename3.str()<< std::endl;
+	topython.open(filename3.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_opt_e[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_opt_e[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
 	}
 }
 
@@ -112,15 +221,22 @@ void runMBIE(MDP_type mdp, int S, int _nA)
 	int m = 1;
 
 	int T = 10000;
-	int reps = 1; // replicates
+	int reps = 10; // replicates
 
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
 
-	//V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
-	//vector<double> V_star = get<0>(V_star_return);
+	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
+	vector<double> V_star = get<0>(V_star_return);
+	
+	std::vector<std::vector<double>> v_opt(reps, std::vector<double>(T, 0.0));
+	std::vector<std::vector<double>> v_pol(reps, std::vector<double>(T, 0.0));
+
+	std::vector<std::vector<double>> v_opt_e(reps, std::vector<double>(T, 0.0));
+	std::vector<std::vector<double>> v_pol_e(reps, std::vector<double>(T, 0.0));
+
 
 	double reward = 0;
 	MBIE MB = MBIE(nS, nA, gamma, epsilon, delta, m);
@@ -151,6 +267,29 @@ void runMBIE(MDP_type mdp, int S, int _nA)
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
+			//Get V for current policy
+			Eigen::MatrixXd P_pi(nS, nS);
+			Eigen::VectorXd R_pi(nS);
+			for (int s = 0; s < nS; s++) {
+
+				std::vector<double> p_row(nS,0.0);
+				auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
+				for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
+					p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+				}
+				P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
+				R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
+			}
+			Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
+			Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
+			
+			v_opt[rep][t]=V_star[state];
+			v_pol[rep][t]=V_pol[state];
+
+			v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
+			v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
+
+
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = P_s_a_nonzero[distribution(generator)];
 			_policy=policy;
@@ -162,6 +301,86 @@ void runMBIE(MDP_type mdp, int S, int _nA)
 		std::cout << std::endl;
 		//std::cout << "\n##################################\n########################" << std::endl;
 	}
+
+	//Export tracked data for plotting
+	std::stringstream filename;
+	filename << "pyplotfiles//mbie_v_opt_" << nS << "_" << nA <<".txt";
+	ofstream topython;
+
+	topython.open(filename.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_opt[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_opt[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+	std::stringstream filename1;
+	filename1 << "pyplotfiles//mbie_v_pol_" << nS << "_" << nA <<".txt";
+	topython.open(filename1.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_pol[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_pol[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+	std::stringstream filename2;
+	filename2 << "pyplotfiles//mbie_v_pol_e" << nS << "_" << nA <<".txt";
+	
+	topython.open(filename2.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_pol_e[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_pol_e[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+
+	std::stringstream filename3;
+	filename3 << "pyplotfiles/mbie_v_opt_e" << nS << "_" << nA <<".txt";
+	//std::cout << filename3.str()<< std::endl;
+	topython.open(filename3.str());
+	if (topython.is_open())
+	{
+		for (int r = 0; r < reps; r++) {
+			topython << v_opt_e[r][0];
+			for (int t = 1; t < T; t++) {
+				topython << " " << v_opt_e[r][t];
+			}
+			topython << std::endl;
+		}
+		topython.close();
+	}
+	else
+	{
+		printf("opened file: fail\n");
+	}
+	
 }
 void RLRS(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
 {

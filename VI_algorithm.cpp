@@ -358,7 +358,7 @@ vector<int> MBIE::swiftEVI()
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0) ;//(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
 	}
 
 	// Initialize V1
@@ -431,7 +431,9 @@ vector<int> MBIE::swiftEVI()
 				max_proba(sorted_indices, s, top_action);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
 
+				//double updated_top_action_value = std::min(hatR[s][top_action] + confR[s][top_action],1.0) + gamma * sum_of_mult(max_p, V0);
 				double updated_top_action_value = hatR[s][top_action] + confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
+				
 				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
 				/*if (cnt >= 119) {
 			    	std::cout << updated_top_action_value << "  " << hatR[s][top_action] << "  " << confR[s][top_action] << std::endl;;
@@ -553,11 +555,11 @@ vector<int> MBIE::EVI()
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 	}
 
 	// Initialize V1
-	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
 	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
 	double R_s_a=0;
 
@@ -576,6 +578,8 @@ vector<int> MBIE::EVI()
 				max_proba(sorted_indices, s, a);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
 				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				//R_s_a = min(hatR[s][a] + confR[s][a],1.0) + gamma * sum_of_mult(max_p, V0);
+				
 				/*if (cnt > 110) {
 					std::cout << R_s_a << "  " << hatR[s][a] << "  " << confR[s][a] << std::endl;;
 				}*/
