@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <math.h>
+#include <thread>
 #include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
 
 #include "MDP_type_definitions.h"
@@ -39,20 +40,21 @@
 using namespace std;
 using namespace std::chrono;
 
-void runSwiftMBIE(MDP_type mdp, int S, int _nA)
+void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 {
 	std::default_random_engine generator;
 	generator.seed(1337);
 
 	int nS = S;
 	int nA = _nA;
-	double gamma = 0.92;
+	double gamma = 0.99;
 	double epsilon = 0.1;
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 10000;
-	int reps = 10; // replicates
+	int T = 100000;
+	int reps = 1; // replicates
+	bool make_plots = false;
 
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
@@ -78,42 +80,61 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 		MB.reset(state);
 		reward = 0;
 		vector<int> _policy(state, 0);
+		int action;
+		std::vector<int> policy;
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			/*if (t%100 == 0) {
+			if (t%1000 == 0) {
 				std::cout << "MBIEH " << t << std::endl;
+			}
+			
+			if (t%1000 == 0) {
+				if (t < T/12) {
+					std::tie(action, policy) = MB.play(state, reward);
+				} else {
+					std::tie(action, policy) = MB.playswift(state, reward);
+				}
+			} else {
+				std::tie(action, policy) = MB.update_vals(state, reward);
+			} 
+			/*else {
+				std::tie(action, policy) = MB.playswift(state, reward);
 			}*/
 			//std::cout << t << std::endl;
 			// Run MBIE step
-			auto [action, policy] = MB.playswift(state, reward);
+			//auto [action, policy] = MB.playswift(state, reward);
 			// Get reward and next step from MDP
 			reward = R[state][action];
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
-			//Get V for current policy
-			Eigen::MatrixXd P_pi(nS, nS);
-			Eigen::VectorXd R_pi(nS);
-			for (int s = 0; s < nS; s++) {
+			if (make_plots) {
+				//Get V for current policy
+				Eigen::MatrixXd P_pi(nS, nS);
+				Eigen::VectorXd R_pi(nS);
+				//P_pi.reserve(nS * nS);
+				//R_pi.reserve(nS);
 
-				std::vector<double> p_row(nS,0.0);
-				auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
-				for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
-					p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+				for (int s = 0; s < nS; s++) {
+
+					std::vector<double> p_row(nS,0.0);
+					auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
+					for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
+						p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+					}
+					P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
+					R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
 				}
-				P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
-				R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
+				Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
+				Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
+				
+				v_opt[rep][t]=V_star[state];
+				v_pol[rep][t]=V_pol[state];
+
+				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
+				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 			}
-			Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
-			Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
-			
-			v_opt[rep][t]=V_star[state];
-			v_pol[rep][t]=V_pol[state];
-
-			v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
-			v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
-
 
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
@@ -128,101 +149,103 @@ void runSwiftMBIE(MDP_type mdp, int S, int _nA)
 		}	
 		 std::cout << std::endl;
 	}
-	//Export tracked data for plotting
-	std::stringstream filename;
-	filename << "pyplotfiles/swiftmbie_v_opt_" << nS << "_" << nA <<".txt";
-	ofstream topython;
+	if (make_plots) {
+		//Export tracked data for plotting
+		std::stringstream filename;
+		filename << "pyplotfiles/swiftmbie_v_opt_" << nS << "_" << nA <<".txt";
+		ofstream topython;
 
-	topython.open(filename.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_opt[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_opt[r][t];
+		topython.open(filename.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_opt[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_opt[r][t];
+				}
+				topython << std::endl;
 			}
-			topython << std::endl;
+			topython.close();
 		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
-	}
-	std::stringstream filename1;
-	filename1 << "pyplotfiles/swiftmbie_v_pol_" << nS << "_" << nA <<".txt";
-	topython.open(filename1.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_pol[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_pol[r][t];
+		else
+		{
+			printf("opened file: fail\n");
+		}
+		std::stringstream filename1;
+		filename1 << "pyplotfiles/swiftmbie_v_pol_" << nS << "_" << nA <<".txt";
+		topython.open(filename1.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_pol[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_pol[r][t];
+				}
+				topython << std::endl;
 			}
-			topython << std::endl;
+			topython.close();
 		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
-	}
-	std::stringstream filename2;
-	filename2 << "pyplotfiles/swiftmbie_v_pol_e" << nS << "_" << nA <<".txt";
+		else
+		{
+			printf("opened file: fail\n");
+		}
+		std::stringstream filename2;
+		filename2 << "pyplotfiles/swiftmbie_v_pol_e" << nS << "_" << nA <<".txt";
 
-	topython.open(filename2.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_pol_e[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_pol_e[r][t];
+		topython.open(filename2.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_pol_e[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_pol_e[r][t];
+				}
+				topython << std::endl;
 			}
-			topython << std::endl;
+			topython.close();
 		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
-	}
+		else
+		{
+			printf("opened file: fail\n");
+		}
 
-	std::stringstream filename3;
-	filename3 << "pyplotfiles/swiftmbie_v_opt_e" << nS << "_" << nA <<".txt";
-	//std::cout << filename3.str()<< std::endl;
-	topython.open(filename3.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_opt_e[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_opt_e[r][t];
+		std::stringstream filename3;
+		filename3 << "pyplotfiles/swiftmbie_v_opt_e" << nS << "_" << nA <<".txt";
+		//std::cout << filename3.str()<< std::endl;
+		topython.open(filename3.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_opt_e[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_opt_e[r][t];
+				}
+				topython << std::endl;
 			}
-			topython << std::endl;
+			topython.close();
 		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
+		else
+		{
+			printf("opened file: fail\n");
+		}
 	}
 }
 
-void runMBIE(MDP_type mdp, int S, int _nA)
+void runMBIE(MDP_type &mdp, int S, int _nA)
 {
 	std::default_random_engine generator;
 	generator.seed(1337);
 
 	int nS = S;
 	int nA = _nA;
-	double gamma = 0.92;
+	double gamma = 0.99;
 	double epsilon = 0.1;
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 10000;
-	int reps = 10; // replicates
-
+	int T = 100000;
+	int reps = 1; // replicates
+	bool make_plots = false;
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
@@ -253,42 +276,51 @@ void runMBIE(MDP_type mdp, int S, int _nA)
 
 		vector<int> _policy(state, 0);
 		vector<double> step_vector(nS,0.0);
+		int action;
+		std::vector<int> policy;
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			/*if (t%100 == 0) {
+			if (t%1000 == 0) {
 				std::cout << "MBIE " << t << std::endl;
-			}*/
+			}
 			//std::cout << t << std::endl;
 			// Run MBIE step
-			auto [action, policy] = MB.play(state, reward);
+			
+			if (t%1000 == 0) {
+				std::tie(action, policy) = MB.play(state, reward);
+			} else {
+				std::tie(action, policy) = MB.update_vals(state, reward);
+			} 
+			//auto [action, policy] = MB.play(state, reward);
 			// Get reward and next step from MDP
 			reward = R[state][action];
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
-			//Get V for current policy
-			Eigen::MatrixXd P_pi(nS, nS);
-			Eigen::VectorXd R_pi(nS);
-			for (int s = 0; s < nS; s++) {
+			if (make_plots) {
+				//Get V for current policy
+				Eigen::MatrixXd P_pi(nS, nS);
+				Eigen::VectorXd R_pi(nS);
+				for (int s = 0; s < nS; s++) {
 
-				std::vector<double> p_row(nS,0.0);
-				auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
-				for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
-					p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+					std::vector<double> p_row(nS,0.0);
+					auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
+					for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
+						p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+					}
+					P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
+					R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
 				}
-				P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
-				R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
+				Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
+				Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
+				
+				v_opt[rep][t]=V_star[state];
+				v_pol[rep][t]=V_pol[state];
+
+				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
+				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 			}
-			Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
-			Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
-			
-			v_opt[rep][t]=V_star[state];
-			v_pol[rep][t]=V_pol[state];
-
-			v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
-			v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
-
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = P_s_a_nonzero[distribution(generator)];
@@ -301,84 +333,85 @@ void runMBIE(MDP_type mdp, int S, int _nA)
 		std::cout << std::endl;
 		//std::cout << "\n##################################\n########################" << std::endl;
 	}
+	if (make_plots) {
+		//Export tracked data for plotting
+		std::stringstream filename;
+		filename << "pyplotfiles//mbie_v_opt_" << nS << "_" << nA <<".txt";
+		ofstream topython;
 
-	//Export tracked data for plotting
-	std::stringstream filename;
-	filename << "pyplotfiles//mbie_v_opt_" << nS << "_" << nA <<".txt";
-	ofstream topython;
+		topython.open(filename.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_opt[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_opt[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
+		std::stringstream filename1;
+		filename1 << "pyplotfiles//mbie_v_pol_" << nS << "_" << nA <<".txt";
+		topython.open(filename1.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_pol[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_pol[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
+		std::stringstream filename2;
+		filename2 << "pyplotfiles//mbie_v_pol_e" << nS << "_" << nA <<".txt";
+		
+		topython.open(filename2.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_pol_e[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_pol_e[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
 
-	topython.open(filename.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_opt[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_opt[r][t];
+		std::stringstream filename3;
+		filename3 << "pyplotfiles/mbie_v_opt_e" << nS << "_" << nA <<".txt";
+		//std::cout << filename3.str()<< std::endl;
+		topython.open(filename3.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_opt_e[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_opt_e[r][t];
+				}
+				topython << std::endl;
 			}
-			topython << std::endl;
+			topython.close();
 		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
-	}
-	std::stringstream filename1;
-	filename1 << "pyplotfiles//mbie_v_pol_" << nS << "_" << nA <<".txt";
-	topython.open(filename1.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_pol[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_pol[r][t];
-			}
-			topython << std::endl;
+		else
+		{
+			printf("opened file: fail\n");
 		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
-	}
-	std::stringstream filename2;
-	filename2 << "pyplotfiles//mbie_v_pol_e" << nS << "_" << nA <<".txt";
-	
-	topython.open(filename2.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_pol_e[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_pol_e[r][t];
-			}
-			topython << std::endl;
-		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
-	}
-
-	std::stringstream filename3;
-	filename3 << "pyplotfiles/mbie_v_opt_e" << nS << "_" << nA <<".txt";
-	//std::cout << filename3.str()<< std::endl;
-	topython.open(filename3.str());
-	if (topython.is_open())
-	{
-		for (int r = 0; r < reps; r++) {
-			topython << v_opt_e[r][0];
-			for (int t = 1; t < T; t++) {
-				topython << " " << v_opt_e[r][t];
-			}
-			topython << std::endl;
-		}
-		topython.close();
-	}
-	else
-	{
-		printf("opened file: fail\n");
 	}
 	
 }
@@ -398,7 +431,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	int repetitions = 1;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
-	float VI[2][siIter];
+	std::vector<std::vector<float>> VI(2,std::vector<float>(siIter, 0));
 	int k = 0;
 	int S;
 	for (int i = 0; i < 2; i++)
@@ -408,39 +441,49 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	for (int iters = 0; iters < repetitions; iters++)
 	{
 		k = 0;
+
+		std::vector<std::thread> threads;
 		for (int ite = StartP; ite <= endP; ite = ite + IncP)
 		{
-			std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
-			int seed = time(0);
-			MDP = ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-			S = ite;
-			int nA = 2;
-			R_type R = get<0>(MDP);
-			A_type A = get<1>(MDP);
-			P_type P = get<2>(MDP);
-			int counter = 0;
+			//threads.push_back(std::thread([&,ite, k]() mutable { 
+				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
+				int seed = time(0);
+				/**MDP CHANGES**/
+				int nA = 40;
+				MDP = generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				S = ite; 
+				/**MDP CHANGES**/
+				R_type R = get<0>(MDP);
+				A_type A = get<1>(MDP);
+				P_type P = get<2>(MDP);
+				int counter = 0;
 
+				A_type A1 = copy_A(A);
+				auto start_VI = high_resolution_clock::now();
+				runMBIE(MDP, S, nA);
+				auto stop_VI = high_resolution_clock::now();
+				auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
 
-			A_type A1 = copy_A(A);
-			auto start_VI = high_resolution_clock::now();
-			runMBIE(MDP, S, nA);
-			auto stop_VI = high_resolution_clock::now();
-			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
-
-
-			A_type A2 = copy_A(A);
-			auto start_VIH = high_resolution_clock::now();
-			runSwiftMBIE(MDP, S, nA);
-			auto stop_VIH = high_resolution_clock::now();
-			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
-			//std::cout << k << "  " << ite << std::endl;
-			VI[0][k] += duration_VI.count();
-			//std::cout << k << std::endl;
-			VI[1][k] += duration_VIH.count();
-			//std::cout << k << std::endl;
-			string_stream << duration_VI.count() << " " << duration_VIH.count() <<endl;
+				A_type A2 = copy_A(A);
+				auto start_VIH = high_resolution_clock::now();
+				runSwiftMBIE(MDP, S, nA);
+				auto stop_VIH = high_resolution_clock::now();
+				auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
+				//std::cout << k << "  " << ite << std::endl;
+				VI[0][k] += duration_VI.count();
+				//std::cout << k << std::endl;
+				VI[1][k] += duration_VIH.count();
+				//std::cout << k << std::endl;
+				//std::cout << VI[0][k] << std::endl;
+				string_stream << duration_VI.count() << " " << duration_VIH.count() <<endl;
+			//}));
 			k++;
+			//std::cout << VI[0][k] << std::endl;
 		}
+		/*for (auto& th : threads) {
+			th.join();
+		}*/
+		//std::cout << VI[0][k] << std::endl;
 	}
 	for (int k = 0; k < siIter; k++)
 	{

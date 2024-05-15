@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 	int States = 30;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 5;
-	int EndP = 20;
-	int IncP = 2;
+	int StartP = 800;
+	int EndP = 800;
+	int IncP = 1;
 	std::size_t pos;
 
 	string file_prefix_number_of_states_best = "number_of_states_best";

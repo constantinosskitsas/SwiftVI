@@ -24,6 +24,7 @@ class MBIE {
 	int nS;
 	double gamma;
 	double epsilon;
+	vector<int> policy;
 	// max(A[0].size();)
 	// or S*4;
 	double delta;// = delta / (2 * S * nA * m);
@@ -42,6 +43,9 @@ class MBIE {
 	int last_action;
 
 	MBIE(S_type S, int nA, double gamma, double epsilon, double delta, int m); 
+	//void parallel_fill(int s, int a);
+	//void fill_segment(int s, int a, int start, int end);
+	std::tuple<int,std::vector<int>> update_vals(int state, double reward);
 	void confidence();
 	void reset(S_type init);
 	void max_proba(vector<int> sorted_indices, int s, int a);
@@ -50,6 +54,8 @@ class MBIE {
 	std::tuple<int,std::vector<int>> play(int state, double reward);
     std::tuple<int,std::vector<int>> playswift(int state, double reward);
 };
+
+
 
 V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon);
 V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon);

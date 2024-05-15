@@ -16,11 +16,17 @@
 
 using namespace std;
 
+double abs_min_diff(std::vector<double> &V_one, std::vector<double> &V_two, int S);
+
+double abs_max_diff(std::vector<double> &V_one, std::vector<double> &V_two, int S);
+
 double abs_max_diff(double V_one[], double V_two[], int S);
 
 double sum_of_mult_nonzero_only(const vector<double> &V_one, double V_two[], const vector<int> &non_zero_transition_states);
 
 double sum_of_mult(const vector<double> &V_one, double V_two[]);
+
+double parallel_sum_of_mult(const vector<double> &V_one, const vector<double> &V_two);
 
 double sum_of_mult(const vector<double> &V_one, const vector<double> &V_two);
 

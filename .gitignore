@@ -9,3 +9,5 @@ algo_test.exe
 *.exe
 pyplotfiles/*.txt
 pyplotfiles/*.pdf
+callgrind.*
+cachegrind.*

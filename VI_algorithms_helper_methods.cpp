@@ -8,6 +8,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <thread>
+//#include <execution>
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -22,6 +24,29 @@
 
 using namespace std;
 using namespace std::chrono;
+
+
+double abs_min_diff(std::vector<double> &V_one, std::vector<double> &V_two, int S)
+{
+	double abs_min = double(0);
+	for (int i = 0; i < S; ++i)
+	{
+		abs_min = min(abs_min, abs(V_one[i] - V_two[i]));
+	}
+	return abs_min;
+}
+
+// Returns the maximum absolute difference between entries in the two vectors
+// pass the arguments by reference for efficiency, use const?
+double abs_max_diff(std::vector<double> &V_one, std::vector<double> &V_two, int S)
+{
+	double abs_max = double(0);
+	for (int i = 0; i < S; ++i)
+	{
+		abs_max = max(abs_max, abs(V_one[i] - V_two[i]));
+	}
+	return abs_max;
+}
 
 // Returns the maximum absolute difference between entries in the two vectors
 // pass the arguments by reference for efficiency, use const?
@@ -85,6 +110,34 @@ double sum_of_mult(const vector<double> &V_one, double V_two[])
 	}
 	return cum_sum;
 }
+
+
+/********************MBIE*************/
+
+static void sum_mult_segment(const vector<double> &V_one, const vector<double> &V_two, vector<double> &result, const int start, const int end, const int t) {
+	for (int i = start; i < end; i++)
+	{
+		result[t] += (V_one[i] * V_two[i]);
+	}
+}
+
+double parallel_sum_of_mult(const vector<double> &V_one, const vector<double>  &V_two) {
+	int num_threads = std::thread::hardware_concurrency(); // Get the number of threads supported by the system
+	std::vector<std::thread> threads(num_threads);
+	int chunk_size = V_one.size() / num_threads; // Determine the size of the segment each thread will process
+	std::vector<double> result(num_threads, 0.0);
+	for (int t = 0; t < num_threads; t++) {
+		int start = t * chunk_size;
+		int end = (t == num_threads - 1) ? V_one.size() : start + chunk_size; // Ensure the last thread covers the remaining elements
+		threads[t] = std::thread(sum_mult_segment,std::cref(V_one),std::cref(V_two),std::ref(result), start, end, t);
+	}
+	// Join the threads with the main thread
+	for (auto& thread : threads) {
+		thread.join();
+	}
+	return std::accumulate(result.begin(),result.end(), 0.0);
+}
+
 
 // used in MBIE
 double sum_of_mult(const vector<double> &V_one, const vector<double>  &V_two)

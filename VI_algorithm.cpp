@@ -10,6 +10,9 @@
 #include <sstream>
 #include <memory.h>
 #include <algorithm>
+//#include <omp.h> /
+//#include <execution>
+#include <thread>
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -24,6 +27,31 @@
 
 using namespace std;
 using namespace std::chrono;
+
+static void fill_segment(MBIE* mb, const int s, const int a, const int start, const int end) {
+	for (int i = start; i < end; i++) {
+		mb->max_p[i] = mb->hatP[s][a][i];
+	}
+}
+
+static void parallel_fill(MBIE* mb, const int s, const int a) {
+	int num_threads = std::thread::hardware_concurrency(); // Get the number of threads supported by the system
+	std::vector<std::thread> threads(num_threads);
+	int chunk_size = mb->nS / num_threads; // Determine the size of the segment each thread will process
+
+	for (int t = 0; t < num_threads; t++) {
+		int start = t * chunk_size;
+		int end = (t == num_threads - 1) ? mb->nS : start + chunk_size; // Ensure the last thread covers the remaining elements
+		threads[t] = std::thread(fill_segment,mb,s, a, start, end);
+	}
+
+	// Join the threads with the main thread
+	for (auto& thread : threads) {
+		thread.join();
+	}
+}
+
+
 
 V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
 {
@@ -146,6 +174,8 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	confP = new double *[S];
 	cnt = 0;
 
+	vector<int> policy(S, 0);
+
 	
 	current_s = 0;
 	last_action = -1;
@@ -180,6 +210,7 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	}
 }
 
+
 std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 	//std::cout << state << " " << reward << std::endl;
 	//If not first action
@@ -204,10 +235,25 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 		}
 	}
 	//Estimate equation 6
-	vector<int> policy = swiftEVI();
+	policy = swiftEVI();
 	//Follow the most optimistic greedy policy
 	int action = policy[state];
 
+	//Update with choice
+	Nsa[state][action] += 1;
+	current_s = state;
+	last_action = action;
+
+	return {action, policy};
+}
+std::tuple<int,std::vector<int>> MBIE::update_vals(int state, double reward) {
+	if (last_action >= 0) 
+	{	
+		cnt++;
+		Nsas[current_s][last_action][state] += 1;
+		Rsa[current_s][last_action] += reward;
+	}
+	int action = policy[state];
 	//Update with choice
 	Nsa[state][action] += 1;
 	current_s = state;
@@ -226,7 +272,7 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 		Rsa[current_s][last_action] += reward;
 	}
 
-	// conduct updates
+	// conduct updatesresult[t] += 
 	confidence();
 	for (int s = 0; s < nS; s++)
 	{
@@ -240,7 +286,7 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 		}
 	}
 	//Estimate equation 6
-	vector<int> policy = EVI();
+	policy = EVI();
 	//Follow the most optimistic greedy policy
 	int action = policy[state];
 
@@ -293,16 +339,37 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 {
 	double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);
 	
-	std::fill(max_p.begin(),max_p.end(),0.0);
+	/*#pragma omp parallel
+	{   
+    auto tid = omp_get_thread_num();
+    auto chunksize = max_p.size() / omp_get_num_threads();
+    auto begin = max_p.begin() + chunksize * tid;
+    auto end = (tid == omp_get_num_threads() -1) ? max_p.end() : begin + chunksize;
+    std::fill(begin, end, 0.0);
+	}*/
+
+	//
+	/*for (int i =0; i<nS; i++) {
+		max_p[i] = 0;
+	}*/
 	
 
 	if (min1 == 1)
 	{
+		//std::fill(std::execution::par, max_p.begin(),max_p.end(),0.0);
+		std::fill(max_p.begin(),max_p.end(),0.0);
+		
+		for (int i =0; i<nS; i++) {
+			max_p[i] = 0;
+		}
 		max_p[sorted_indices[nS - 1]] = 1.0;
+		
+		
 	}
 	else
 	{	
-		
+		//std::cout << "My fill" << std::endl;
+		//parallel_fill(this,s,a);
 		for (int i = 0; i < nS; i++){
 			max_p[i] = hatP[s][a][i];
 			//if (hatP[s][a][i] != 0) {
@@ -347,7 +414,7 @@ void MBIE::max_proba(vector<int> sorted_indices, int s, int a)
 
 vector<int> MBIE::swiftEVI()
 {
-	int max_iter = 20;
+	int max_iter = 2000;
 	int niter = 0;
 	//int nS = S;
 	vector<int> sorted_indices(nS);
@@ -409,6 +476,8 @@ vector<int> MBIE::swiftEVI()
 	while (true)
 	{
 		niter++;
+		//std::cout << niter << std::endl;
+		//std::cout << nA << std::endl;
 		for (int s = 0; s < nS; s++)
 		{
 			q_action_pair_type *s_h = s_heaps[s];
@@ -416,8 +485,12 @@ vector<int> MBIE::swiftEVI()
 			//std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
 			//std::cout << s_h[1].first << "  " << s_h[1].second << std::endl;
 			//std::cout << std::endl;
+			//std::cout << std::endl;
+			int heap_loops = 0;
 			while (true) {
-				
+				heap_loops++;
+
+				//std::cout << "loop" << std::endl;
 				// update the top value
 				int top_action = s_h[0].second;
 				double old = s_h[0].first;
@@ -442,6 +515,7 @@ vector<int> MBIE::swiftEVI()
 				//	std::cout << std::endlR_s_a;
 				//} 
 				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+				double temp_top_val = s_h[0].first;
 				s_h[heap_size[s] - 1] = updated_pair;
 				push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
 
@@ -471,7 +545,10 @@ vector<int> MBIE::swiftEVI()
 					//std::cout <<"old: " << top_action << " new: "  << new_action << std::endl;
 				}
 				
-				if (top_action == new_action) {
+				if (top_action == new_action || temp_top_val == updated_pair.first) {
+					/*if (heap_loops > nA || heap_loops < nA) {
+						std::cout << heap_loops << std::endl;
+					}*/
 					break;
 				}
 			}
@@ -487,14 +564,15 @@ vector<int> MBIE::swiftEVI()
 		
 
 		// V distance
-		int dist = 0;
+		/*int dist = 0;
 		for (int i = 0; i < nS; i++) 
 		{
 			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
 		}
-		dist = sqrt(dist);
-		
-		if (dist < _epsilon) 
+		dist = sqrt(dist);*/
+		//abs_max_diff(V0, V1, nS);
+		//if (abs_max_diff(V0, V1, nS) < _epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
 		{
 			return policy;
 		} 
@@ -506,10 +584,10 @@ vector<int> MBIE::swiftEVI()
 			
 			std::swap(V0,V1);
 			//V0 = V1; //copy
-			/*for (int i = 0; i < nS; i++)
+			for (int i = 0; i < nS; i++)
 			{
 				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2; //(gamma / (1.0 - gamma))*1+1;
-			}*/
+			}
 			//sorted indices
 			/*std::cout << std::endl;
 			std::cout << "cnt: " << cnt << "| ";
@@ -535,7 +613,7 @@ vector<int> MBIE::swiftEVI()
 
 		}
 		if (max_iter == niter) {
-			std::cout << "Early stop in EVI: "<< dist << "  " << _epsilon  << std::endl;
+			std::cout << "Early stop in EVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
 			
 			return policy;
 		}
@@ -544,7 +622,7 @@ vector<int> MBIE::swiftEVI()
 
 vector<int> MBIE::EVI()
 {
-	int max_iter = 20;
+	int max_iter = 2000;
 	int niter = 0;
 	//int nS = S;
 	vector<int> sorted_indices(nS);
@@ -566,6 +644,7 @@ vector<int> MBIE::EVI()
 	while (true)
 	{
 		niter++;
+		//std::cout << niter << std::endl;
 		for (int s = 0; s < nS; s++)
 		{
 			for (int a = 0; a < nA; a++)
@@ -583,7 +662,7 @@ vector<int> MBIE::EVI()
 				/*if (cnt > 110) {
 					std::cout << R_s_a << "  " << hatR[s][a] << "  " << confR[s][a] << std::endl;;
 				}*/
-				if (a == 0 || R_s_a > V1[s])
+				if (a == 0 || R_s_a > V1[s]) 
 				{
 					V1[s] = R_s_a;
 					policy[s] = a;
@@ -601,14 +680,15 @@ vector<int> MBIE::EVI()
 		std::cout << std::endl;*/
 		
 		// V distance
-		int dist = 0;
+		/*int dist = 0;
 		for (int i = 0; i < nS; i++) 
 		{
 			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
 		}
-		dist = sqrt(dist);
+		dist = sqrt(dist);*/
 		//std::cout << dist << std::endl;
-		if (dist < _epsilon) 
+		//if (abs_max_diff(V0, V1, nS) < _epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
 		{
 			//std::cout << niter << std::endl;
 			return policy;
@@ -620,16 +700,16 @@ vector<int> MBIE::EVI()
 			//}
 			std::swap(V0,V1);
 			//V0 = V1; //copy
-			/*for (int i = 0; i < nS; i++)
+			for (int i = 0; i < nS; i++)
 			{
 				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
-			}*/
+			}
 			//sorted indices
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);
 			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
 		}
 		if (max_iter == niter) {
-			std::cout << "Early stop in EVI: "<< dist << "  " << _epsilon  << std::endl;
+			std::cout << "Early stop in EVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
 			
 			return policy;
 		}
