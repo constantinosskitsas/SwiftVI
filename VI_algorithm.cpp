@@ -172,6 +172,7 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	hatR = new double *[S];
 	confR = new double *[S];
 	confP = new double *[S];
+	StateSwift= new int [S];
 	cnt = 0;
 
 	vector<int> policy(S, 0);
@@ -188,6 +189,7 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 		hatR[i] = new double[nA];
 		confR[i] = new double[nA];
 		confP[i] = new double[nA];
+		StateSwift[i]=0;
 		memset(Nsa[i], 0, sizeof(int) * nA);
 		memset(Rsa[i], 0.0, sizeof(double) * nA);
 		memset(hatR[i], 0.0, sizeof(double) * nA);
@@ -223,15 +225,22 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 
 	// conduct updates
 	confidence();
+	float Conf_Sum=0;
 	for (int s = 0; s < nS; s++)
 	{
+		Conf_Sum=0;
 		for (int a = 0; a < nA; a++)
 		{
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+			Conf_Sum+=(confP[s][a]+confR[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
+		}if (Conf_Sum/(2*nA)>1){
+			StateSwift[s]=0;
+		}else{
+			StateSwift[s]=1;
 		}
 	}
 	//Estimate equation 6
@@ -424,7 +433,7 @@ vector<int> MBIE::swiftEVI()
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
-	{
+	{	
 		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0) ;//(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
 	}
 
@@ -444,7 +453,8 @@ vector<int> MBIE::swiftEVI()
 	int *heap_size = new int[nS];
 
 	for (int s = 0; s < nS; s++)
-	{
+	{ 
+		if (StateSwift[s]==1){
 		// Put the initial q(s,a) elements into the heap
 		// fill each one with the maximum value of each action
 		// vector<q_action_pair_type> s_h(A[s].size(),(R_max / (1 - gamma)));
@@ -480,8 +490,8 @@ vector<int> MBIE::swiftEVI()
 
 		// make it a heap for this state s
 		make_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
-	}
-
+	}}
+	double R_s_a=0;
 	while (true)
 	{
 		niter++;
@@ -489,6 +499,7 @@ vector<int> MBIE::swiftEVI()
 		//std::cout << nA << std::endl;
 		for (int s = 0; s < nS; s++)
 		{
+			if (StateSwift[s]==1){
 			q_action_pair_type *s_h = s_heaps[s];
 			//nt old_action = -1;
 			//std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
@@ -569,6 +580,21 @@ vector<int> MBIE::swiftEVI()
 			std::cout << s_h[1].first << "  " << s_h[1].second << std::endl;
 			std::cout << std::endl;*/
 			policy[s] = s_h[0].second;
+		}else{
+			for (int a = 0; a < nA; a++)
+			{
+				max_proba(sorted_indices, s, a);
+				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				if (a == 0 || R_s_a > V1[s]) 
+				{
+					V1[s] = R_s_a;
+					policy[s] = a;
+				}
+			}
+
+		}
+
 		}
 		
 
