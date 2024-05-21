@@ -29,6 +29,7 @@ class MBIE {
 	// or S*4;
 	double delta;// = delta / (2 * S * nA * m);
 	int s_state;// = 0;
+	int *StateSwift; //false-> do VI, true do SwiftVI
 	int **Nsa;// = NULL;
 	double ***hatP;// = NULL;
 	double **Rsa;// = NULL;
