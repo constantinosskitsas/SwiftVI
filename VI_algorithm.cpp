@@ -450,6 +450,13 @@ vector<int> MBIE::swiftEVI()
 		// vector<q_action_pair_type> s_h(A[s].size(),(R_max / (1 - gamma)));
 		q_action_pair_type *s_h = s_heaps[s];
 
+		/*for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(1.0+confR[s][a_index])+1.0+confR[s][a_index];
+			if (r_bound > V0[s]) {
+				V0[s] = r_bound;
+			}
+		}*/
 		// for (int a_index = 0; a_index < A[s].size(); a_index++){
 		for (int a_index = 0; a_index < nA; a_index++)
 		{
@@ -460,8 +467,10 @@ vector<int> MBIE::swiftEVI()
 			// auto& [P_s_a, P_s_a_nonzero] = P[s][a];
 			// use the even iteration, as this is the one used in the i = 1 iteration, that we want to pre-do
 			// double q_1_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V[0], P_s_a_nonzero);
+			
 			double q_1_s_a = V0[s]; //(gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
 
+			//q_action_pair_type q_a_pair = make_pair(q_1_s_a, a_index);
 			q_action_pair_type q_a_pair = make_pair(q_1_s_a, a_index);
 			s_h[a_index] = q_a_pair;
 		}
@@ -530,9 +539,9 @@ vector<int> MBIE::swiftEVI()
 					std::cout << "New val: " << updated_top_action_value <<"\n";
 					std::cout << "Old val: " << old <<"\n";
 					std::cout << "hatR: " << hatR[s][top_action] << "  confR: " << confR[s][top_action] << "\n";
-					std::cout << " Max_r bonus: " << sqrt(log(2.0 / delta))/2.0 << "\n";
-					std::cout << " v2" << sqrt(log(2.0 / delta) / (double) (2));
-					std::cout << "nsa: " << Nsa[s][top_action] <<" delta: " << delta <<  "\n";
+					std::cout << " NSA: " << Nsa[s][top_action] << "\n";
+					std::cout << " v2: " << sqrt(log(2.0 / delta) / (double) (2));
+					std::cout << " nsa: " << Nsa[s][top_action] <<" delta: " << delta <<  "\n";
 					std::cout << "Max proba sum: ";
 					double sum_max_p = 0.0;
 					for (int i = 0; i < max_p.size(); i++)
@@ -586,7 +595,7 @@ vector<int> MBIE::swiftEVI()
 			//V0 = V1; //copy
 			for (int i = 0; i < nS; i++)
 			{
-				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2; //(gamma / (1.0 - gamma))*1+1;
+				//V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2; //(gamma / (1.0 - gamma))*1+1;	
 			}
 			//sorted indices
 			/*std::cout << std::endl;
@@ -634,6 +643,12 @@ vector<int> MBIE::EVI()
 	for (int i = 0; i < nS; i++)
 	{
 		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		/*for (int j = 0; j < nA; j++) {
+			double r_bound = (gamma / (1.0 - gamma))*(1.0+confR[i][j])+1.0+confR[i][j];
+			if (r_bound > V0[i]) {
+				V0[i] = r_bound;
+			}
+		}*/
 	}
 
 	// Initialize V1
