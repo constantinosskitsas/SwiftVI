@@ -53,6 +53,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int m = 1;
 
 	int T = 100000;
+	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
 
@@ -244,6 +245,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int m = 1;
 
 	int T = 100000;
+	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
