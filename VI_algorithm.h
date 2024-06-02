@@ -52,6 +52,8 @@ class MBIE {
 	void max_proba(vector<int> sorted_indices, int s, int a);
 	vector<int> EVI();
     vector<int> swiftEVI();
+	vector<int> baoEVI();
+	std::tuple<int,std::vector<int>> playbao(int state, double reward);
 	std::tuple<int,std::vector<int>> play(int state, double reward);
     std::tuple<int,std::vector<int>> playswift(int state, double reward);
 };
