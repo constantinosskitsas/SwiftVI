@@ -17,6 +17,7 @@
 using namespace std;
 
 //void runMBIE(MDP_type mdp, int S, int nA);
+void runBaoMBIE(MDP_type &mdp, int S, int _nA);
 void RLRS(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition);
 void GSTM(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition);
 void REXP(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition);

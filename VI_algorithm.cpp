@@ -213,6 +213,43 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 }
 
 
+
+std::tuple<int,std::vector<int>> MBIE::playbao(int state, double reward){
+		//std::cout << state << " " << reward << std::endl;
+	//If not first action
+	if (last_action >= 0) 
+	{	
+		cnt++;
+		Nsas[current_s][last_action][state] += 1;
+		Rsa[current_s][last_action] += reward;
+	}
+
+	// conduct updatesresult[t] += 
+	confidence();
+	for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+			for (int s2 = 0; s2 < nS; s2++)
+			{
+				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
+			}
+		}
+	}
+	//Estimate equation 6
+	policy = baoEVI();
+	//Follow the most optimistic greedy policy
+	int action = policy[state];
+
+	//Update with choice
+	Nsa[state][action] += 1;
+	current_s = state;
+	last_action = action;
+
+	return {action, policy};
+}
+
 std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 	//std::cout << state << " " << reward << std::endl;
 	//If not first action
@@ -244,8 +281,8 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 		}
 	}
 	//Estimate equation 6
-	policy = baoEVI();
-	//policy = swiftEVI();
+	//policy = baoEVI();
+	policy = swiftEVI();
 	//Follow the most optimistic greedy policy
 	int action = policy[state];
 

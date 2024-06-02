@@ -56,6 +56,7 @@ class MBIE {
 	std::tuple<int,std::vector<int>> playbao(int state, double reward);
 	std::tuple<int,std::vector<int>> play(int state, double reward);
     std::tuple<int,std::vector<int>> playswift(int state, double reward);
+	
 };
 
 
