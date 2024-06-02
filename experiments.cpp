@@ -89,7 +89,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 		for (int t = 0; t < T; t++)
 		{
 			if (t%1000 == 0) {
-				std::cout << "MBIEH " << t << std::endl;
+				std::cout << "MBIEBAO " << t << std::endl;
 			}
 			
 			if (t%1000 == 0) {
