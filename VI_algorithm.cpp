@@ -238,7 +238,7 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
 		}if (Conf_Sum/(2*nA)>1){
-			StateSwift[s]=0;
+			StateSwift[s]=1;
 		}else{
 			StateSwift[s]=1;
 		}
