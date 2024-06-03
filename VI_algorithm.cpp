@@ -751,7 +751,7 @@ vector<int> MBIE::baoEVI(){
 			double *Q_values_s = Q_values_per_state[s];
 
 			// start with delta value larger than epsilon such that we go into while loop at least once
-			double inner_delta = _epsilon + 1;
+			double inner_delta = epsilon + 1;
 
 			while (!(inner_delta < epsilon))
 			{
