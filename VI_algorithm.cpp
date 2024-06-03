@@ -213,6 +213,43 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 }
 
 
+
+std::tuple<int,std::vector<int>> MBIE::playbao(int state, double reward){
+		//std::cout << state << " " << reward << std::endl;
+	//If not first action
+	if (last_action >= 0) 
+	{	
+		cnt++;
+		Nsas[current_s][last_action][state] += 1;
+		Rsa[current_s][last_action] += reward;
+	}
+
+	// conduct updatesresult[t] += 
+	confidence();
+	for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+			for (int s2 = 0; s2 < nS; s2++)
+			{
+				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
+			}
+		}
+	}
+	//Estimate equation 6
+	policy = baoEVI();
+	//Follow the most optimistic greedy policy
+	int action = policy[state];
+
+	//Update with choice
+	Nsa[state][action] += 1;
+	current_s = state;
+	last_action = action;
+
+	return {action, policy};
+}
+
 std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 	//std::cout << state << " " << reward << std::endl;
 	//If not first action
@@ -238,12 +275,13 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
 		}if (Conf_Sum/(2*nA)>1){
-			StateSwift[s]=0;
+			StateSwift[s]=1;
 		}else{
 			StateSwift[s]=1;
 		}
 	}
 	//Estimate equation 6
+	//policy = baoEVI();
 	policy = swiftEVI();
 	//Follow the most optimistic greedy policy
 	int action = policy[state];
@@ -654,7 +692,157 @@ vector<int> MBIE::swiftEVI()
 		}
 	}
 }
+vector<int> MBIE::baoEVI(){
+	int max_iter = 2000;
+	int niter = 0;
+	float upper_convergence_criteria=0.0005;
+	//int nS = S;
+	vector<int> sorted_indices(nS);
+	
+	// Fill the vector with indices
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	vector<int> policy(nS, 0);
+	std::vector<double> V0(nS);
+	for (int i = 0; i < nS; i++)
+	{
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+	}
+	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
+	double R_s_a=0;
+	double **Q_values_per_state = new double *[nS];
+	for (int i = 0; i < nS; ++i)
+	{
+		// Q_values_per_state[i] = new double[A[i].size()];
+		Q_values_per_state[i] = new double[nA];
+	}
+		for (int s = 0; s < nS; s++)
+	{
+		// pointers to the heaps of current state s
+		double *Q_values_s = Q_values_per_state[s];
+		for (int a = 0; a < nA; a++)
+		{
+			// for (int a = 0; a < (A[s].size()); a++){
+			// Q_values_s[a] = (r_star_max / (1.0 - gamma));	//init with V_max as stated in BAO1 paper
+			// Q_values_s[a] = (gamma / (1.0 - gamma)) * r_star_max + r_star_values[s]; //init with upper bound V_U
+			Q_values_s[a] = V0[s];
+			// Q_values_s[a]=1.0;
+		}
+	}
+	//int niter = 0;
+		while (true)
+	{
 
+		// Increment iteration counter
+		niter++;
+
+		// Record actions eliminated in this iteration over all states
+		//vector<pair<int, int>> actions_eliminated_in_iteration;
+
+		// begin timing of this iteration
+		auto start_of_iteration = high_resolution_clock::now();
+
+		// If iiteration is even, then (iteration & 1) is 0, and the one to change is V[0]
+		
+
+		// for all states in each iteration
+		for (int s = 0; s < nS; s++)
+		{
+			// keep best actions here
+			double *Q_values_s = Q_values_per_state[s];
+
+			// start with delta value larger than epsilon such that we go into while loop at least once
+			double delta = epsilon + 1;
+
+			while (!(delta < epsilon))
+			{
+
+				// Find Max Q value
+				// double Q_max = numeric_limits<double>::min();
+				double Q_max = -100000;
+				//best action is policy, so just get the policy?
+				for (int a = 0; a < nA; a++)
+				{
+					// for (int a = 0; a < A[s].size(); a++){
+					if (Q_values_s[a] > Q_max)
+					{
+						Q_max = Q_values_s[a];
+					}
+				}
+				
+
+				// best_actions: find those actions that are at most epsilon from largest action
+				vector<int> best_actions;
+				for (int a = 0; a < nA; a++)
+				{
+					// for (int a = 0; a < A[s].size(); a++){
+					if (abs(Q_values_s[a] - Q_max) < epsilon)
+					{
+						best_actions.push_back(a);
+					}
+				}
+
+				delta = 0.0;
+
+				for (int a : best_actions)
+				{
+					double old_q = Q_values_s[a];
+
+					// actually update this value Q(s,a)
+					max_proba(sorted_indices, s, a);
+					R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+					Q_values_s[a] = R_s_a;
+
+					if (abs(old_q - Q_values_s[a]) > delta)
+					{
+						delta = abs(old_q - Q_values_s[a]);
+					}
+				}
+			}
+
+			// find new value of V_U[s]
+			// V_U_current_iteration[s] = numeric_limits<double>::min();
+			V1[s] = -100000;
+			for (int a = 0; a < nA; a++)
+			{
+				// for (int a = 0; a <A[s].size(); a++){
+				if (Q_values_s[a] > V1[s])
+				{
+					V1[s] = Q_values_s[a];
+					policy[s] = a;
+				}
+			}
+		}
+
+		// Check if upper convergence criteria is met
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
+		{
+			//std::cout << niter << std::endl;
+			return policy;
+		} 
+		else 
+		{
+			//for (int i = 0; i< nS; i++) {
+			//	V0[i] =
+			//}
+			std::swap(V0,V1);
+			//V0 = V1; //copy
+			// no need
+			for (int i = 0; i < nS; i++)
+			{
+				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+			}
+			//sorted indices
+			iota(sorted_indices.begin(), sorted_indices.end(), 0);
+			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		}
+		if (max_iter == niter) {
+			std::cout << "Early stop in EVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
+			
+			return policy;
+		}
+	}
+}
 vector<int> MBIE::EVI()
 {
 	int max_iter = 2000;
@@ -669,16 +857,12 @@ vector<int> MBIE::EVI()
 	for (int i = 0; i < nS; i++)
 	{
 		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
-		/*for (int j = 0; j < nA; j++) {
-			double r_bound = (gamma / (1.0 - gamma))*(1.0+confR[i][j])+1.0+confR[i][j];
-			if (r_bound > V0[i]) {
-				V0[i] = r_bound;
-			}
-		}*/
+		
 	}
 
 	// Initialize V1
 	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+	
 	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
 	double R_s_a=0;
 
@@ -703,6 +887,7 @@ vector<int> MBIE::EVI()
 				/*if (cnt > 110) {
 					std::cout << R_s_a << "  " << hatR[s][a] << "  " << confR[s][a] << std::endl;;
 				}*/
+
 				if (a == 0 || R_s_a > V1[s]) 
 				{
 					V1[s] = R_s_a;
@@ -741,6 +926,7 @@ vector<int> MBIE::EVI()
 			//}
 			std::swap(V0,V1);
 			//V0 = V1; //copy
+			//why? we dont need it the way you have  (a == 0 || R_s_a > V1[s]) 
 			for (int i = 0; i < nS; i++)
 			{
 				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
