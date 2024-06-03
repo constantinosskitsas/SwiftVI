@@ -645,7 +645,7 @@ vector<int> MBIE::swiftEVI()
 		dist = sqrt(dist);*/
 		//abs_max_diff(V0, V1, nS);
 		//if (abs_max_diff(V0, V1, nS) < _epsilon) 
-		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < _epsilon) 
 		{
 			return policy;
 		} 
@@ -695,7 +695,6 @@ vector<int> MBIE::swiftEVI()
 vector<int> MBIE::baoEVI(){
 	int max_iter = 2000;
 	int niter = 0;
-	float upper_convergence_criteria=0.0005;
 	//int nS = S;
 	vector<int> sorted_indices(nS);
 	
@@ -752,9 +751,9 @@ vector<int> MBIE::baoEVI(){
 			double *Q_values_s = Q_values_per_state[s];
 
 			// start with delta value larger than epsilon such that we go into while loop at least once
-			double delta = epsilon + 1;
+			double inner_delta = _epsilon + 1;
 
-			while (!(delta < epsilon))
+			while (!(inner_delta < _epsilon))
 			{
 
 				// Find Max Q value
@@ -764,7 +763,7 @@ vector<int> MBIE::baoEVI(){
 				for (int a = 0; a < nA; a++)
 				{
 					// for (int a = 0; a < A[s].size(); a++){
-					if (Q_values_s[a] >= Q_max)
+					if (Q_values_s[a] > Q_max)
 					{
 						Q_max = Q_values_s[a];
 					}
@@ -776,13 +775,13 @@ vector<int> MBIE::baoEVI(){
 				for (int a = 0; a < nA; a++)
 				{
 					// for (int a = 0; a < A[s].size(); a++){
-					if (abs(Q_values_s[a] - Q_max) < epsilon)
+					if (abs(Q_values_s[a] - Q_max) < _epsilon)
 					{
 						best_actions.push_back(a);
 					}
 				}
 
-				delta = 0.0;
+				inner_delta = 0.00000;
 
 				for (int a : best_actions)
 				{
@@ -793,9 +792,9 @@ vector<int> MBIE::baoEVI(){
 					R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
 					Q_values_s[a] = R_s_a;
 
-					if (abs(old_q - Q_values_s[a]) > delta)
+					if (abs(old_q - Q_values_s[a]) > inner_delta)
 					{
-						delta = abs(old_q - Q_values_s[a]);
+						inner_delta = abs(old_q - Q_values_s[a]);
 					}
 				}
 			}
@@ -815,7 +814,7 @@ vector<int> MBIE::baoEVI(){
 		}
 
 		// Check if upper convergence criteria is met
-		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < _epsilon) 
 		{
 			//std::cout << niter << std::endl;
 			return policy;
@@ -914,7 +913,7 @@ vector<int> MBIE::EVI()
 		dist = sqrt(dist);*/
 		//std::cout << dist << std::endl;
 		//if (abs_max_diff(V0, V1, nS) < _epsilon) 
-		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < _epsilon) 
 		{
 			//std::cout << niter << std::endl;
 			return policy;

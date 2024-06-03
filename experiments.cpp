@@ -623,7 +623,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO" << endl;
 	avgstring_stream << "MBVI MBVIH MBBAO" << endl;
-	int repetitions = 1;
+	int repetitions = 10;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
 	std::vector<std::vector<float>> VI(3,std::vector<float>(siIter, 0));
@@ -644,8 +644,8 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 40;
-				MDP = generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				int nA = 2;
+				MDP = ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
 				S = ite; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);

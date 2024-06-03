@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
 	int States = 30;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 800;
-	int EndP = 801;
+	int StartP = 5;
+	int EndP = 20;
 	int IncP = 2;
 	std::size_t pos;
 
