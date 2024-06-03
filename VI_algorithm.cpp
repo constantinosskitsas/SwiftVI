@@ -492,7 +492,7 @@ vector<int> MBIE::swiftEVI()
 
 	for (int s = 0; s < nS; s++)
 	{ 
-		if (StateSwift[s]==1){
+		if (true) {//(StateSwift[s]==1){
 		// Put the initial q(s,a) elements into the heap
 		// fill each one with the maximum value of each action
 		// vector<q_action_pair_type> s_h(A[s].size(),(R_max / (1 - gamma)));
@@ -537,7 +537,7 @@ vector<int> MBIE::swiftEVI()
 		//std::cout << nA << std::endl;
 		for (int s = 0; s < nS; s++)
 		{
-			if (StateSwift[s]==1){
+			if (true){//(StateSwift[s]==1){
 			q_action_pair_type *s_h = s_heaps[s];
 			//nt old_action = -1;
 			//std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
@@ -764,7 +764,7 @@ vector<int> MBIE::baoEVI(){
 				for (int a = 0; a < nA; a++)
 				{
 					// for (int a = 0; a < A[s].size(); a++){
-					if (Q_values_s[a] > Q_max)
+					if (Q_values_s[a] >= Q_max)
 					{
 						Q_max = Q_values_s[a];
 					}

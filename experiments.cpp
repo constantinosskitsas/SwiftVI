@@ -54,7 +54,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 100000;
+	int T = 50000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -88,16 +88,16 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			if (t%1000 == 0) {
+			if (t%10000 == 0) {
 				std::cout << "MBIEBAO " << t << std::endl;
 			}
 			
 			if (t%1000 == 0) {
-				if (t < T/12) {
+				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
-				} else {
+				} else {*/
 					std::tie(action, policy) = MB.playbao(state, reward);
-				}
+				//}
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
 			} 
@@ -146,7 +146,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 			_policy=policy;
 		}
 
-		std::cout << "SwiftMBIE policy:  ";
+		std::cout << "BaoMBIE policy:  ";
 		for (int i: _policy) {
 			std::cout << i;
 		}	
@@ -155,7 +155,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
-		filename << "pyplotfiles/swiftmbie_v_opt_" << nS << "_" << nA <<".txt";
+		filename << "pyplotfiles/baombie_v_opt_" << nS << "_" << nA <<".txt";
 		ofstream topython;
 
 		topython.open(filename.str());
@@ -175,7 +175,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 		std::stringstream filename1;
-		filename1 << "pyplotfiles/swiftmbie_v_pol_" << nS << "_" << nA <<".txt";
+		filename1 << "pyplotfiles/baombie_v_pol_" << nS << "_" << nA <<".txt";
 		topython.open(filename1.str());
 		if (topython.is_open())
 		{
@@ -193,7 +193,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 		std::stringstream filename2;
-		filename2 << "pyplotfiles/swiftmbie_v_pol_e" << nS << "_" << nA <<".txt";
+		filename2 << "pyplotfiles/baombie_v_pol_e" << nS << "_" << nA <<".txt";
 
 		topython.open(filename2.str());
 		if (topython.is_open())
@@ -213,7 +213,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 		}
 
 		std::stringstream filename3;
-		filename3 << "pyplotfiles/swiftmbie_v_opt_e" << nS << "_" << nA <<".txt";
+		filename3 << "pyplotfiles/baombie_v_opt_e" << nS << "_" << nA <<".txt";
 		//std::cout << filename3.str()<< std::endl;
 		topython.open(filename3.str());
 		if (topython.is_open())
@@ -248,7 +248,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 100000;
+	int T = 50000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -282,22 +282,19 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			if (t%1000 == 0) {
+			if (t%10000 == 0) {
 				std::cout << "MBIEH " << t << std::endl;
 			}
 			
 			if (t%1000 == 0) {
-				if (t < T/12) {
+				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
-				} else {
+				} else {*/
 					std::tie(action, policy) = MB.playswift(state, reward);
-				}
+				//}
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
-			} 
-			/*else {
-				std::tie(action, policy) = MB.playswift(state, reward);
-			}*/
+			}
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			//auto [action, policy] = MB.playswift(state, reward);
@@ -440,7 +437,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 100000;
+	int T = 50000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -479,7 +476,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			if (t%1000 == 0) {
+			if (t%10000 == 0) {
 				std::cout << "MBIE " << t << std::endl;
 			}
 			//std::cout << t << std::endl;
@@ -489,7 +486,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 				std::tie(action, policy) = MB.play(state, reward);
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
-			} 
+			}
 			//auto [action, policy] = MB.play(state, reward);
 			// Get reward and next step from MDP
 			reward = R[state][action];
@@ -692,7 +689,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	}
 	for (int k = 0; k < siIter; k++)
 	{
-		avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions <<  endl;
+		avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions << " " << VI[2][k] / repetitions <<  endl;
 	}
 	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
 	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
