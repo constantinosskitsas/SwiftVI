@@ -686,7 +686,7 @@ vector<int> MBIE::swiftEVI()
 
 		}
 		if (max_iter == niter) {
-			std::cout << "Early stop in EVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
+			std::cout << "Early stop in swiftEVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
 			
 			return policy;
 		}
@@ -837,7 +837,7 @@ vector<int> MBIE::baoEVI(){
 			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
 		}
 		if (max_iter == niter) {
-			std::cout << "Early stop in EVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
+			std::cout << "Early stop in baoEVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
 			
 			return policy;
 		}
