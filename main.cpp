@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	int SS = 50;
 	int StartP = 5;
 	int EndP = 20;
-	int IncP = 2;
+	int IncP = 5;
 	std::size_t pos;
 
 	string file_prefix_number_of_states_best = "number_of_states_best";

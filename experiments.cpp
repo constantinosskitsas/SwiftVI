@@ -50,8 +50,8 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
-	double delta = 0.05;
+	double epsilon = 0.01;
+	double delta = 0.005;
 	int m = 1;
 
 	int T = 50000;
@@ -92,7 +92,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 				std::cout << "MBIEBAO " << t << std::endl;
 			}
 			
-			if (t%1000 == 0) {
+			if (t%5000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -286,7 +286,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 				std::cout << "MBIEH " << t << std::endl;
 			}
 			
-			if (t%1000 == 0) {
+			if (t%5000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -482,7 +482,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			
-			if (t%1000 == 0) {
+			if (t%5000 == 0) {
 				std::tie(action, policy) = MB.play(state, reward);
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
@@ -644,9 +644,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 2;
-				MDP = ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				S = ite; 
+				int nA = 4;
+				MDP = GridWorld(ite,ite,123, 0);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				S = ite*ite; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);
 				A_type A = get<1>(MDP);
