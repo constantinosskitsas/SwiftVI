@@ -154,6 +154,106 @@ V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, dou
 	return result_tuple;
 }
 
+UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
+	nS = S;
+	nA = _nA;
+	t = 0; //1
+	k = 0; //1
+	gamma = _gamma;
+	epsilon = _epsilon;
+	vsa = new int *[S];
+	vsas = new int **[S];
+	Nsas = new int **[S];
+	Nsa = new int *[S];
+	Rsa = new double *[S];
+	hatR = new double *[S];
+	confR = new double *[S];
+	confP = new double **[S];
+
+	H = 1.0/(1.0-gamma);
+	w_min = (epsilon*(1-gamma))/(4*nS);
+	delta_one = _delta/(2*nS*nA)*(1/(log2(nS)*log2(1/(w_min*(1-gamma))))); //log2
+	L_one = log(2/delta_one); //nat log
+	m = ((1280*L_one)/(pow(epsilon,2)*pow((log(log(1/(1-gamma)))),2)))*(log(nS/(epsilon*(1-gamma))))*log(1/(epsilon*(1-gamma))); //nat log
+
+	current_s = 0;
+	last_s = 0;
+	last_action = -1;
+	
+	for (int i = 0; i < S; ++i)
+	{
+		max_p.push_back(0.0);// (nS, 0.0);
+		vsa[i] = new int[nA];
+		Nsa[i] = new int[nA];
+		Rsa[i] = new double[nA];
+		hatR[i] = new double[nA];
+		confR[i] = new double[nA];
+		memset(vsa[i], 0, sizeof(int) * nA);
+		memset(Nsa[i], 0, sizeof(int) * nA);
+		memset(Rsa[i], 0.0, sizeof(double) * nA);
+		memset(hatR[i], 0.0, sizeof(double) * nA);
+	}
+
+	for (int i = 0; i < S; i++)
+	{
+		Nsas[i] = new int *[nA];
+		vsas[i] = new int *[nA];
+		hatP[i] = new double *[nA];
+		confP[i] = new double *[nA];
+		for (int j = 0; j < nA; j++)
+		{
+			Nsas[i][j] = new int[S];
+			vsas[i][j] = new int[S];
+			hatP[i][j] = new double[S];
+			confP[i][j] = new double[S];
+			memset(Nsas[i][j], 0, sizeof(int) * S);
+			memset(vsas[i][j], 0, sizeof(int) * S);
+			memset(hatP[i][j], 0.0, sizeof(double) * S);
+			memset(confP[i][j], 0.0, sizeof(double) * S);
+		}
+	}
+
+}
+
+void UCLR::confidence() {
+	for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			double n = max(1, Nsa[s][a]);
+
+			for (int s2 = 0; s2 < nS; s2++)
+			{
+				double p = hatP[s][a][s2];
+				confP[s][a][s2] = min(sqrt((2*L_one*p*(1-p))/n)+(2*L_one)/(3*n),sqrt(L_one/(2*n)));//sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
+			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
+			//confR[s][a] = sqrt(log(2.0 / delta) / (double) (2 * max(1, Nsa[s][a])));
+			//std::cout << confR[s][a] << std::endl;
+			}
+		}
+	}
+
+}
+
+void UCLR::update(int s, int a) {
+	Nsa[s][a] += vsa[s][a];
+	vsa[s][a] = 0;
+	for (int s2 = 0; s2 < nS; s2++) {
+		Nsas[s][a][s2] += vsas[s][a][s2];
+		vsas[s][a][s2] = 0;
+	}
+}
+
+bool UCLR::end_act(int s, int action) {
+	return ((vsa[s][action] >= max(m*w_min, (double) Nsa[s][action])) && Nsa[s][action] < (nS*m)/(1-gamma));
+}
+
+vector<int> MBIE::EVI() {
+	//TODO
+}
+
+
+
 
 MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int _m) {
 	delta = _delta;

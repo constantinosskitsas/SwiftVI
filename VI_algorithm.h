@@ -59,6 +59,54 @@ class MBIE {
 	
 };
 
+class UCLR {
+	public:
+	int t;
+	int k;
+	int nA;
+	int nS;
+	double gamma;
+	double epsilon;
+	vector<int> policy;
+	double H;
+	double w_min;
+	double delta_one;
+	double L_one;
+	double m;
+
+	int **vsa;
+	int ***vsas;
+
+
+	int **Nsa;
+	int ***Nsas;
+	double **Rsa;
+
+	double ***hatP;
+	double **hatR;
+
+	double **confR;
+	double ***confP;
+	vector<double> max_p;
+
+	int current_s;
+	int last_s;
+	int last_action;
+
+	UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta);
+	//int act(int state);
+	bool end_act(int state, int action);
+	//void delay();
+	vector<int> EVI();
+	std::tuple<int,std::vector<int>> play_gamma(int state, double reward);
+	void confidence();
+	void max_proba(vector<int> sorted_indices, int s, int a);
+	void reset(S_type init);
+	void update(int s, int a);
+
+
+};
+
 
 
 V_type value_iteration(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon);

@@ -40,6 +40,258 @@
 using namespace std;
 using namespace std::chrono;
 
+void runUCRLgamma(MDP_type &mdp, int S, int _nA)
+{
+	std::default_random_engine generator;
+	generator.seed(1337);
+
+	int nS = S;
+	int nA = _nA;
+	double gamma = 0.99;
+	double epsilon = 0.00001;
+	double delta = 0.000005;
+	//nt m = 1;
+
+	int T = 50000;
+	int k = 0;
+	int t = 0;
+	//T=10000;
+	int reps = 1; // replicates
+	bool make_plots = false;
+
+	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
+	R_type R = get<0>(MDP);
+	A_type A = get<1>(MDP);
+	P_type P = get<2>(MDP);
+
+	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
+	vector<double> V_star = get<0>(V_star_return);
+	
+	std::vector<std::vector<double>> v_opt(reps, std::vector<double>(T, 0.0));
+	std::vector<std::vector<double>> v_pol(reps, std::vector<double>(T, 0.0));
+
+	std::vector<std::vector<double>> v_opt_e(reps, std::vector<double>(T, 0.0));
+	std::vector<std::vector<double>> v_pol_e(reps, std::vector<double>(T, 0.0));
+
+	double reward = 0;
+	UCLR MB = UCLR(nS, nA, gamma, epsilon, delta);
+	vector<double> step_vector(nS,0.0); 
+	for (int rep = 0; rep < reps; rep++)
+	{
+		// Init game
+		int state = 0;
+		int prev_state;
+		MB.reset(state);
+		reward = 0;
+		vector<int> _policy(state, 0);
+		int action;
+		int prev_action;
+		std::vector<int> policy;
+
+		// Run game
+		while (t < T)
+		{
+			if (t%10000 == 0) {
+				std::cout << "UCLR_GAMMA " << t << std::endl;
+			}
+			MB.confidence();
+			policy = MB.EVI();
+			do {
+				//Act
+				action = _policy[state];
+
+				reward = R[state][action]; //TODO: Reward conf support
+				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
+
+				prev_state = state;
+				prev_action = action;
+
+
+				/*##################### TRACKING ####################*/
+				if (make_plots) {
+					//Get V for current policy
+					Eigen::MatrixXd P_pi(nS, nS);
+					Eigen::VectorXd R_pi(nS);
+					//P_pi.reserve(nS * nS);
+					//R_pi.reserve(nS);
+
+					for (int s = 0; s < nS; s++) {
+
+						std::vector<double> p_row(nS,0.0);
+						auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
+						for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
+							p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+						}
+						P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
+						R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
+					}
+					Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
+					Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
+					
+					v_opt[rep][t]=V_star[state];
+					v_pol[rep][t]=V_pol[state];
+
+					v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
+					v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
+				}
+				/*##################### END TRACKING ####################*/
+
+
+				std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
+				state = P_s_a_nonzero[distribution(generator)];
+				
+				MB.vsa[prev_state][prev_action] += 1;
+				MB.vsas[prev_state][prev_action][state] += 1;
+				t += 1;
+
+			} while (!MB.end_act(prev_state, prev_action));  //repeat end condition
+
+			MB.update(prev_state, prev_action);
+
+			// Delay
+			for (int j = 0; j < MB.H; j++) {
+				action = _policy[state];
+
+				reward = R[state][action]; //TODO: Reward conf support
+				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
+
+				prev_state = state;
+				prev_action = action;
+
+
+				/*##################### TRACKING ####################*/
+				if (make_plots) {
+					//Get V for current policy
+					Eigen::MatrixXd P_pi(nS, nS);
+					Eigen::VectorXd R_pi(nS);
+					//P_pi.reserve(nS * nS);
+					//R_pi.reserve(nS);
+
+					for (int s = 0; s < nS; s++) {
+
+						std::vector<double> p_row(nS,0.0);
+						auto &[_P_s_a, _P_s_a_nonzero] = P[s][policy[s]];
+						for (int i = 0; i < _P_s_a_nonzero.size(); i++) {
+							p_row[_P_s_a_nonzero[i]] = _P_s_a[i];
+						}
+						P_pi.row(s) = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(p_row.data(),nS);
+						R_pi(s) = R[s][policy[s]]; //Assume R map is full cover
+					}
+					Eigen::MatrixXd I = Eigen::MatrixXd::Identity(nS, nS);
+					Eigen::VectorXd V_pol = (I - P_pi * gamma).inverse() * R_pi;
+					
+					v_opt[rep][t]=V_star[state];
+					v_pol[rep][t]=V_pol[state];
+
+					v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
+					v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
+				}
+				/*##################### END TRACKING ####################*/
+
+
+				std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
+				state = P_s_a_nonzero[distribution(generator)];
+
+				MB.vsa[prev_state][prev_action] += 1;
+				MB.vsas[prev_state][prev_action][state] += 1;
+				t += 1;
+
+			}	
+			
+			k += 1; //Tracks episodes.
+			_policy=policy;
+			
+		}
+
+		std::cout << "SwiftMBIE policy:  ";
+		for (int i: _policy) {
+			std::cout << i;
+		}	
+		 std::cout << std::endl;
+	}
+	if (make_plots) {
+		//Export tracked data for plotting
+		std::stringstream filename;
+		filename << "pyplotfiles/swiftmbie_v_opt_" << nS << "_" << nA <<".txt";
+		ofstream topython;
+
+		topython.open(filename.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_opt[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_opt[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
+		std::stringstream filename1;
+		filename1 << "pyplotfiles/swiftmbie_v_pol_" << nS << "_" << nA <<".txt";
+		topython.open(filename1.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_pol[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_pol[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
+		std::stringstream filename2;
+		filename2 << "pyplotfiles/swiftmbie_v_pol_e" << nS << "_" << nA <<".txt";
+
+		topython.open(filename2.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_pol_e[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_pol_e[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
+
+		std::stringstream filename3;
+		filename3 << "pyplotfiles/swiftmbie_v_opt_e" << nS << "_" << nA <<".txt";
+		//std::cout << filename3.str()<< std::endl;
+		topython.open(filename3.str());
+		if (topython.is_open())
+		{
+			for (int r = 0; r < reps; r++) {
+				topython << v_opt_e[r][0];
+				for (int t = 1; t < T; t++) {
+					topython << " " << v_opt_e[r][t];
+				}
+				topython << std::endl;
+			}
+			topython.close();
+		}
+		else
+		{
+			printf("opened file: fail\n");
+		}
+	}
+}
+
+
 //I just copied the BAO function, feel bad doing this should we merge them?
 //However if we keep only BAO and VIH then its kind of okay.
 void runBaoMBIE(MDP_type &mdp, int S, int _nA)
@@ -50,8 +302,8 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.01;
-	double delta = 0.005;
+	double epsilon = 0.00001;
+	double delta = 0.000005;
 	int m = 1;
 
 	int T = 50000;
@@ -92,7 +344,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 				std::cout << "MBIEBAO " << t << std::endl;
 			}
 			
-			if (t%5000 == 0) {
+			if (t%1000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -244,8 +496,8 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
-	double delta = 0.05;
+	double epsilon = 0.00001;
+	double delta = 0.000005;
 	int m = 1;
 
 	int T = 50000;
@@ -286,7 +538,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 				std::cout << "MBIEH " << t << std::endl;
 			}
 			
-			if (t%5000 == 0) {
+			if (t%1000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -433,8 +685,8 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
-	double delta = 0.05;
+	double epsilon = 0.00001;
+	double delta = 0.000005;
 	int m = 1;
 
 	int T = 50000;
@@ -482,7 +734,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			
-			if (t%5000 == 0) {
+			if (t%1000 == 0) {
 				std::tie(action, policy) = MB.play(state, reward);
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
@@ -644,9 +896,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 4;
-				MDP = GridWorld(ite,ite,123, 0);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				S = ite*ite; 
+				int nA = 40;
+				MDP = generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				S = ite; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);
 				A_type A = get<1>(MDP);
