@@ -92,7 +92,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 		while (t < T)
 		{
 			if (t%10000 == 0) {
-				std::cout << "UCLR_GAMMA " << t << std::endl;
+				std::cout << "UCRL_GAMMA " << t << std::endl;
 			}
 			MB.confidence();
 			policy = MB.EVI();
@@ -203,7 +203,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 			
 		}
 
-		std::cout << "SwiftMBIE policy:  ";
+		std::cout << "UCRL_Gamma policy:  ";
 		for (int i: _policy) {
 			std::cout << i;
 		}	
@@ -212,7 +212,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
-		filename << "pyplotfiles/swiftmbie_v_opt_" << nS << "_" << nA <<".txt";
+		filename << "pyplotfiles/ucrlg_v_opt_" << nS << "_" << nA <<".txt";
 		ofstream topython;
 
 		topython.open(filename.str());
@@ -232,7 +232,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 		std::stringstream filename1;
-		filename1 << "pyplotfiles/swiftmbie_v_pol_" << nS << "_" << nA <<".txt";
+		filename1 << "pyplotfiles/ucrlg_v_pol_" << nS << "_" << nA <<".txt";
 		topython.open(filename1.str());
 		if (topython.is_open())
 		{
@@ -250,7 +250,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 		std::stringstream filename2;
-		filename2 << "pyplotfiles/swiftmbie_v_pol_e" << nS << "_" << nA <<".txt";
+		filename2 << "pyplotfiles/ucrlg_v_pol_e" << nS << "_" << nA <<".txt";
 
 		topython.open(filename2.str());
 		if (topython.is_open())
@@ -270,7 +270,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 		}
 
 		std::stringstream filename3;
-		filename3 << "pyplotfiles/swiftmbie_v_opt_e" << nS << "_" << nA <<".txt";
+		filename3 << "pyplotfiles/ucrlg_v_opt_e" << nS << "_" << nA <<".txt";
 		//std::cout << filename3.str()<< std::endl;
 		topython.open(filename3.str());
 		if (topython.is_open())
