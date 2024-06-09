@@ -70,6 +70,7 @@ class UCLR {
 	vector<int> policy;
 	double H;
 	double w_min;
+	double r_delta;
 	double delta_one;
 	double L_one;
 	double m;
@@ -95,10 +96,10 @@ class UCLR {
 
 	UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta);
 	//int act(int state);
-	bool end_act(int state, int action);
+	bool end_act(int state, int action, bool verbose);
 	//void delay();
 	vector<int> EVI();
-	std::tuple<int,std::vector<int>> play_gamma(int state, double reward);
+	//std::tuple<int,std::vector<int>> play_gamma(int state, double reward);
 	void confidence();
 	void max_proba(vector<int> sorted_indices, int s, int a);
 	void reset(S_type init);

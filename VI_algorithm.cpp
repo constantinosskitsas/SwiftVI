@@ -160,9 +160,11 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	t = 0; //1
 	k = 0; //1
 	gamma = _gamma;
+	r_delta = _delta / (2 * S * nA * 1); //TODO m 
 	epsilon = _epsilon;
 	vsa = new int *[S];
 	vsas = new int **[S];
+	hatP = new double **[S];
 	Nsas = new int **[S];
 	Nsa = new int *[S];
 	Rsa = new double *[S];
@@ -170,11 +172,13 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	confR = new double *[S];
 	confP = new double **[S];
 
-	H = 1.0/(1.0-gamma);
+	H = 1.0/(1.0-gamma)*log((8*nS)/(epsilon*(1-gamma)));
 	w_min = (epsilon*(1-gamma))/(4*nS);
 	delta_one = _delta/(2*nS*nA)*(1/(log2(nS)*log2(1/(w_min*(1-gamma))))); //log2
 	L_one = log(2/delta_one); //nat log
 	m = ((1280*L_one)/(pow(epsilon,2)*pow((log(log(1/(1-gamma)))),2)))*(log(nS/(epsilon*(1-gamma))))*log(1/(epsilon*(1-gamma))); //nat log
+
+	std::cout << "m*w_min: " << m*w_min << std::endl;
 
 	current_s = 0;
 	last_s = 0;
@@ -209,7 +213,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 			memset(Nsas[i][j], 0, sizeof(int) * S);
 			memset(vsas[i][j], 0, sizeof(int) * S);
 			memset(hatP[i][j], 0.0, sizeof(double) * S);
-			memset(confP[i][j], 0.0, sizeof(double) * S);
+			//memset(confP[i][j], 0.0, sizeof(double) * S);
 		}
 	}
 
@@ -220,14 +224,27 @@ void UCLR::confidence() {
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			double n = max(1, Nsa[s][a]);
+			//hatR[s][a] = Rsa[s][a]; //FIXED R ///(double)max(1, Nsa[s][a]);
+			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+			for (int s2 = 0; s2 < nS; s2++)
+			{
+				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1.0, (double) Nsa[s][a]);		
+			}
+		}	
+	}
+	for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{
+			double n = max(1.0, (double) Nsa[s][a]);
+
+			confR[s][a] = sqrt(log(2.0 / r_delta) / (double) (2 * max(1, Nsa[s][a])));
 
 			for (int s2 = 0; s2 < nS; s2++)
 			{
 				double p = hatP[s][a][s2];
-				confP[s][a][s2] = min(sqrt((2*L_one*p*(1-p))/n)+(2*L_one)/(3*n),sqrt(L_one/(2*n)));//sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
+				confP[s][a][s2] = min(sqrt((2.0*L_one*p*(1.0-p))/n)+(2.0*L_one)/(3.0*n),sqrt(L_one/(2.0*n)));//sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
-			//confR[s][a] = sqrt(log(2.0 / delta) / (double) (2 * max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << std::endl;
 			}
 		}
@@ -244,12 +261,226 @@ void UCLR::update(int s, int a) {
 	}
 }
 
-bool UCLR::end_act(int s, int action) {
+bool UCLR::end_act(int s, int action, bool verbose) {
+	if (verbose) {
+		std::cout << "vsa: " << vsa[s][action] << "\n";
+		std::cout << "max: " << max(m*w_min, (double) Nsa[s][action]) << "\n";
+		std::cout << "NSA: " << Nsa[s][action] << "\n";
+		std::cout << "const: " << (nS*m)/(1-gamma) << "\n";
+	}
 	return ((vsa[s][action] >= max(m*w_min, (double) Nsa[s][action])) && Nsa[s][action] < (nS*m)/(1-gamma));
 }
 
-vector<int> MBIE::EVI() {
+void UCLR::reset(S_type init) {
+	for (int i = 0; i < nS; i++)
+	{
+		for (int j = 0; j < nA; j++)
+		{
+			vsa[i][j] = 0;
+			Rsa[i][j] = 0.0;
+			hatR[i][j] = 0.0;
+			confR[i][j] = 0.0;
+			Nsa[i][j] = 0;
+			for (int k = 0; k < nS; k++)
+			{
+				vsas[i][j][k] = 0;
+				Nsas[i][j][k] = 0;
+				hatP[i][j][k] = 0.0;
+				confP[i][j][k] = 0.0;
+			}
+		}
+	}
+	current_s = init; //Not used
+	last_action = -1;	//not used
+}
+
+void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
+{
+	double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a][sorted_indices[nS - 1]] / 2.0);
+	
+	/*#pragma omp parallel
+	{   
+    auto tid = omp_get_thread_num();
+    auto chunksize = max_p.size() / omp_get_num_threads();
+    auto begin = max_p.begin() + chunksize * tid;
+    auto end = (tid == omp_get_num_threads() -1) ? max_p.end() : begin + chunksize;
+    std::fill(begin, end, 0.0);
+	}*/
+
+	//
+	/*for (int i =0; i<nS; i++) {
+		max_p[i] = 0;
+	}*/
+	
+
+	if (min1 == 1.0)
+	{
+		//std::fill(std::execution::par, max_p.begin(),max_p.end(),0.0);
+		std::fill(max_p.begin(),max_p.end(),0.0);
+		
+		for (int i =0; i<nS; i++) {
+			max_p[i] = 0;
+		}
+		max_p[sorted_indices[nS - 1]] = 1.0;
+		
+		
+	}
+	else
+	{	
+		//std::cout << "My fill" << std::endl;
+		//parallel_fill(this,s,a);
+		for (int i = 0; i < nS; i++){
+			max_p[i] = hatP[s][a][i];
+			//if (hatP[s][a][i] != 0) {
+			//	std::cout << s << " " << i << "  " << hatP[s][a][i] << std::endl;
+			//}
+		}
+		//Mega copy hack (that may or may not work)
+		//std::copy(hatP[s][a], hatP[s][a]+nS,max_p.begin());
+		//max_p.assign(*hatP[s][a], *hatP[s][a] + nS);
+		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
+		
+		max_p[sorted_indices[nS - 1]] += confP[s][a][sorted_indices[nS - 1]] / 2.0;
+		//std::cout << hatP[s][a][sorted_indices[nS - 1]] << std::endl;
+		//std::cout << std::endl;
+		
+		int l = 0;
+		double sum_max_p = 0.0;
+		for (int i = 0; i < max_p.size(); i++)
+		{
+			sum_max_p += max_p[i];
+		}
+		while (sum_max_p > 1.0)
+		{
+			max_p[sorted_indices[l]] = max(0.0, 1.0 - sum_max_p + max_p[sorted_indices[l]]);
+			l++;
+
+			// Recalculate the sum of max_p
+			sum_max_p = 0.0;
+			for (int i = 0; i < max_p.size(); i++)
+			{
+				sum_max_p += max_p[i];
+			}
+		}
+		
+	}
+	//max_p has been set
+	//for (auto i: max_p) {
+	//	std::cout << i << " ";
+	//}
+	//std::cout << std::endl;
+}
+
+vector<int> UCLR::EVI()
+{
+	int max_iter = 2000;
+	int niter = 0;
+	//int nS = S;
+	vector<int> sorted_indices(nS);
+	
+	// Fill the vector with indices
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	vector<int> policy(nS, 0);
+	std::vector<double> V0(nS);
+	for (int i = 0; i < nS; i++)
+	{
+		//FIXED R
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0)+1.0;
+
+		//Non-fixed R
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		
+	}
+
+	// Initialize V1
 	//TODO
+	vector<double> V1(nS, 1.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+	
+	//double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
+	double R_s_a=0;
+
+	while (true)
+	{
+		niter++;
+		//std::cout << niter << std::endl;
+		for (int s = 0; s < nS; s++)
+		{
+			for (int a = 0; a < nA; a++)
+			{
+				/*for (int l = 0; l < nS; l++)
+				{
+					std::cout << sorted_indices[l] << " ";
+				}
+				std::cout << std::endl;*/
+				max_proba(sorted_indices, s, a);
+				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				//Fixed R
+				//R_s_a = hatR[s][a] + gamma * sum_of_mult(max_p, V0);
+				//Non-fixed R
+				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				//R_s_a = min(hatR[s][a] + confR[s][a],1.0) + gamma * sum_of_mult(max_p, V0);
+				
+				/*if (cnt > 110) {
+					std::cout << R_s_a << "  " << hatR[s][a] << "  " << confR[s][a] << std::endl;;
+				}*/
+
+				if (a == 0 || R_s_a > V1[s]) 
+				{
+					V1[s] = R_s_a;
+					policy[s] = a;
+				}
+			}
+			/*if (cnt > 110) {
+				std::cout << cnt << " " << s << " "  << V1[s] << "  " << policy[s] << std::endl;
+			}
+			std::cout << std::endl;*/
+		}
+		/*std::cout << "cnt: " << cnt << "| ";
+		for (auto i: V1) {
+			std::cout << i << " " ;
+		}
+		std::cout << std::endl;*/
+		
+		// V distance
+		/*int dist = 0;
+		for (int i = 0; i < nS; i++) 
+		{
+			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
+		}
+		dist = sqrt(dist);*/
+		//std::cout << dist << std::endl;
+		//if (abs_max_diff(V0, V1, nS) < _epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
+		{
+			//std::cout << niter << std::endl;
+			/*for (auto i: V1) {
+				std::cout << i << " " ;
+			}
+			std::cout << std::endl;*/
+			return policy;
+		} 
+		else 
+		{
+			//for (int i = 0; i< nS; i++) {
+			//	V0[i] =
+			//}
+			std::swap(V0,V1);
+			//V0 = V1; //copy
+			//why? we dont need it the way you have  (a == 0 || R_s_a > V1[s]) 
+			for (int i = 0; i < nS; i++)
+			{
+				//V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+			}
+			//sorted indices
+			iota(sorted_indices.begin(), sorted_indices.end(), 0);
+			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		}
+		if (max_iter == niter) {
+			std::cout << "Early stop in EVI: "<< abs_max_diff(V0, V1, nS) << "  " << epsilon  << std::endl;
+			
+			return policy;
+		}
+	}
 }
 
 

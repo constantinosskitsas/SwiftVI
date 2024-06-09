@@ -48,16 +48,16 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.00001;
-	double delta = 0.000005;
+	double epsilon = 0.1;
+	double delta = 0.05;
 	//nt m = 1;
 
 	int T = 50000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
-	int reps = 1; // replicates
-	bool make_plots = false;
+	int reps = 5; // plotting replicates
+	bool make_plots = true;
 
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
@@ -76,12 +76,24 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	double reward = 0;
 	UCLR MB = UCLR(nS, nA, gamma, epsilon, delta);
 	vector<double> step_vector(nS,0.0); 
+
+
 	for (int rep = 0; rep < reps; rep++)
 	{
 		// Init game
 		int state = 0;
 		int prev_state;
 		MB.reset(state);
+
+		//Use known R
+		/*for (int s = 0; s < nS; s++) {
+			for (int a = 0; a < nA; a++) {
+				MB.Rsa[s][a] = R[s][a]; 
+			} 
+
+		}*/
+		t = 0;
+		k = 0;
 		reward = 0;
 		vector<int> _policy(state, 0);
 		int action;
@@ -91,16 +103,21 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 		// Run game
 		while (t < T)
 		{
-			if (t%10000 == 0) {
-				std::cout << "UCRL_GAMMA " << t << std::endl;
-			}
+			
 			MB.confidence();
 			policy = MB.EVI();
 			do {
+				if (t%10000 == 0) {
+					std::cout << "UCRL_GAMMA " << t << std::endl; 
+				}
 				//Act
-				action = _policy[state];
+				action = policy[state];
 
-				reward = R[state][action]; //TODO: Reward conf support
+				reward = R[state][action]; 
+				
+				//We update reward trackers right away, as they are not used before next EVI.
+				MB.Rsa[state][action] += reward;  
+
 				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
 				prev_state = state;
@@ -144,15 +161,30 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 				MB.vsas[prev_state][prev_action][state] += 1;
 				t += 1;
 
-			} while (!MB.end_act(prev_state, prev_action));  //repeat end condition
+				if (t%10000 == 0) {
+					//MB.end_act(prev_state, prev_action, true);  
+				}
+			} while (!MB.end_act(prev_state, prev_action, false) && t < T);  //repeat end condition
 
 			MB.update(prev_state, prev_action);
 
 			// Delay
 			for (int j = 0; j < MB.H; j++) {
-				action = _policy[state];
+				if (t == T) {
+					break;
+				}
+				/*if (j==0) {
+					std::cout << "UCRL_GAMMA ACTING" << t << "  H = " << MB.H << std::endl;
+				}*/
+				if (t%10000 == 0) {
+					std::cout << "UCRL_GAMMA " << t << std::endl; 
+				}
+				action = policy[state];
 
-				reward = R[state][action]; //TODO: Reward conf support
+				reward = R[state][action];
+
+				//We update reward trackers right away, as they are not used before next EVI.
+				MB.Rsa[state][action] += reward;  
 				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
 				prev_state = state;
@@ -302,8 +334,8 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.00001;
-	double delta = 0.000005;
+	double epsilon = 0.01;
+	double delta = 0.005;
 	int m = 1;
 
 	int T = 50000;
@@ -496,8 +528,8 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.00001;
-	double delta = 0.000005;
+	double epsilon = 0.01;
+	double delta = 0.005;
 	int m = 1;
 
 	int T = 50000;
@@ -685,8 +717,8 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.00001;
-	double delta = 0.000005;
+	double epsilon = 0.01;
+	double delta = 0.005;
 	int m = 1;
 
 	int T = 50000;
@@ -873,15 +905,15 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	string file_name_VIAVG = "Skitsas//avgRLRS.txt";
 	string_stream << "Experiment ID: " << expnum << endl;
 	avgstring_stream << "Experiment ID" << expnum << endl;
-	string_stream << "MBVI MBVIH MBBAO" << endl;
-	avgstring_stream << "MBVI MBVIH MBBAO" << endl;
-	int repetitions = 10;
+	string_stream << "MBVI MBVIH MBBAO UCRL_G" << endl;
+	avgstring_stream << "MBVI MBVIH MBBAO UCRL_G" << endl;
+	int repetitions = 1;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
-	std::vector<std::vector<float>> VI(3,std::vector<float>(siIter, 0));
+	std::vector<std::vector<float>> VI(4,std::vector<float>(siIter, 0));
 	int k = 0;
 	int S;
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < siIter; j++)
 			VI[i][j] = 0;
 
@@ -896,9 +928,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 40;
-				MDP = generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				S = ite; 
+				int nA = 4;
+				MDP = GridWorld(ite,ite,123, 0);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				S = ite*ite; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);
 				A_type A = get<1>(MDP);
@@ -922,14 +954,21 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				runBaoMBIE(MDP, S, nA);
 				auto stop_BAO = high_resolution_clock::now();
 				auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
+
+				A_type A4 = copy_A(A);
+				auto start_UCRL_G = high_resolution_clock::now();
+				runUCRLgamma(MDP, S, nA);
+				auto stop_UCRL_G = high_resolution_clock::now();
+				auto duration_UCRL_G= duration_cast<milliseconds>(stop_UCRL_G - start_UCRL_G);
 				//std::cout << k << "  " << ite << std::endl;
 				VI[0][k] += duration_VI.count();
 				//std::cout << k << std::endl;
 				VI[1][k] += duration_VIH.count();
 				VI[2][k] += duration_BAO.count();
+				VI[3][k] += duration_UCRL_G.count();
 				//std::cout << k << std::endl;
 				//std::cout << VI[0][k] << std::endl;
-				string_stream << duration_VI.count() << " " << duration_VIH.count()<< " " << duration_BAO.count() <<endl;
+				string_stream << duration_VI.count() << " " << duration_VIH.count()<< " " << duration_BAO.count() << " " << duration_UCRL_G.count() <<endl;
 			//}));
 			k++;
 			//std::cout << VI[0][k] << std::endl;
@@ -941,7 +980,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	}
 	for (int k = 0; k < siIter; k++)
 	{
-		avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions << " " << VI[2][k] / repetitions <<  endl;
+		avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions << " " << VI[2][k] / repetitions << " " << VI[3][k] / repetitions  <<  endl;
 	}
 	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
 	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
