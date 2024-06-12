@@ -1305,7 +1305,7 @@ int posDi3D(int X1, int Y1, int Z1, int Xmax, int Ymax, int Dir)
 
 	return (Z1 * Xmax * Ymax) + (Y1 * Xmax) + X1;
 }
-MDP_type FixedGridWorld() {
+MDP_type FixedGridWorld(bool side_slide) {
 //4 rooms 3*3 connected by single doors. 9*9 when walls included.
     //nS = 40, nA = 4
 	vector<vector<int>> world{
@@ -1320,8 +1320,8 @@ MDP_type FixedGridWorld() {
 	{-1,-1,-1,-1,-1,-1,-1,-1,-1}}; 
 
 
-
-
+	double p_self;
+	double real_val;
 	//Create R. Last state is rewarding 
 	R_type R;
 	for (int i = 0; i < 39; i++)
@@ -1376,25 +1376,49 @@ MDP_type FixedGridWorld() {
 
 			//Handle each action with walls and sliding.
 			// ACTION UP - Sliding RIGHT and LEFT
-			double p_self = 0.1;
+			
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
+			} else {
+				p_self = 0.1;
+				real_val = 0.9;
+			}
+
 			if (-1 == up) {
-				p_self += 0.7; //bounce back
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != right) {
+						P_s_a_nonzero_states.push_back(right);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(left);
+						P_s_a.push_back(real_val);
+					}
+				}
+
 			} else {
 				P_s_a_nonzero_states.push_back(up);
-				P_s_a.push_back(0.7);
+				P_s_a.push_back(real_val);
 			}
-			if (-1 == right) {
-				p_self += 0.1;
-			} else {
-				P_s_a_nonzero_states.push_back(right);
-				P_s_a.push_back(0.1);
+			if (side_slide) {
+				if (-1 == right) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(right);
+					P_s_a.push_back(0.1);
+				}
+				if (-1 == left) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(left);
+					P_s_a.push_back(0.1);
+				}
 			}
-			if (-1 == left) {
-				p_self += 0.1;
-			} else {
-				P_s_a_nonzero_states.push_back(left);
-				P_s_a.push_back(0.1);
-			}
+			
 			//Add self sliding and bounce
 			P_s_a_nonzero_states.push_back(world[row][col]);
 			P_s_a.push_back(p_self);
@@ -1405,24 +1429,46 @@ MDP_type FixedGridWorld() {
 			P_s_a.clear();
 
 			// ACTION RIGHT - Sliding UP and DOWN
-			p_self = 0.1;
-			if (-1 == up) {
-				p_self += 0.1; //bounce back
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
 			} else {
-				P_s_a_nonzero_states.push_back(up);
-				P_s_a.push_back(0.1);
+				p_self = 0.1;
+				real_val = 0.9;
 			}
+			
 			if (-1 == right) {
-				p_self += 0.7;
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != up) {
+						P_s_a_nonzero_states.push_back(up);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(down);
+						P_s_a.push_back(real_val);
+					}
+				}
 			} else {
 				P_s_a_nonzero_states.push_back(right);
-				P_s_a.push_back(0.7);
+				P_s_a.push_back(real_val);
 			}
-			if (-1 == down) {
-				p_self += 0.1;
-			} else {
-				P_s_a_nonzero_states.push_back(down);
-				P_s_a.push_back(0.1);
+			if (side_slide) {
+				if (-1 == up) {
+					p_self += 0.1; //bounce back
+				} else {
+					P_s_a_nonzero_states.push_back(up);
+					P_s_a.push_back(0.1);
+				}
+				
+				if (-1 == down) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(down);
+					P_s_a.push_back(0.1);
+				}
 			}
 			//Add self sliding and bounce
 			P_s_a_nonzero_states.push_back(world[row][col]);
@@ -1434,24 +1480,45 @@ MDP_type FixedGridWorld() {
 			P_s_a.clear();
 
 			// ACTION DOWN - Sliding RIGHT and LEFT
-			p_self = 0.1;
-			if (-1 == right) {
-				p_self += 0.1; //bounce back
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
 			} else {
-				P_s_a_nonzero_states.push_back(right);
-				P_s_a.push_back(0.1);
+				p_self = 0.1;
+				real_val = 0.9;
 			}
+
 			if (-1 == down) {
-				p_self += 0.7;
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != right) {
+						P_s_a_nonzero_states.push_back(right);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(left);
+						P_s_a.push_back(real_val);
+					}
+				}
 			} else {
 				P_s_a_nonzero_states.push_back(down);
-				P_s_a.push_back(0.7);
+				P_s_a.push_back(real_val);
 			}
-			if (-1 == left) {
-				p_self += 0.1;
-			} else {
-				P_s_a_nonzero_states.push_back(left);
-				P_s_a.push_back(0.1);
+			if (side_slide) {
+				if (-1 == right) {
+					p_self += 0.1; //bounce back
+				} else {
+					P_s_a_nonzero_states.push_back(right);
+					P_s_a.push_back(0.1);
+				}
+				if (-1 == left) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(left);
+					P_s_a.push_back(0.1);
+				}
 			}
 			//Add self sliding and bounce
 			P_s_a_nonzero_states.push_back(world[row][col]);
@@ -1465,24 +1532,45 @@ MDP_type FixedGridWorld() {
 
 
 			// ACTION LEFT - Sliding UP and DOWN
-			p_self = 0.1;
-			if (-1 == up) {
-				p_self += 0.1; //bounce back
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
 			} else {
-				P_s_a_nonzero_states.push_back(up);
-				P_s_a.push_back(0.1);
+				p_self = 0.1;
+				real_val = 0.9;
 			}
+			
 			if (-1 == left) {
-				p_self += 0.7;
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != up) {
+						P_s_a_nonzero_states.push_back(up);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(down);
+						P_s_a.push_back(real_val);
+					}
+				}
 			} else {
 				P_s_a_nonzero_states.push_back(left);
-				P_s_a.push_back(0.7);
+				P_s_a.push_back(real_val);
 			}
-			if (-1 == down) {
-				p_self += 0.1;
-			} else {
-				P_s_a_nonzero_states.push_back(down);
-				P_s_a.push_back(0.1);
+			if (side_slide) {
+				if (-1 == up) {
+					p_self += 0.1; //bounce back
+				} else {
+					P_s_a_nonzero_states.push_back(up);
+					P_s_a.push_back(0.1);
+				}
+				if (-1 == down) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(down);
+					P_s_a.push_back(0.1);
+				}
 			}
 			//Add self sliding and bounce
 			P_s_a_nonzero_states.push_back(world[row][col]);

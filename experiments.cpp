@@ -48,11 +48,11 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
+	double epsilon = 0.2;
 	double delta = 0.05;
 	//nt m = 1;
 
-	int T = 50000;
+	int T = 500000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -334,11 +334,11 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.01;
-	double delta = 0.005;
+	double epsilon = 0.2;
+	double delta = 0.05;
 	int m = 1;
 
-	int T = 50000;
+	int T = 500000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -528,14 +528,14 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.01;
-	double delta = 0.005;
+	double epsilon = 0.2;
+	double delta = 0.05;
 	int m = 1;
 
-	int T = 50000;
+	int T = 500000;
 	//T=10000;
-	int reps = 1; // replicates
-	bool make_plots = false;
+	int reps = 5; // replicates
+	bool make_plots = true;
 
 	MDP_type MDP = mdp; //ErgodicRiverSwim(5); // GridWorld(5, 5, 1337);
 	R_type R = get<0>(MDP);
@@ -717,11 +717,11 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.01;
-	double delta = 0.005;
+	double epsilon = 0.2;
+	double delta = 0.05;
 	int m = 1;
 
-	int T = 50000;
+	int T = 500000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -929,8 +929,8 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				int seed = time(0);
 				/**MDP CHANGES**/
 				int nA = 4;
-				MDP = GridWorld(ite,ite,123, 0);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				S = ite*ite; 
+				MDP = generate_random_MDP_normal_distributed_rewards(ite, nA, 1, 10, seed, 0.5, 0.05);//FixedGridWorld(true);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				S = ite;//ite*ite; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);
 				A_type A = get<1>(MDP);

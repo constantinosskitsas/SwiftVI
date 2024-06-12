@@ -87,7 +87,9 @@ class UCLR {
 	double **hatR;
 
 	double **confR;
-	double ***confP;
+	double **confP;
+	double ***confP_long;
+	//double **confP;
 	vector<double> max_p;
 
 	int current_s;

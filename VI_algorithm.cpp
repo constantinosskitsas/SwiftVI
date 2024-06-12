@@ -170,7 +170,8 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	Rsa = new double *[S];
 	hatR = new double *[S];
 	confR = new double *[S];
-	confP = new double **[S];
+	confP = new double *[S];
+	confP_long = new double **[S];
 
 	H = 1.0/(1.0-gamma)*log((8*nS)/(epsilon*(1-gamma)));
 	w_min = (epsilon*(1-gamma))/(4*nS);
@@ -192,6 +193,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 		Rsa[i] = new double[nA];
 		hatR[i] = new double[nA];
 		confR[i] = new double[nA];
+		confP[i] = new double[nA];
 		memset(vsa[i], 0, sizeof(int) * nA);
 		memset(Nsa[i], 0, sizeof(int) * nA);
 		memset(Rsa[i], 0.0, sizeof(double) * nA);
@@ -203,13 +205,13 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 		Nsas[i] = new int *[nA];
 		vsas[i] = new int *[nA];
 		hatP[i] = new double *[nA];
-		confP[i] = new double *[nA];
+		confP_long[i] = new double *[nA];
 		for (int j = 0; j < nA; j++)
 		{
 			Nsas[i][j] = new int[S];
 			vsas[i][j] = new int[S];
 			hatP[i][j] = new double[S];
-			confP[i][j] = new double[S];
+			confP_long[i][j] = new double[S];
 			memset(Nsas[i][j], 0, sizeof(int) * S);
 			memset(vsas[i][j], 0, sizeof(int) * S);
 			memset(hatP[i][j], 0.0, sizeof(double) * S);
@@ -224,7 +226,10 @@ void UCLR::confidence() {
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			//hatR[s][a] = Rsa[s][a]; //FIXED R ///(double)max(1, Nsa[s][a]);
+			//Fixed R 
+			//hatR[s][a] = Rsa[s][a];
+
+			//Non-fixed 
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
@@ -239,11 +244,16 @@ void UCLR::confidence() {
 			double n = max(1.0, (double) Nsa[s][a]);
 
 			confR[s][a] = sqrt(log(2.0 / r_delta) / (double) (2 * max(1, Nsa[s][a])));
-
+			confP[s][a] = 0;
+			double max_p = -1;
 			for (int s2 = 0; s2 < nS; s2++)
-			{
+			{	
 				double p = hatP[s][a][s2];
-				confP[s][a][s2] = min(sqrt((2.0*L_one*p*(1.0-p))/n)+(2.0*L_one)/(3.0*n),sqrt(L_one/(2.0*n)));//sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
+				if (max_p < p) {
+					max_p = p;
+					confP[s][a] = min(sqrt((2.0*L_one*p*(1.0-p))/n)+(2.0*L_one)/(3.0*n),sqrt(L_one/(2.0*n)));
+				}
+				confP_long[s][a][s2] = min(sqrt((2.0*L_one*p*(1.0-p))/n)+(2.0*L_one)/(3.0*n),sqrt(L_one/(2.0*n)));//sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
 			//std::cout << confR[s][a] << std::endl;
 			}
@@ -253,12 +263,18 @@ void UCLR::confidence() {
 }
 
 void UCLR::update(int s, int a) {
-	Nsa[s][a] += vsa[s][a];
-	vsa[s][a] = 0;
-	for (int s2 = 0; s2 < nS; s2++) {
-		Nsas[s][a][s2] += vsas[s][a][s2];
-		vsas[s][a][s2] = 0;
-	}
+	/*for (int s = 0; s < nS; s++)
+	{
+		for (int a = 0; a < nA; a++)
+		{*/
+			Nsa[s][a] += vsa[s][a];
+			vsa[s][a] = 0;
+			for (int s2 = 0; s2 < nS; s2++) {
+				Nsas[s][a][s2] += vsas[s][a][s2];
+				vsas[s][a][s2] = 0;
+			}
+		/*}
+	}*/
 }
 
 bool UCLR::end_act(int s, int action, bool verbose) {
@@ -280,13 +296,14 @@ void UCLR::reset(S_type init) {
 			Rsa[i][j] = 0.0;
 			hatR[i][j] = 0.0;
 			confR[i][j] = 0.0;
+			confP[i][j] = 0.0;
 			Nsa[i][j] = 0;
 			for (int k = 0; k < nS; k++)
 			{
 				vsas[i][j][k] = 0;
 				Nsas[i][j][k] = 0;
 				hatP[i][j][k] = 0.0;
-				confP[i][j][k] = 0.0;
+				confP_long[i][j][k] = 0.0;
 			}
 		}
 	}
@@ -296,7 +313,7 @@ void UCLR::reset(S_type init) {
 
 void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 {
-	double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a][sorted_indices[nS - 1]] / 2.0);
+	double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);
 	
 	/*#pragma omp parallel
 	{   
@@ -340,7 +357,7 @@ void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 		//max_p.assign(*hatP[s][a], *hatP[s][a] + nS);
 		//vector<double> max_p(hatP[s][a].begin(), hatP[s][a].end());
 		
-		max_p[sorted_indices[nS - 1]] += confP[s][a][sorted_indices[nS - 1]] / 2.0;
+		max_p[sorted_indices[nS - 1]] += confP[s][a] / 2.0;
 		//std::cout << hatP[s][a][sorted_indices[nS - 1]] << std::endl;
 		//std::cout << std::endl;
 		
@@ -392,6 +409,9 @@ vector<int> UCLR::EVI()
 		
 	}
 
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		
 	// Initialize V1
 	//TODO
 	vector<double> V1(nS, 1.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
