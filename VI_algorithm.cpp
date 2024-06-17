@@ -503,7 +503,30 @@ vector<int> UCLR::EVI()
 	}
 }
 
+void MBIE::delete_MBIE() {
+    for (int i = 0; i < nS; ++i) {
+        delete[] Nsa[i];
+        delete[] Rsa[i];
+        delete[] hatR[i];
+        delete[] confR[i];
+        delete[] confP[i];
+        for (int j = 0; j < nA; ++j) {
+            delete[] Nsas[i][j];
+            delete[] hatP[i][j];
+        }
+        delete[] Nsas[i];
+        delete[] hatP[i];
+    }
 
+    delete[] Nsa;
+    delete[] Rsa;
+    delete[] hatR;
+    delete[] confR;
+    delete[] confP;
+    delete[] StateSwift;
+    delete[] Nsas;
+    delete[] hatP;
+}
 
 
 MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int _m) {

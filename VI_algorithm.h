@@ -50,6 +50,7 @@ class MBIE {
 	void confidence();
 	void reset(S_type init);
 	void max_proba(vector<int> sorted_indices, int s, int a);
+	void delete_MBIE();
 	vector<int> EVI();
     vector<int> swiftEVI();
 	vector<int> baoEVI();
