@@ -576,6 +576,86 @@ MDP_type readMDPS(string Rseed, string S)
 	return MDP;
 }*/
 
+MDP_type ExpandMDP(const MDP_type MDP, int &nS, int nA) {
+
+	int S2 = nS;
+	R_type R = get<0>(MDP);
+	A_type A = get<1>(MDP);
+	P_type P = get<2>(MDP);
+
+	R_type R2 = R; 
+	A_type A2 = A;
+	P_type P2;
+	int new_states = 0;
+	
+
+	//Update P and add new states
+	vector<pair<vector<double>, vector<int>>> P_s();
+	int skip = 0;
+	//Real state 0 is still state 0 in expanded mdp.
+	for (int ps = 0; ps < P.size(); ps++) {
+		for (int psa = 0; psa < P[ps].size(); psa++) {
+			//for each action in a state. We need |S|-2 extra states later. 
+			//We reserve indexes for those in a convenient position and add connections to them from ps
+						
+
+		}
+	
+	}
+
+
+	for (int ps = 0; ps < P.size(); ps++) {
+		for (int psa = 0; psa < P[ps].size(); psa++) {
+			
+			//Find interval and indexes new states to add
+			int first_new = S2;
+			int last_new = first_new+nS-2-1; //Index of last new state
+
+
+
+			//for each new added state. Connect them as a heap from behind
+			for (int i = last_new; i >= first_new; i--) {
+				vector<int> P_s_a_nonzero_states;
+				vector<double> P_s_a;
+				//Should i connect to a real node? (Assume Even nS.)
+				if (i >= last_new-(nS/2)) {
+					//Pretend real indexes come after newly added, and connect accordingly
+					
+				}
+
+			}
+
+		}
+		
+	}
+
+
+	//Update A2
+	vector<int> A_s;
+	A_s.push_back(0);
+	for (int i = 0; i < new_states; i++)
+	{
+		A2.push_back(A_s);
+	}
+
+	//Update R2
+	for (int i = 0; i < new_states; i++)
+	{
+		vector<double> R_s;
+		for (int j = 0; j < nA; j++) { //Just do it once instead?
+			R_s.push_back(0);
+		}
+		R2.push_back(R_s);
+	}
+
+	
+
+	MDP_type MDP2;
+	return MDP2;
+}
+
+
+
 MDP_type ErgodicRiverSwim(int S)
 {
 	// Create R
