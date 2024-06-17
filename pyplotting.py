@@ -39,32 +39,42 @@ def plot(data, names, y_label = "#(Bad Episodes)", exp_name = "error"):
 	pl.savefig("pyplotfiles/Figure_" + name + exp_name + '.pdf')
 	
 
-startS = 5
-nA = 2
-endS = 10
+startS = 10*10
+nA = 4
+endS = 20*20
 incS = 2
-for ite in range(startS,endS,incS):	
+l_ = [40]#[4*4,5*5,6*6,7*7,8*8]#[10*10,12*12,14*14] #,16*16,18*18,20*20]
+for ite in l_:#range(startS,endS,incS):	
     #mbie_v_opt = np.loadtxt(f"pyplotfiles/mbie_v_opt_{ite}_{nA}.txt", delimiter=" ")
     #mbie_v_pol = np.loadtxt(f"pyplotfiles/mbie_v_pol_{ite}_{nA}.txt", delimiter=" ")
     #mbie_v_pol_e = np.loadtxt(f"pyplotfiles/mbie_v_pol_e{ite}_{nA}.txt", delimiter=" ")
     #mbie_v_opt_e = np.loadtxt(f"pyplotfiles/mbie_v_opt_e{ite}_{nA}.txt", delimiter=" ")
     #print(mbie_v_opt.shape)
     #plot([mbie_v_opt, mbie_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"mbie Value over time{ite}_{nA}")
-    #plot([mbie_v_opt_e, mbie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"mbie Value over time{ite}_{nA}")
+    #plot([mbie_v_opt_e, mbie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"mbie Expected Value over time{ite}_{nA}")
 
-    #swiftmbie_v_opt = np.loadtxt(f"pyplotfiles/swiftmbie_v_opt_{ite}_{nA}.txt", delimiter=" ")
-    #swiftmbie_v_pol = np.loadtxt(f"pyplotfiles/swiftmbie_v_pol_{ite}_{nA}.txt", delimiter=" ")
-    #swiftmbie_v_pol_e = np.loadtxt(f"pyplotfiles/swiftmbie_v_pol_e{ite}_{nA}.txt", delimiter=" ")
-    #swiftmbie_v_opt_e = np.loadtxt(f"pyplotfiles/swiftmbie_v_opt_e{ite}_{nA}.txt", delimiter=" ")
-    #print(swiftmbie_v_opt.shape)
-    #plot([swiftmbie_v_opt, swiftmbie_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"swiftmbie Value over time{ite}_{nA}")
-    #plot([swiftmbie_v_opt_e, swiftmbie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"swiftmbie Value over time{ite}_{nA}")
+    swiftmbie_v_opt = np.loadtxt(f"pyplotfiles/swiftmbie_v_opt_{ite}_{nA}.txt", delimiter=" ")
+    swiftmbie_v_pol = np.loadtxt(f"pyplotfiles/swiftmbie_v_pol_{ite}_{nA}.txt", delimiter=" ")
+    swiftmbie_v_pol_e = np.loadtxt(f"pyplotfiles/swiftmbie_v_pol_e{ite}_{nA}.txt", delimiter=" ")
+    swiftmbie_v_opt_e = np.loadtxt(f"pyplotfiles/swiftmbie_v_opt_e{ite}_{nA}.txt", delimiter=" ")
+    print(swiftmbie_v_opt.shape)
+    plot([swiftmbie_v_opt, swiftmbie_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"swiftmbie Value over time{ite}_{nA}")
+    plot([swiftmbie_v_opt_e, swiftmbie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"swiftmbie Expected Value over time{ite}_{nA}")
     
-    baombie_v_opt = np.loadtxt(f"pyplotfiles/baombie_v_opt_{ite}_{nA}.txt", delimiter=" ")
-    baombie_v_pol = np.loadtxt(f"pyplotfiles/baombie_v_pol_{ite}_{nA}.txt", delimiter=" ")
-    baombie_v_pol_e = np.loadtxt(f"pyplotfiles/baombie_v_pol_e{ite}_{nA}.txt", delimiter=" ")
-    baombie_v_opt_e = np.loadtxt(f"pyplotfiles/baombie_v_opt_e{ite}_{nA}.txt", delimiter=" ")
-    print(baombie_v_opt.shape)
-    plot([baombie_v_opt, baombie_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"baombie Value over time{ite}_{nA}")
-    plot([baombie_v_opt_e, baombie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"baombie Value over time{ite}_{nA}")
+    #baombie_v_opt = np.loadtxt(f"pyplotfiles/baombie_v_opt_{ite}_{nA}.txt", delimiter=" ")
+    #baombie_v_pol = np.loadtxt(f"pyplotfiles/baombie_v_pol_{ite}_{nA}.txt", delimiter=" ")
+    #baombie_v_pol_e = np.loadtxt(f"pyplotfiles/baombie_v_pol_e{ite}_{nA}.txt", delimiter=" ")
+    #baombie_v_opt_e = np.loadtxt(f"pyplotfiles/baombie_v_opt_e{ite}_{nA}.txt", delimiter=" ")
+    #print(baombie_v_opt.shape)
+    #plot([baombie_v_opt, baombie_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"baombie Value over time{ite}_{nA}")
+    #plot([baombie_v_opt_e, baombie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"baombie Expected Value over time{ite}_{nA}")
+
+    uclr_g_v_opt = np.loadtxt(f"pyplotfiles/ucrlg_v_opt_{ite}_{nA}.txt", delimiter=" ")
+    uclr_g_v_pol = np.loadtxt(f"pyplotfiles/ucrlg_v_pol_{ite}_{nA}.txt", delimiter=" ")
+    uclr_g_v_pol_e = np.loadtxt(f"pyplotfiles/ucrlg_v_pol_e{ite}_{nA}.txt", delimiter=" ")
+    uclr_g_v_opt_e = np.loadtxt(f"pyplotfiles/ucrlg_v_opt_e{ite}_{nA}.txt", delimiter=" ")
+    print(uclr_g_v_opt.shape)
+    plot([uclr_g_v_opt, uclr_g_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"UCLR_Gamma Value over time{ite}_{nA}")
+    plot([uclr_g_v_opt_e, uclr_g_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"UCLR_Gamma Expected Value over time{ite}_{nA}")
+        
         

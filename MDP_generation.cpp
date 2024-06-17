@@ -576,6 +576,86 @@ MDP_type readMDPS(string Rseed, string S)
 	return MDP;
 }*/
 
+MDP_type ExpandMDP(const MDP_type MDP, int &nS, int nA) {
+
+	int S2 = nS;
+	R_type R = get<0>(MDP);
+	A_type A = get<1>(MDP);
+	P_type P = get<2>(MDP);
+
+	R_type R2 = R; 
+	A_type A2 = A;
+	P_type P2;
+	int new_states = 0;
+	
+
+	//Update P and add new states
+	vector<pair<vector<double>, vector<int>>> P_s();
+	int skip = 0;
+	//Real state 0 is still state 0 in expanded mdp.
+	for (int ps = 0; ps < P.size(); ps++) {
+		for (int psa = 0; psa < P[ps].size(); psa++) {
+			//for each action in a state. We need |S|-2 extra states later. 
+			//We reserve indexes for those in a convenient position and add connections to them from ps
+						
+
+		}
+	
+	}
+
+
+	for (int ps = 0; ps < P.size(); ps++) {
+		for (int psa = 0; psa < P[ps].size(); psa++) {
+			
+			//Find interval and indexes new states to add
+			int first_new = S2;
+			int last_new = first_new+nS-2-1; //Index of last new state
+
+
+
+			//for each new added state. Connect them as a heap from behind
+			for (int i = last_new; i >= first_new; i--) {
+				vector<int> P_s_a_nonzero_states;
+				vector<double> P_s_a;
+				//Should i connect to a real node? (Assume Even nS.)
+				if (i >= last_new-(nS/2)) {
+					//Pretend real indexes come after newly added, and connect accordingly
+					
+				}
+
+			}
+
+		}
+		
+	}
+
+
+	//Update A2
+	vector<int> A_s;
+	A_s.push_back(0);
+	for (int i = 0; i < new_states; i++)
+	{
+		A2.push_back(A_s);
+	}
+
+	//Update R2
+	for (int i = 0; i < new_states; i++)
+	{
+		vector<double> R_s;
+		for (int j = 0; j < nA; j++) { //Just do it once instead?
+			R_s.push_back(0);
+		}
+		R2.push_back(R_s);
+	}
+
+	
+
+	MDP_type MDP2;
+	return MDP2;
+}
+
+
+
 MDP_type ErgodicRiverSwim(int S)
 {
 	// Create R
@@ -1305,6 +1385,291 @@ int posDi3D(int X1, int Y1, int Z1, int Xmax, int Ymax, int Dir)
 
 	return (Z1 * Xmax * Ymax) + (Y1 * Xmax) + X1;
 }
+MDP_type FixedGridWorld(bool side_slide) {
+//4 rooms 3*3 connected by single doors. 9*9 when walls included.
+    //nS = 40, nA = 4
+	vector<vector<int>> world{
+	{-1,-1,-1,-1,-1,-1,-1,-1,-1},
+	{-1, 0, 1, 2,-1, 3, 4, 5,-1},
+	{-1, 6, 7, 8, 9,10,11,12,-1},
+	{-1,13,14,15,-1,16,17,18,-1},
+	{-1,-1,19,-1,-1,-1,20,-1,-1},
+	{-1,21,22,23,-1,24,25,26,-1},
+	{-1,27,28,29,30,31,32,33,-1},
+	{-1,34,35,36,-1,37,38,39,-1},
+	{-1,-1,-1,-1,-1,-1,-1,-1,-1}}; 
+
+
+	double p_self;
+	double real_val;
+	//Create R. Last state is rewarding 
+	R_type R;
+	for (int i = 0; i < 39; i++)
+	{
+		vector<double> R_s;
+		for (int j = 0; j < 4; j++)
+		{
+			R_s.push_back(0);
+		}
+		R.push_back(R_s);
+	}
+	vector<double> R_s;
+	R_s.push_back(1);
+	R_s.push_back(1);
+	R_s.push_back(1);
+	R_s.push_back(1);
+	R.push_back(R_s);
+
+	//Create A
+	// 0->UP
+	// 1->RIGHT
+	// 2->DOWN
+	// 3->LEFT
+	A_type A;
+	vector<int> A_s;
+	A_s.push_back(0);
+	A_s.push_back(1);
+	A_s.push_back(2);
+	A_s.push_back(3);
+	for (int i = 0; i < 40; i++)
+	{
+		A.push_back(A_s);
+	}
+	
+	//Create P
+	// We can slide. Walls bounces back with sliding.
+	P_type P;
+	vector<pair<vector<double>, vector<int>>> P_s;
+	for (int row = 0; row < 9; row++) {
+		for (int col = 0; col < 9; col++) {
+			if (-1 == world[row][col]) {
+				//Skip walls
+				continue;
+			}
+			//Assuming outerwalls padding, we can safely grab directional actions
+			vector<int> P_s_a_nonzero_states;
+			vector<double> P_s_a;
+			int up = world[row-1][col];
+			int right = world[row][col+1];  
+			int down = world[row+1][col];
+			int left = world[row][col-1];
+
+			//Handle each action with walls and sliding.
+			// ACTION UP - Sliding RIGHT and LEFT
+			
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
+			} else {
+				p_self = 0.1;
+				real_val = 0.9;
+			}
+
+			if (-1 == up) {
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != right) {
+						P_s_a_nonzero_states.push_back(right);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(left);
+						P_s_a.push_back(real_val);
+					}
+				}
+
+			} else {
+				P_s_a_nonzero_states.push_back(up);
+				P_s_a.push_back(real_val);
+			}
+			if (side_slide) {
+				if (-1 == right) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(right);
+					P_s_a.push_back(0.1);
+				}
+				if (-1 == left) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(left);
+					P_s_a.push_back(0.1);
+				}
+			}
+			
+			//Add self sliding and bounce
+			P_s_a_nonzero_states.push_back(world[row][col]);
+			P_s_a.push_back(p_self);
+
+			//Add to P and clear
+			P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+			P_s_a_nonzero_states.clear();
+			P_s_a.clear();
+
+			// ACTION RIGHT - Sliding UP and DOWN
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
+			} else {
+				p_self = 0.1;
+				real_val = 0.9;
+			}
+			
+			if (-1 == right) {
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != up) {
+						P_s_a_nonzero_states.push_back(up);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(down);
+						P_s_a.push_back(real_val);
+					}
+				}
+			} else {
+				P_s_a_nonzero_states.push_back(right);
+				P_s_a.push_back(real_val);
+			}
+			if (side_slide) {
+				if (-1 == up) {
+					p_self += 0.1; //bounce back
+				} else {
+					P_s_a_nonzero_states.push_back(up);
+					P_s_a.push_back(0.1);
+				}
+				
+				if (-1 == down) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(down);
+					P_s_a.push_back(0.1);
+				}
+			}
+			//Add self sliding and bounce
+			P_s_a_nonzero_states.push_back(world[row][col]);
+			P_s_a.push_back(p_self);
+
+			//Add to P and clear
+			P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+			P_s_a_nonzero_states.clear();
+			P_s_a.clear();
+
+			// ACTION DOWN - Sliding RIGHT and LEFT
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
+			} else {
+				p_self = 0.1;
+				real_val = 0.9;
+			}
+
+			if (-1 == down) {
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != right) {
+						P_s_a_nonzero_states.push_back(right);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(left);
+						P_s_a.push_back(real_val);
+					}
+				}
+			} else {
+				P_s_a_nonzero_states.push_back(down);
+				P_s_a.push_back(real_val);
+			}
+			if (side_slide) {
+				if (-1 == right) {
+					p_self += 0.1; //bounce back
+				} else {
+					P_s_a_nonzero_states.push_back(right);
+					P_s_a.push_back(0.1);
+				}
+				if (-1 == left) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(left);
+					P_s_a.push_back(0.1);
+				}
+			}
+			//Add self sliding and bounce
+			P_s_a_nonzero_states.push_back(world[row][col]);
+			P_s_a.push_back(p_self);
+
+			//Add to P and clear
+			P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+			P_s_a_nonzero_states.clear();
+			P_s_a.clear();
+
+
+
+			// ACTION LEFT - Sliding UP and DOWN
+			if (side_slide) {
+				p_self = 0.1;
+				real_val = 0.7;
+			} else {
+				p_self = 0.1;
+				real_val = 0.9;
+			}
+			
+			if (-1 == left) {
+				if (side_slide) {
+					p_self += real_val; //bounce back
+				} else {
+					//We must slide somewhere else to have two possible end states
+					//Either must be true in the fixed grid
+					if (-1 != up) {
+						P_s_a_nonzero_states.push_back(up);
+						P_s_a.push_back(real_val);
+					} else {
+						P_s_a_nonzero_states.push_back(down);
+						P_s_a.push_back(real_val);
+					}
+				}
+			} else {
+				P_s_a_nonzero_states.push_back(left);
+				P_s_a.push_back(real_val);
+			}
+			if (side_slide) {
+				if (-1 == up) {
+					p_self += 0.1; //bounce back
+				} else {
+					P_s_a_nonzero_states.push_back(up);
+					P_s_a.push_back(0.1);
+				}
+				if (-1 == down) {
+					p_self += 0.1;
+				} else {
+					P_s_a_nonzero_states.push_back(down);
+					P_s_a.push_back(0.1);
+				}
+			}
+			//Add self sliding and bounce
+			P_s_a_nonzero_states.push_back(world[row][col]);
+			P_s_a.push_back(p_self);
+
+			//Add to P and clear
+			P_s.push_back(make_pair(P_s_a, P_s_a_nonzero_states));
+			P.push_back(P_s);
+			P_s_a_nonzero_states.clear();
+			P_s_a.clear();
+			P_s.clear();
+		}
+	}
+
+	MDP_type MDP = make_tuple(R,A,P);
+	return MDP;
+}
+
+
 // always 4 actions-> if we go to wall stay in the same state
 // if we slip to the wall stay in the same state
 MDP_type GridWorld(int X, int Y, int seed, int wrong_box)
