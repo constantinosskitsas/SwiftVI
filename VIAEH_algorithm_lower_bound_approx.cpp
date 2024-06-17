@@ -439,7 +439,8 @@ V_type value_iteration_action_elimination_heaps_lower_bound_approxGS(S_type S, R
 	// pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
 	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 	const double two_epsilon = 2 * epsilon;
-	const double convergence_bound_precomputed = 0.0005;
+	//const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 
 	// record actions eliminated in each iteration, where a pair is (state, action)
 	// push empty vector for 0-index. Iterations start with 1

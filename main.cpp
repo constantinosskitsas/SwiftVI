@@ -54,13 +54,13 @@ int main(int argc, char *argv[])
 	double non_zero_transition = 0.5; // beta
 
 	int expnum = 3;
-	int NOFexp = 7;
-	int States = 30;
+	int NOFexp = 3;
+	int States = 500;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 5;
-	int EndP = 20;
-	int IncP = 2;
+	int StartP = 500;
+	int EndP = 3000;
+	int IncP = 500;
 	std::size_t pos;
 
 	string file_prefix_number_of_states_best = "number_of_states_best";

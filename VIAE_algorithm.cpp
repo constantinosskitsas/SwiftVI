@@ -287,7 +287,8 @@ V_type value_iteration_action_eliminationGS(S_type S, R_type R, A_type A, P_type
 	actions_eliminated.push_back(vector<pair<int, int>>());
 	double *V_U_current_iteration = V_U[0];
 	double *V_L_current_iteration = V_L[0];
-	const double convergence_bound_precomputed = 0.0005;
+	//const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 
 	// while any of the criteria are NOT, !, met, run the loop
 	// while NEITHER has converged

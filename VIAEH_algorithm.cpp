@@ -718,7 +718,8 @@ V_type value_iteration_action_elimination_heapsGS(S_type S, R_type R, A_type A, 
 	// pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
 	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 	const double two_epsilon = 2 * epsilon;
-	const double convergence_bound_precomputed = 0.0005;
+	//const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 
 	// HEAP INDICIES INITIALIZING
 	//  for each s, and each a, gets the index in heap_max and heap_min

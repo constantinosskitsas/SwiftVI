@@ -238,8 +238,9 @@ V_type bounded_value_iterationGS(S_type S, R_type R, A_type A, P_type P, double 
 
 	// Pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
 	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
-	const double two_epsilon = 2 * epsilon;
-	const double convergence_bound_precomputed = 0.0005;
+	//const double two_epsilon = 2 * epsilon;
+	//const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 
 	// Keep count of number of iterations
 	int iterations = 0;
@@ -292,7 +293,7 @@ V_type bounded_value_iterationGS(S_type S, R_type R, A_type A, P_type P, double 
 			}
 			V_U_current_iteration[s] = Q_max;
 
-			if ((V_U_current_iteration[s] - V_L_current_iteration[s]) > two_epsilon)
+			if ((V_U_current_iteration[s] - V_L_current_iteration[s]) > convergence_bound_precomputed*2)
 				bounded_convergence_criteria = false;
 			if (abs(V_U_current_iteration[s] - oldVU) > convergence_bound_precomputed)
 				upper_convergence_criteria = false;

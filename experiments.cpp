@@ -11,7 +11,7 @@
 #include <sstream>
 #include <math.h>
 #include <thread>
-#include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
+//#include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -50,7 +50,8 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
+	double epsilon = 0.0001;
+	//epsilon=0.0001;
 	double delta = 0.05;
 	int m = 1;
 
@@ -111,7 +112,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 			reward = R[state][action];
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-
+/*
 			if (make_plots) {
 				//Get V for current policy
 				Eigen::MatrixXd P_pi(nS, nS);
@@ -137,7 +138,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 
 				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
-			}
+			}*/
 
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
@@ -244,7 +245,8 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
+	double epsilon = 0.01;
+	epsilon=0.0001;
 	double delta = 0.05;
 	int m = 1;
 
@@ -302,7 +304,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 			reward = R[state][action];
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-
+			/*
 			if (make_plots) {
 				//Get V for current policy
 				Eigen::MatrixXd P_pi(nS, nS);
@@ -328,7 +330,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 
 				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
-			}
+			}*/
 
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
@@ -433,7 +435,8 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
+	double epsilon = 0.01;
+	epsilon=0.0001;
 	double delta = 0.05;
 	int m = 1;
 
@@ -492,7 +495,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 			reward = R[state][action];
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-
+			/*
 			if (make_plots) {
 				//Get V for current policy
 				Eigen::MatrixXd P_pi(nS, nS);
@@ -515,7 +518,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 
 				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
-			}
+			}*/
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = P_s_a_nonzero[distribution(generator)];
@@ -618,12 +621,14 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	ofstream output_stream;
 	ofstream avgoutput_stream;
 	string file_name_VI = "Skitsas//RLRS.txt";
+	file_name_VI = "Skitsas//RLRS_S500_100A_50SS_E-00001_OF_ITER46.txt";
 	string file_name_VIAVG = "Skitsas//avgRLRS.txt";
+	file_name_VIAVG = "Skitsas//avgRLRS_S500_100A_50SS_E-00001_OF_ITER46.txt";
 	string_stream << "Experiment ID: " << expnum << endl;
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO" << endl;
 	avgstring_stream << "MBVI MBVIH MBBAO" << endl;
-	int repetitions = 10;
+	int repetitions = 2;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
 	std::vector<std::vector<float>> VI(3,std::vector<float>(siIter, 0));
@@ -645,7 +650,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				int seed = time(0);
 				/**MDP CHANGES**/
 				int nA = 2;
-				MDP = ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				nA=100;
+				MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 50, seed, 0.5, 0.05);
+				//MDP = ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
 				S = ite; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);
@@ -907,7 +914,7 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 	auto duration_BAO = milliseconds(0);
 	V_type BAO_approx_solution_tuple;
 	int k = 0;
-	int repetitions = 2;
+	int repetitions = 10;
 	ostringstream string_stream;
 	ostringstream avgstring_stream;
 	ofstream output_stream;
@@ -927,8 +934,8 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 		for (int j = 0; j < NE; j++)
 			VI[i][j] = 0;
 	MDP_type MDP;
-	string file_name_VI = "Skitsas//RandomGraphs_" + SE[expnum] + ".txt";
-	string file_name_VIAVG = "Skitsas//AVG_RandomGraphs_" + SE[expnum] + ".txt";
+	string file_name_VI = "Skitsas//RandomGraphs_50S_100A_50SS_OF" + SE[expnum] + ".txt";
+	string file_name_VIAVG = "Skitsas//AVG_RandomGraphs_50S_100A_50SS_OF" + SE[expnum] + ".txt";
 	string_stream << "Exp_ID: " << expnum << " States: " << States << " Actions: " << Actions << " S_states: " << SS << " Start_P: " << StartP << " endP: " << endP << " IncP: " << IncP << endl;
 	avgstring_stream << "Exp_ID: " << expnum << " States: " << States << " Actions: " << Actions << " S_states: " << SS << " Start_P: " << StartP << " endP: " << endP << " IncP: " << IncP << endl;
 	if (BO)
@@ -1852,7 +1859,7 @@ void create_data_tables_number_of_states(string filename, int S_max, int A_num, 
 	write_stringstream_to_file(stringstream_VIAEHL, output_stream_VIAEHL, file_name_VIAEHL);
 	write_stringstream_to_file(stringstream_BAO, output_stream_BAO, file_name_BAO);
 	write_stringstream_to_file(stringstream_BAON, output_stream_BAON, file_name_BAON);
-	cout << "writeFuckYou" << endl;
+
 }
 
 // VARYING NUMBER OF BOTH STATES AND ACTIONS

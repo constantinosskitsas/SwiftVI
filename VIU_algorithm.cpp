@@ -173,7 +173,9 @@ V_type value_iteration_upperGS(S_type S, R_type R, A_type A, P_type P, double ga
 	int iterations = 0;
 	double *V_current_iteration = V[0];
 	bool upper_convergence_criteria = false;
-	const double convergence_bound_precomputed = 0.0005;
+	//const double convergence_bound_precomputed = 0.0005;
+    const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
+
 
 	while (!upper_convergence_criteria)
 	{

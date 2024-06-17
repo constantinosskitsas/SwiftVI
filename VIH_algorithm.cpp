@@ -273,7 +273,8 @@ V_type value_iteration_with_heapGS(S_type S, R_type R, A_type A, P_type P, doubl
 
 	// pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
 	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
-	const double convergence_bound_precomputed = 0.0005;
+	//const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
 
 	// HEAP INITIALIZATION
 	// q_action_pair_type s_heaps[S][A_max];
