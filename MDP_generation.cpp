@@ -1385,6 +1385,58 @@ int posDi3D(int X1, int Y1, int Z1, int Xmax, int Ymax, int Dir)
 
 	return (Z1 * Xmax * Ymax) + (Y1 * Xmax) + X1;
 }
+void printMatrix(const vector<vector<int>>& matrix) {
+    for (const auto& row : matrix) {
+        for (int val : row) {
+            cout << val <<" ";
+        }
+        cout << endl;
+    }
+}
+
+vector<vector<int>> createMatrix(int n,int FB) {
+    // Create an (n+2) x (n+2) matrix initialized with -1
+    vector<vector<int>> matrix(n + 2, vector<int>(n + 2, -1));
+    
+    int mid = n / 2;
+    int new_mid = (n + 2) / 2;
+
+    // Set the internal n x n matrix starting at (1, 1) inside the (n+2) x (n+2) matrix
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            matrix[i][j] = -2;
+        }
+    }
+
+    // Set initial -1 positions
+    matrix[1][new_mid] = -1;         // Middle of top row
+    matrix[n][new_mid] = -1;         // Middle of bottom row
+    matrix[new_mid][1] = -1;         // Middle of left column
+    matrix[new_mid][n] = -1;         // Middle of right column
+    matrix[new_mid][new_mid] = -1;   // Center of matrix
+
+    // Extend -1 positions from the center outwards
+    for (int j = 1; j <= FB; ++j) {
+        if (new_mid - j >= 1) {
+            matrix[new_mid][new_mid - j] = -1;  // Extend to the left
+            matrix[new_mid][new_mid + j] = -1;  // Extend to the right
+            matrix[new_mid - j][new_mid] = -1;  // Extend upwards
+            matrix[new_mid + j][new_mid] = -1;  // Extend downwards
+        }
+    }
+		int counter=0;
+	    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+			if (matrix[i][j]==-2)
+            matrix[i][j] = counter;
+			counter++;
+        }
+    }
+
+    return matrix;
+}
+
+
 MDP_type FixedGridWorld(bool side_slide) {
 //4 rooms 3*3 connected by single doors. 9*9 when walls included.
     //nS = 40, nA = 4
@@ -1398,7 +1450,9 @@ MDP_type FixedGridWorld(bool side_slide) {
 	{-1,27,28,29,30,31,32,33,-1},
 	{-1,34,35,36,-1,37,38,39,-1},
 	{-1,-1,-1,-1,-1,-1,-1,-1,-1}}; 
-
+	// Kasper give the size for X or Y (nxn) and then the faulty blocks(extension)
+	//vector<vector<int>> matrix=createMatrix(X,2);
+	//printMatrix(matrix);
 
 	double p_self;
 	double real_val;
@@ -1674,6 +1728,8 @@ MDP_type FixedGridWorld(bool side_slide) {
 // if we slip to the wall stay in the same state
 MDP_type GridWorld(int X, int Y, int seed, int wrong_box)
 {
+
+
 	int G_X = X - 1;
 	int G_Y = Y - 1;
 	unordered_set<int> WBoxes;
@@ -1716,7 +1772,6 @@ MDP_type GridWorld(int X, int Y, int seed, int wrong_box)
 	}
 	else
 	{
-		//int scaling=wrong_box*-1;
 		WBoxes.insert(0 + (Y / 2) * X);
 		WBoxes.insert(X - 1 + (Y / 2) * X);
 		WBoxes.insert(X / 2 + 0);
@@ -1731,7 +1786,10 @@ MDP_type GridWorld(int X, int Y, int seed, int wrong_box)
 		}
 	}
 
-	
+	for (int value : WBoxes) {
+       std::cout << value << std::endl;
+    }
+
 	for (int i = 0; i < S; i++)
 	{
 		x_curr = i % X;

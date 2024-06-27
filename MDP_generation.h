@@ -16,7 +16,9 @@
 #include "MDP_type_definitions.h"
 
 using namespace std;
+void printMatrix(const vector<vector<int>>& matrix);
 
+vector<vector<int>> createMatrix(int n,int FB);
 MDP_type FixedGridWorld(bool side_slide);
 MDP_type GridWorld(int X, int Y, int seed, int wrong_box);
 
