@@ -1427,9 +1427,10 @@ vector<vector<int>> createMatrix(int n,int FB) {
 		int counter=0;
 	    for (int i = 1; i <= n; ++i) {
         for (int j = 1; j <= n; ++j) {
-			if (matrix[i][j]==-2)
+			if (matrix[i][j]==-2) {
             matrix[i][j] = counter;
 			counter++;
+			}
         }
     }
 
@@ -1437,10 +1438,11 @@ vector<vector<int>> createMatrix(int n,int FB) {
 }
 
 
-MDP_type FixedGridWorld(bool side_slide) {
+MDP_type FixedGridWorld(int size, int FB, bool side_slide) {
 //4 rooms 3*3 connected by single doors. 9*9 when walls included.
     //nS = 40, nA = 4
-	vector<vector<int>> world{
+
+	/*vector<vector<int>> world{
 	{-1,-1,-1,-1,-1,-1,-1,-1,-1},
 	{-1, 0, 1, 2,-1, 3, 4, 5,-1},
 	{-1, 6, 7, 8, 9,10,11,12,-1},
@@ -1449,16 +1451,21 @@ MDP_type FixedGridWorld(bool side_slide) {
 	{-1,21,22,23,-1,24,25,26,-1},
 	{-1,27,28,29,30,31,32,33,-1},
 	{-1,34,35,36,-1,37,38,39,-1},
-	{-1,-1,-1,-1,-1,-1,-1,-1,-1}}; 
+	{-1,-1,-1,-1,-1,-1,-1,-1,-1}}; */
 	// Kasper give the size for X or Y (nxn) and then the faulty blocks(extension)
-	//vector<vector<int>> matrix=createMatrix(X,2);
-	//printMatrix(matrix);
+
+
+	//Real number of states will be size*size-5-FB*4
+	int nS = size*size-5-FB*4;
+	vector<vector<int>> world=createMatrix(size,FB);
+
+	printMatrix(world);
 
 	double p_self;
 	double real_val;
 	//Create R. Last state is rewarding 
 	R_type R;
-	for (int i = 0; i < 39; i++)
+	for (int i = 0; i < nS-1; i++)
 	{
 		vector<double> R_s;
 		for (int j = 0; j < 4; j++)
@@ -1485,7 +1492,7 @@ MDP_type FixedGridWorld(bool side_slide) {
 	A_s.push_back(1);
 	A_s.push_back(2);
 	A_s.push_back(3);
-	for (int i = 0; i < 40; i++)
+	for (int i = 0; i < nS; i++)
 	{
 		A.push_back(A_s);
 	}
@@ -1494,8 +1501,8 @@ MDP_type FixedGridWorld(bool side_slide) {
 	// We can slide. Walls bounces back with sliding.
 	P_type P;
 	vector<pair<vector<double>, vector<int>>> P_s;
-	for (int row = 0; row < 9; row++) {
-		for (int col = 0; col < 9; col++) {
+	for (int row = 0; row < size+2; row++) {
+		for (int col = 0; col < size+2; col++) {
 			if (-1 == world[row][col]) {
 				//Skip walls
 				continue;

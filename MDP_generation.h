@@ -19,7 +19,7 @@ using namespace std;
 void printMatrix(const vector<vector<int>>& matrix);
 
 vector<vector<int>> createMatrix(int n,int FB);
-MDP_type FixedGridWorld(bool side_slide);
+MDP_type FixedGridWorld(int size, int FB, bool side_slide);
 MDP_type GridWorld(int X, int Y, int seed, int wrong_box);
 
 MDP_type generate_random_MDP_with_variable_parameters(int S, int A_num, double action_prob, double non_zero_prob, double upper_bound_reward, int seed);

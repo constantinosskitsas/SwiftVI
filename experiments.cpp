@@ -11,7 +11,7 @@
 #include <sstream>
 #include <math.h>
 #include <thread>
-//#include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
+ #include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -48,11 +48,11 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.2;
+	double epsilon = 0.1;
 	double delta = 0.05;
 	//nt m = 1;
 
-	int T = 500000;
+	int T = 1000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -338,7 +338,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 500000;
+	int T = 1000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -532,7 +532,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 500000;
+	int T = 100000;
 	//T=10000;
 	int reps = 5; // replicates
 	bool make_plots = true;
@@ -586,7 +586,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 			reward = R[state][action];
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-			/*
+			
 			if (make_plots) {
 				//Get V for current policy
 				Eigen::MatrixXd P_pi(nS, nS);
@@ -612,7 +612,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 
 				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
-			}*/
+			}
 
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
@@ -721,7 +721,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 500000;
+	int T = 1000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -909,7 +909,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO" << endl;
 	avgstring_stream << "MBVI MBVIH MBBAO" << endl;
-	int repetitions = 10;
+	int repetitions = 1;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
 	std::vector<std::vector<float>> VI(4,std::vector<float>(siIter, 0));
@@ -930,9 +930,10 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 2;
-				MDP = ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				S = ite; 
+				int nA = 4;
+				int FB = 1; //Gridworld block extension
+				MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				S = ite*ite-5-FB*4; 
 				/**MDP CHANGES**/
 				R_type R = get<0>(MDP);
 				A_type A = get<1>(MDP);
