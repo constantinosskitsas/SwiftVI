@@ -69,12 +69,12 @@ for ite in l_:#range(startS,endS,incS):
     #plot([baombie_v_opt, baombie_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"baombie Value over time{ite}_{nA}")
     #plot([baombie_v_opt_e, baombie_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"baombie Expected Value over time{ite}_{nA}")
 
-    #uclr_g_v_opt = np.loadtxt(f"pyplotfiles/ucrlg_v_opt_{ite}_{nA}.txt", delimiter=" ")
-    #uclr_g_v_pol = np.loadtxt(f"pyplotfiles/ucrlg_v_pol_{ite}_{nA}.txt", delimiter=" ")
-    #uclr_g_v_pol_e = np.loadtxt(f"pyplotfiles/ucrlg_v_pol_e{ite}_{nA}.txt", delimiter=" ")
-    #uclr_g_v_opt_e = np.loadtxt(f"pyplotfiles/ucrlg_v_opt_e{ite}_{nA}.txt", delimiter=" ")
-    #print(uclr_g_v_opt.shape)
-    #plot([uclr_g_v_opt, uclr_g_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"UCLR_Gamma Value over time{ite}_{nA}")
-    #plot([uclr_g_v_opt_e, uclr_g_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"UCLR_Gamma Expected Value over time{ite}_{nA}")
+    uclr_g_v_opt = np.loadtxt(f"pyplotfiles/ucrlg_v_opt_{ite}_{nA}.txt", delimiter=" ")
+    uclr_g_v_pol = np.loadtxt(f"pyplotfiles/ucrlg_v_pol_{ite}_{nA}.txt", delimiter=" ")
+    uclr_g_v_pol_e = np.loadtxt(f"pyplotfiles/ucrlg_v_pol_e{ite}_{nA}.txt", delimiter=" ")
+    uclr_g_v_opt_e = np.loadtxt(f"pyplotfiles/ucrlg_v_opt_e{ite}_{nA}.txt", delimiter=" ")
+    print(uclr_g_v_opt.shape)
+    plot([uclr_g_v_opt, uclr_g_v_pol], ["V_star", "V"], y_label="Learned Value over time", exp_name=f"UCLR_Gamma Value over time{ite}_{nA}")
+    plot([uclr_g_v_opt_e, uclr_g_v_pol_e], ["Expected_V_star", "Expected_V"], y_label="Learned Value over time", exp_name=f"UCLR_Gamma Expected Value over time{ite}_{nA}")
         
         

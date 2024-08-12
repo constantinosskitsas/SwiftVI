@@ -52,7 +52,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	//nt m = 1;
 
-	int T = 1000;
+	int T = 1000000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -532,7 +532,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	int m = 1;
 
-	int T = 100000;
+	int T = 1000000;
 	//T=10000;
 	int reps = 5; // replicates
 	bool make_plots = true;

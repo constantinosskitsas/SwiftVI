@@ -313,7 +313,47 @@ void UCLR::reset(S_type init) {
 
 void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 {
-	double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);
+
+	//a_i = max(0.0, hatP[s][a][i]-confP[s][a])
+	//b_i = min(1.0, hatP[s][a][i]+confP[s][a])
+
+	//double w = 0;
+	double init_prob = 0;
+	for (int i=0; i < nS; i++) {
+		//set current prob to a
+		max_p[i] = max(0.0, hatP[s][a][i]-confP[s][a]);
+		init_prob += max_p[i];
+	} 
+
+	//Set delta remainder
+	double delta_mass = 1 - init_prob;
+
+	//Set index counter
+	int idx = 0;
+
+	//Assign mass remainder
+	while (delta_mass > 0) {
+		//Take the next highest sorted state
+		int s_prime = sorted_indices[nS-1-idx];
+
+		//Assign as much mass as possible up to its b val
+		double delta_mass_prime = min(delta_mass, min(1.0, hatP[s][a][s_prime]+confP[s][a])-max(0.0, hatP[s][a][s_prime]-confP[s][a]));
+		
+		//Assign mass to the probability
+		max_p[s_prime] += delta_mass_prime;
+
+		//Update mass remainder
+		delta_mass -= delta_mass_prime;
+
+		//Increment index counter 
+		idx += 1;
+	}
+
+	//Max_p has been updated
+
+
+	//******************OLD**************
+	/*double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);*/
 	
 	/*#pragma omp parallel
 	{   
@@ -330,7 +370,7 @@ void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 	}*/
 	
 
-	if (min1 == 1.0)
+	/*if (min1 == 1.0)
 	{
 		//std::fill(std::execution::par, max_p.begin(),max_p.end(),0.0);
 		std::fill(max_p.begin(),max_p.end(),0.0);
@@ -380,7 +420,7 @@ void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 			}
 		}
 		
-	}
+	}*/
 	//max_p has been set
 	//for (auto i: max_p) {
 	//	std::cout << i << " ";
