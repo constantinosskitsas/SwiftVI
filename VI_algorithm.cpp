@@ -13,7 +13,8 @@
 //#include <omp.h> /
 //#include <execution>
 #include <thread>
-
+#include <queue>
+#include <utility>  // for std::pair
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
 #include "MDP_generation.h"
@@ -27,7 +28,14 @@
 
 using namespace std;
 using namespace std::chrono;
-
+using namespace std::chrono;
+    auto cmp = [](std::pair<double, int> a, std::pair<double, int> b) {
+		if (a.first == b.first) {
+			return a.second > b.second; 
+		} else {
+			return a.first < b.first;
+	}
+    };
 static void fill_segment(MBIE* mb, const int s, const int a, const int start, const int end) {
 	for (int i = start; i < end; i++) {
 		mb->max_p[i] = mb->hatP[s][a][i];
@@ -1763,6 +1771,151 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 
 	return result_tuple;
 }
+
+V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
+{
+
+	// Find the maximum reward in the reward table
+	auto [r_star_min, r_star_max, r_star_values] = find_all_r_values(R);
+
+	// 2. Improved Lower Bound
+	double **V = new double *[1];
+	for (int i = 0; i < 1; ++i)
+	{
+		V[i] = new double[S];
+	}
+
+	for (int s = 0; s < S; s++)
+	{
+
+		V[0][s] = (gamma / (1.0 - gamma)) * r_star_min + r_star_values[s];
+	} 
+
+	// record actions eliminated in each iteration, where a pair is (state, action)
+	// push empty vector for 0-index. Iterations start with 1
+	vector<vector<pair<int, int>>> actions_eliminated;
+	actions_eliminated.push_back(vector<pair<int, int>>());
+	double *reverseV = new double [S];
+	// keep track of work done in each iteration in microseconds
+	// start from iteration 1
+	vector<microseconds> work_per_iteration(1);
+	std::vector<std::vector<int>> predecessor (S);
+
+	std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, decltype(cmp)> PriorityHeap(cmp);
+
+	//policy
+	vector<int> policy(S, 0);
+
+	// keep count of number of iterations
+	int iterations = 0;
+	bool upper_convergence_criteria = false;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
+	//const double convergence_bound_precomputed = 0.0005;
+	
+		double *V_current_iteration = V[0];
+
+		// for all states in each iteration
+		for (int s = 0; s < S; s++)
+		{
+			// TODO if non-negative rewards, 0 is a lower bound of the maximization. to be changed if we want negative rewards
+			// V_current_iteration[s] = double(0);
+			double oldV = V_current_iteration[s];
+			// ranged for loop over all actions in the action set of state s
+			for (auto a : A[s])
+			{
+				auto &[P_s_a, P_s_a_nonzero] = P[s][a];
+					double cum_sum = double(0);
+					int k = 0;
+					for (int ks : P_s_a_nonzero)
+				{
+				// cum_sum += 	(V_one[s] * V_two[s]);
+					cum_sum += (P_s_a[k] * V_current_iteration[ks]);
+					k++;
+					if (P_s_a[k]>0.1){
+					if (predecessor[ks].size()==0)
+						predecessor[ks].push_back(s);
+					else if(predecessor[ks][predecessor[ks].size()-1]!=s)
+						predecessor[ks].push_back(s);}
+				}
+				double R_s_a = R[s][a] + gamma *cum_sum ;
+				if (R_s_a > V_current_iteration[s])
+				{
+					V_current_iteration[s] = R_s_a;
+					policy[s] = a;
+				}
+			}
+			PriorityHeap.push({oldV-V_current_iteration[s],s});
+			reverseV[s]=oldV-V_current_iteration[s];
+		}
+		int s;
+		double value;
+		while (!PriorityHeap.empty()){
+			s=PriorityHeap.top().second;
+			value=PriorityHeap.top().first;
+			PriorityHeap.pop();
+			if(abs(value-reverseV[s])>0.0001)//outdaded value in heap.
+			continue;
+
+			double oldV = V_current_iteration[s];
+			// ranged for loop over all actions in the action set of state s
+			for (auto a : A[s])
+			{
+				auto &[P_s_a, P_s_a_nonzero] = P[s][a];
+				double R_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_current_iteration, P_s_a_nonzero);
+				if (R_s_a > V_current_iteration[s])
+				{
+					V_current_iteration[s] = R_s_a;
+					policy[s] = a;
+				}
+			}
+			if(abs(oldV-V_current_iteration[s])>convergence_bound_precomputed){
+				PriorityHeap.push({oldV-V_current_iteration[s],s});
+				reverseV[s]=oldV-V_current_iteration[s];
+			}
+
+			for (auto sa: predecessor[s]){
+				double oldV = V_current_iteration[sa];
+			// ranged for loop over all actions in the action set of state s
+			for (auto a : A[sa])
+			{
+				auto &[P_s_a, P_s_a_nonzero] = P[sa][a];
+				double R_s_a = R[sa][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V_current_iteration, P_s_a_nonzero);
+				if (R_s_a > V_current_iteration[sa])
+				{
+					V_current_iteration[sa] = R_s_a;
+					policy[sa] = a;
+				}
+			}
+			if(oldV-V_current_iteration[sa]>convergence_bound_precomputed){
+				PriorityHeap.push({oldV-V_current_iteration[sa],sa});
+				reverseV[sa]=oldV-V_current_iteration[sa];
+			}
+			}
+
+			
+		}
+
+	vector<double> result(V[0], V[0] + S);
+	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
+
+	std::cout << "V_star policy: ";
+	for (int i: policy) {
+		std::cout << i;
+	}
+	std::cout << std::endl;
+
+	// DEALLOCATE MEMORY
+	for (int i = 0; i < 1; ++i)
+	{
+		delete[] V[i];
+	}
+	delete[] V;
+
+	return result_tuple;
+}
+
+
+
 
 V_type value_iterationGSTM(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, int D3)
 {
