@@ -83,6 +83,7 @@ class UCLR {
 	int **Nsa;
 	int ***Nsas;
 	double **Rsa;
+	double **vRsa;
 
 	double ***hatP;
 	double **hatR;
@@ -103,6 +104,7 @@ class UCLR {
 	//void delay();
 	vector<int> EVI();
 	//std::tuple<int,std::vector<int>> play_gamma(int state, double reward);
+	vector<int> swiftEVI();
 	void confidence();
 	void max_proba(vector<int> sorted_indices, int s, int a);
 	void reset(S_type init);

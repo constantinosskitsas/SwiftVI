@@ -168,6 +168,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	Nsas = new int **[S];
 	Nsa = new int *[S];
 	Rsa = new double *[S];
+	vRsa = new double *[S];
 	hatR = new double *[S];
 	confR = new double *[S];
 	confP = new double *[S];
@@ -191,12 +192,14 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 		vsa[i] = new int[nA];
 		Nsa[i] = new int[nA];
 		Rsa[i] = new double[nA];
+		vRsa[i] = new double[nA];
 		hatR[i] = new double[nA];
 		confR[i] = new double[nA];
 		confP[i] = new double[nA];
 		memset(vsa[i], 0, sizeof(int) * nA);
 		memset(Nsa[i], 0, sizeof(int) * nA);
 		memset(Rsa[i], 0.0, sizeof(double) * nA);
+		memset(vRsa[i], 0.0, sizeof(double) * nA);
 		memset(hatR[i], 0.0, sizeof(double) * nA);
 	}
 
@@ -231,6 +234,7 @@ void UCLR::confidence() {
 
 			//Non-fixed 
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+			
 			for (int s2 = 0; s2 < nS; s2++)
 			{
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1.0, (double) Nsa[s][a]);		
@@ -267,6 +271,7 @@ void UCLR::update(int s, int a) {
 	{
 		for (int a = 0; a < nA; a++)
 		{*/
+			Rsa[s][a] += vRsa[s][a]; //Non-fixed reward update
 			Nsa[s][a] += vsa[s][a];
 			vsa[s][a] = 0;
 			for (int s2 = 0; s2 < nS; s2++) {
@@ -294,6 +299,7 @@ void UCLR::reset(S_type init) {
 		{
 			vsa[i][j] = 0;
 			Rsa[i][j] = 0.0;
+			vRsa[i][j] = 0.0;
 			hatR[i][j] = 0.0;
 			confR[i][j] = 0.0;
 			confP[i][j] = 0.0;
@@ -353,7 +359,7 @@ void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 
 
 	//******************OLD**************
-	/*double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);*/
+	//double min1 = min(1.0, hatP[s][a][sorted_indices[nS - 1]] + confP[s][a] / 2.0);
 	
 	/*#pragma omp parallel
 	{   
@@ -428,6 +434,253 @@ void UCLR::max_proba(vector<int> sorted_indices, int s, int a)
 	//std::cout << std::endl;
 }
 
+vector<int> UCLR::swiftEVI(){
+	int max_iter = 2000;
+	int niter = 0;
+	//int nS = S;
+	vector<int> sorted_indices(nS);
+	
+	// Fill the vector with indices
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	vector<int> policy(nS, 0);
+	std::vector<double> V0(nS);
+	for (int i = 0; i < nS; i++)
+	{
+		//FIXED R
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0)+1.0;
+
+		//Non-fixed R
+		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		
+	}
+	
+	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	//sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		
+	// Initialize V1
+	vector<double> V1(nS, 1.0); // Initialize with ones
+	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
+	double temp=0;
+
+	// Heap init
+	q_action_pair_type **s_heaps = new q_action_pair_type *[nS];
+	for (int i = 0; i < nS; i++)
+	{
+		// s_heaps[i] = new q_action_pair_type[A[i].size()];
+		s_heaps[i] = new q_action_pair_type[nA];
+	}
+
+	int *heap_size = new int[nS];
+
+	for (int s = 0; s < nS; s++)
+	{ 
+		if (true) {//(StateSwift[s]==1){
+		// Put the initial q(s,a) elements into the heap
+		// fill each one with the maximum value of each action
+		// vector<q_action_pair_type> s_h(A[s].size(),(R_max / (1 - gamma)));
+		q_action_pair_type *s_h = s_heaps[s];
+
+		/*for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(1.0+confR[s][a_index])+1.0+confR[s][a_index];
+			if (r_bound > V0[s]) {
+				V0[s] = r_bound;
+			}
+		}*/
+		// for (int a_index = 0; a_index < A[s].size(); a_index++){
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			// get the action of the index
+			//int a = A[s][a_index];
+			//(Currently a is always its index)
+
+			// auto& [P_s_a, P_s_a_nonzero] = P[s][a];
+			// use the even iteration, as this is the one used in the i = 1 iteration, that we want to pre-do
+			// double q_1_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V[0], P_s_a_nonzero);
+			
+			double q_1_s_a = V0[s]; //(gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
+
+			//q_action_pair_type q_a_pair = make_pair(q_1_s_a, a_index);
+			q_action_pair_type q_a_pair = make_pair(q_1_s_a, a_index);
+			s_h[a_index] = q_a_pair;
+		}
+
+		// set the heap size
+		heap_size[s] = nA;
+
+		// make it a heap for this state s
+		make_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+	}}
+	double R_s_a=0;
+	while (true)
+	{
+		niter++;
+		//std::cout << niter << std::endl;
+		//std::cout << nA << std::endl;
+		for (int s = 0; s < nS; s++)
+		{
+			if (true){//(StateSwift[s]==1){
+			q_action_pair_type *s_h = s_heaps[s];
+			//nt old_action = -1;
+			//std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
+			//std::cout << s_h[1].first << "  " << s_h[1].second << std::endl;
+			//std::cout << std::endl;
+			//std::cout << std::endl;
+			int heap_loops = 0;
+			while (true) {
+				heap_loops++;
+
+				//std::cout << "loop" << std::endl;
+				// update the top value
+				int top_action = s_h[0].second;
+				double old = s_h[0].first;
+		
+				/*for (int l = 0; l < nS; l++)
+				{
+					std::cout << sorted_indices[l] << " ";
+				}
+				std::cout << std::endl;*/
+				//std::cout << top_action << st
+				max_proba(sorted_indices, s, top_action);
+				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+
+				//double updated_top_action_value = std::min(hatR[s][top_action] + confR[s][top_action],1.0) + gamma * sum_of_mult(max_p, V0);
+				double updated_top_action_value = hatR[s][top_action]+confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
+				
+				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+				/*if (cnt >= 119) {
+			    	std::cout << updated_top_action_value << "  " << hatR[s][top_action] << "  " << confR[s][top_action] << std::endl;;
+				}*/
+				//if (updated_top_action_value != updated_top_action_value) {
+				//	std::cout << std::endlR_s_a;
+				//} 
+				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+				double temp_top_val = s_h[0].first;
+				s_h[heap_size[s] - 1] = updated_pair;
+				push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+
+				int new_action = s_h[0].second;
+				//if (top_action == 0 || temp > V1[s])
+				//{
+				//	V1[s] = temp;
+				//	policy[s] = top_action;
+				//}
+				if (updated_top_action_value > old) {
+			    	std::cout << "ILLEGAL UPGRADE "<< std::endl;
+					std::cout << "New val: " << updated_top_action_value <<"\n";
+					std::cout << "Old val: " << old <<"\n";
+					std::cout << "hatR: " << hatR[s][top_action] << "  confR: " << confR[s][top_action] << "\n";
+					std::cout << " vsa: " << vsa[s][top_action] << "\n";
+					std::cout << " NSA: " << Nsa[s][top_action] << "\n";
+					std::cout << " v2: " << sqrt(log(2.0 / r_delta) / (double) (2));
+					std::cout << " nsa: " << Nsa[s][top_action] <<" delta: " << r_delta <<  "\n";
+					std::cout << std::endl;
+					for (auto i: sorted_indices) {
+						std::cout << V0[i] << " ";
+					}
+					std::cout << std::endl;
+					std::cout << "Max proba sum: ";
+					double sum_max_p = 0.0;
+					for (int i = 0; i < max_p.size(); i++)
+					{
+						sum_max_p += max_p[i];
+					}
+					std::cout << sum_max_p << std::endl;
+
+					//std::cout <<"old val: " << old << " new val: "  << updated_top_action_value << std::endl;
+					//std::cout <<"old: " << top_action << " new: "  << new_action << std::endl;
+				}
+				
+				if (top_action == new_action || temp_top_val == updated_pair.first) {
+					/*if (heap_loops > nA || heap_loops < nA) {
+						std::cout << heap_loops << std::endl;
+					}*/
+					break;
+				}
+			}
+			V1[s] = s_h[0].first;
+			/*if (cnt >= 119) {
+				std::cout << cnt << " " << s << " " << s_h[0].first << "  " << s_h[0].second << std::endl;
+			}*/
+			/*std::cout << s_h[0].first << "  " << s_h[0].second << std::endl;
+			std::cout << s_h[1].first << "  " << s_h[1].second << std::endl;
+			std::cout << std::endl;*/
+			policy[s] = s_h[0].second;
+		}else{
+			for (int a = 0; a < nA; a++)
+			{
+				max_proba(sorted_indices, s, a);
+				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				if (a == 0 || R_s_a > V1[s]) 
+				{
+					V1[s] = R_s_a;
+					policy[s] = a;
+				}
+			}
+
+		}
+
+		}
+		
+
+		// V distance
+		/*int dist = 0;
+		for (int i = 0; i < nS; i++) 
+		{
+			dist += (V0[i]-V1[i])*(V0[i]-V1[i]);
+		}
+		dist = sqrt(dist);*/
+		//abs_max_diff(V0, V1, nS);
+		//if (abs_max_diff(V0, V1, nS) < _epsilon) 
+		if (abs_max_diff(V0, V1, nS)-abs_min_diff(V0,V1, nS) < epsilon) 
+		{
+			return policy;
+		} 
+		else 
+		{
+			//for (int i = 0; i< nS; i++) {
+			//	V0[i] =
+			//}
+			
+			std::swap(V0,V1);
+			//V0 = V1; //copy
+			for (int i = 0; i < nS; i++)
+			{
+				//V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta))/2)+1.0+sqrt(log(2.0 / r_delta))/2; //(gamma / (1.0 - gamma))*1+1;	
+			}
+			//sorted indices
+			/*std::cout << std::endl;
+			std::cout << "cnt: " << cnt << "| ";
+			for (auto i: V0) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;
+			for (auto i: sorted_indices) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;*/
+		
+			iota(sorted_indices.begin(), sorted_indices.end(), 0);
+			sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+			
+			/*std::cout << std::endl;
+			for (auto i: sorted_indices) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;
+			std::cout << std::endl;
+			std::cout << std::endl;*/
+
+		}
+		if (max_iter == niter) {
+			std::cout << "Early stop in swiftEVI: "<< abs_max_diff(V0, V1, nS) << "  " << _epsilon  << std::endl;
+			
+			return policy;
+		}
+	}
+}
+
 vector<int> UCLR::EVI()
 {
 	int max_iter = 2000;
@@ -477,7 +730,7 @@ vector<int> UCLR::EVI()
 				//Fixed R
 				//R_s_a = hatR[s][a] + gamma * sum_of_mult(max_p, V0);
 				//Non-fixed R
-				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				R_s_a = hatR[s][a]+confR[s][a] + gamma * sum_of_mult(max_p, V0);
 				//R_s_a = min(hatR[s][a] + confR[s][a],1.0) + gamma * sum_of_mult(max_p, V0);
 				
 				/*if (cnt > 110) {

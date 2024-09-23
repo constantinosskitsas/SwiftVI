@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 	int States = 500;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 7;
-	int EndP = 8;
-	int IncP = 2;
+	int StartP = 100;  //7 for 40 S grid
+	int EndP = 500;
+	int IncP = 100;
 	std::size_t pos;
 
 	string file_prefix_number_of_states_best = "number_of_states_best";
