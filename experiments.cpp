@@ -11,7 +11,12 @@
 #include <sstream>
 #include <math.h>
 #include <thread>
- #include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
+//#define makeplots  //if you want plots remove from comments.
+
+
+#ifdef makeplots
+#include <eigen3/Eigen/Dense> //apt-get install libeigen3-dev
+#endif
 
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -125,6 +130,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 
 
 				/*##################### TRACKING ####################*/
+				#ifdef makeplots
 				if (make_plots) {
 					//Get V for current policy
 					Eigen::MatrixXd P_pi(nS, nS);
@@ -151,6 +157,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 					v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 					v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 				}
+				#endif
 				/*##################### END TRACKING ####################*/
 
 
@@ -193,6 +200,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 
 
 				/*##################### TRACKING ####################*/
+				#ifdef makeplots
 				if (make_plots) {
 					//Get V for current policy
 					Eigen::MatrixXd P_pi(nS, nS);
@@ -219,6 +227,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 					v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 					v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 				}
+				#endif
 				/*##################### END TRACKING ####################*/
 
 
@@ -242,6 +251,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 		}	
 		 std::cout << std::endl;
 	}
+	#ifdef makeplots
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
@@ -322,6 +332,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 	}
+	#endif
 }
 
 void runUCRLgamma(MDP_type &mdp, int S, int _nA)
@@ -409,6 +420,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 
 
 				/*##################### TRACKING ####################*/
+				#ifdef makeplots
 				if (make_plots) {
 					//Get V for current policy
 					Eigen::MatrixXd P_pi(nS, nS);
@@ -435,6 +447,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 					v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 					v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 				}
+				#endif
 				/*##################### END TRACKING ####################*/
 
 
@@ -476,6 +489,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 
 
 				/*##################### TRACKING ####################*/
+				#ifdef makeplots
 				if (make_plots) {
 					//Get V for current policy
 					Eigen::MatrixXd P_pi(nS, nS);
@@ -503,7 +517,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 					v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 				}
 				/*##################### END TRACKING ####################*/
-
+				#endif
 
 				std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 				state = P_s_a_nonzero[distribution(generator)];
@@ -525,6 +539,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 		}	
 		 std::cout << std::endl;
 	}
+	#ifdef makeplots
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
@@ -605,6 +620,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 	}
+	#endif
 }
 
 
@@ -720,6 +736,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 		}	
 		 std::cout << std::endl;
 	}
+	#ifdef makeplots
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
@@ -800,6 +817,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 	}
+	#endif
 }
 
 
@@ -870,7 +888,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 			reward = R[state][action];
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
-			
+			#ifdef makeplots
 			if (make_plots) {
 				//Get V for current policy
 				Eigen::MatrixXd P_pi(nS, nS);
@@ -897,7 +915,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 				v_opt_e[rep][t]=accumulate(V_star.begin(), V_star.end(), 0.0)/nS;
 				v_pol_e[rep][t]=accumulate(V_pol.begin(), V_pol.end(), 0.0)/nS;  
 			}
-
+			#endif
 
 			std::discrete_distribution<int> distribution(P_s_a.begin(), P_s_a.end());
 			state = P_s_a_nonzero[distribution(generator)];
@@ -911,6 +929,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 		}	
 		 std::cout << std::endl;
 	}
+	#ifdef makeplots
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
@@ -991,6 +1010,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 	}
+	#endif
 }
 
 void runMBIE(MDP_type &mdp, int S, int _nA)
@@ -1096,6 +1116,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 		std::cout << std::endl;
 		//std::cout << "\n##################################\n########################" << std::endl;
 	}
+	#ifdef makeplots
 	if (make_plots) {
 		//Export tracked data for plotting
 		std::stringstream filename;
@@ -1176,7 +1197,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 			printf("opened file: fail\n");
 		}
 	}
-	
+	#endif
 }
 void RLRS(string filename, int expnum, int States, int Actions, int SS, int StartP, int endP, int IncP, double epsilon, double gamma, double upper_reward, double non_zero_transition)
 {
