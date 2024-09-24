@@ -25,17 +25,20 @@
 #include "VIAEH_algorithm.h"
 #include "VIH_algorithm.h"
 #include "experiments.h"
-
+#include "PrioritizeSweep.h"
 using namespace std;
 using namespace std::chrono;
 using namespace std::chrono;
+using ComparatorType = std::function<bool(std::pair<double, int>, std::pair<double, int>)>;
+
+/*
     auto cmp = [](std::pair<double, int> a, std::pair<double, int> b) {
 		if (a.first == b.first) {
 			return a.second > b.second; 
 		} else {
 			return a.first < b.first;
 	}
-    };
+    };*/
 static void fill_segment(MBIE* mb, const int s, const int a, const int start, const int end) {
 	for (int i = start; i < end; i++) {
 		mb->max_p[i] = mb->hatP[s][a][i];
@@ -1743,6 +1746,9 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 					policy[s] = a;
 				}
 			}
+			if (oldV- V_current_iteration[s]>0){
+				cout<<"I am so lonelyyy"<<endl;
+			}
 			if (abs(oldV - V_current_iteration[s]) > convergence_bound_precomputed)
 				upper_convergence_criteria = false;
 		}
@@ -1801,7 +1807,7 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 	vector<microseconds> work_per_iteration(1);
 	std::vector<std::vector<int>> predecessor (S);
 
-	std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, decltype(cmp)> PriorityHeap(cmp);
+	std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, ComparatorType> PriorityHeap(cmp);
 
 	//policy
 	vector<int> policy(S, 0);
@@ -1815,6 +1821,8 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 		double *V_current_iteration = V[0];
 
 		// for all states in each iteration
+		
+		/*
 		for (int s = 0; s < S; s++)
 		{
 			// TODO if non-negative rewards, 0 is a lower bound of the maximization. to be changed if we want negative rewards
@@ -1846,14 +1854,15 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 			}
 			PriorityHeap.push({oldV-V_current_iteration[s],s});
 			reverseV[s]=oldV-V_current_iteration[s];
-		}
+		}*/
 		int s;
 		double value;
+		performIteration(S,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV);
 		while (!PriorityHeap.empty()){
 			s=PriorityHeap.top().second;
 			value=PriorityHeap.top().first;
 			PriorityHeap.pop();
-			if(abs(value-reverseV[s])>0.0001)//outdaded value in heap.
+			if(abs(value-reverseV[s])>convergence_bound_precomputed)//outdaded value in heap.
 			continue;
 
 			double oldV = V_current_iteration[s];
@@ -1869,10 +1878,11 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 				}
 			}
 			if(abs(oldV-V_current_iteration[s])>convergence_bound_precomputed){
-				PriorityHeap.push({oldV-V_current_iteration[s],s});
-				reverseV[s]=oldV-V_current_iteration[s];
+				PriorityHeap.push({V_current_iteration[s]-oldV,s});
+				reverseV[s]=V_current_iteration[s]-oldV;
 			}
-
+			performIterationPred(s,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV,convergence_bound_precomputed);
+			/*
 			for (auto sa: predecessor[s]){
 				double oldV = V_current_iteration[sa];
 			// ranged for loop over all actions in the action set of state s
@@ -1886,13 +1896,11 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 					policy[sa] = a;
 				}
 			}
-			if(oldV-V_current_iteration[sa]>convergence_bound_precomputed){
-				PriorityHeap.push({oldV-V_current_iteration[sa],sa});
-				reverseV[sa]=oldV-V_current_iteration[sa];
+			if(abs(oldV-V_current_iteration[sa])>convergence_bound_precomputed){
+				PriorityHeap.push({abs(oldV-V_current_iteration[sa]),sa});
+				reverseV[sa]=abs(oldV-V_current_iteration[sa]);
 			}
-			}
-
-			
+			}		*/	
 		}
 
 	vector<double> result(V[0], V[0] + S);

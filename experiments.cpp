@@ -1568,49 +1568,39 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			R_type R = get<0>(MDP);
 			A_type A = get<1>(MDP);
 			P_type P = get<2>(MDP);
-			// Print the values of P
-			// std::cout << "Doubles:" << std::endl;
-			// typedef <<pair<vector<double>, vector<int> > > > P_type;
 			double sum = 0;
-			/* for (int i=0;i<P.size();i++) {
-				 for (int j=0;j<P[i].size();j++) {
-					 sum=0;
-					 cout<<"i,j"<<i<<","<<j<<endl;
-					 for (int k=0;k<P[i][j].second.size();k++){
-						 std::cout << P[i][j].first[k] << ", "<<P[i][j].second[k]<<endl;
-						 sum+=(P[i][j].first[k]);
-				 }
-				 if(sum!=1)
-				 cout<<"monaxa etsi tha teliwsoume emis "<<sum<<endl;
-				 }
-				 cout <<"Break" <<endl;
-			 }
-			 cout<<"hi"<<endl;*/
 			cout << States << endl;
 			int counter = 0;
-			if (BO)
-			{
+			//if (BO)
+			//{
 				A_type A1 = copy_A(A);
 				auto start_VI = high_resolution_clock::now();
-				V_approx_solution_tuple = value_iterationGS(States, R, A1, P, gamma, epsilon);
+				 V_bounded_approx_solution_tuple= value_iterationGSPS(States, R, A1, P, gamma, epsilon);
+				//V_approx_solution_tuple
 				auto stop_VI = high_resolution_clock::now();
 				duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
 				// VIU testing
 				A_type A6 = copy_A(A);
 				auto start_VIU = high_resolution_clock::now();
-				V_approx_solution_upper_tuple = value_iteration_upperGS(States, R, A6, P, gamma, epsilon);
+				//V_approx_solution_tuple = value_iterationGSPS(States, R, A1, P, gamma, epsilon);
+
+				V_approx_solution_upper_tuple = value_iteration_upperGSPS(States, R, A6, P, gamma, epsilon);
 				auto stop_VIU = high_resolution_clock::now();
 				duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
 
 				A_type A3 = copy_A(A);
 				auto start_BVI = high_resolution_clock::now();
-				V_bounded_approx_solution_tuple = bounded_value_iterationGS(States, R, A3, P, gamma, epsilon);
+				V_approx_solution_tuple = value_iterationGS(States, R, A3, P, gamma, epsilon);
+
+				//V_bounded_approx_solution_tuple = bounded_value_iterationGS(States, R, A3, P, gamma, epsilon);
 				auto stop_BVI = high_resolution_clock::now();
 				duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
-			}
+			//}
 			A_type A4 = copy_A(A);
 			auto start_VIAE = high_resolution_clock::now();
-			V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(States, R, A4, P, gamma, epsilon);
+			V_AE_approx_solution_tuple = value_iteration_upperGS(States, R, A4, P, gamma, epsilon);
+
+			//V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(States, R, A4, P, gamma, epsilon);
 			auto stop_VIAE = high_resolution_clock::now();
 			duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
 
@@ -1644,13 +1634,13 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
 			vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
 			if (BO)
-			{
+			{	
 				vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
 				vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
 				vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
 				vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
 				vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
-
+				if (true){
 				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
 				{
 					printf("DIFFERENCE1\n");
@@ -1659,7 +1649,6 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 				{
 					printf("DIFFERENCE2\n");
 				}
-
 				if (abs_max_diff_vectors(V_approx_solution, V_AE_H_approx_solution) > (2 * epsilon))
 				{
 					printf("DIFFERENCE3\n");
@@ -1683,7 +1672,7 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
 				{
 					printf("DIFFERENCE8\n");
-				}
+				}}
 				VI[0][k] += duration_VI.count();
 				VI[1][k] += duration_VIU.count();
 
