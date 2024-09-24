@@ -56,8 +56,8 @@ int main(int argc, char *argv[])
 	int expnum = 3;
 	int NOFexp = 3;
 	int States = 500;
-	int Actions = 10;
-	int SS = 10;
+	int Actions = 50;
+	int SS = 50;
 	int StartP = 100;  //7 for 40 S grid
 	int EndP = 200;
 	int IncP = 100;

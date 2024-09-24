@@ -1625,7 +1625,9 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			// BAO
 			A_type A9 = copy_A(A);
 			auto start_BAO = high_resolution_clock::now();
-			BAO_approx_solution_tuple = value_iteration_BAOGS(States, R, A9, P, gamma, epsilon);
+			BAO_approx_solution_tuple = value_iteration_with_heapGSPS(States, R, A9, P, gamma, epsilon);
+
+			//BAO_approx_solution_tuple = value_iteration_BAOGS(States, R, A9, P, gamma, epsilon);
 			auto stop_BAO = high_resolution_clock::now();
 			duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
 

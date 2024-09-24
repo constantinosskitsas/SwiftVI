@@ -20,6 +20,7 @@
 #include "VIAEH_algorithm.h"
 #include "VIH_algorithm.h"
 #include "experiments.h"
+#include "PrioritizeSweep.h"
 #define SIZE_T long long int
 using namespace std;
 using namespace std::chrono;
@@ -416,6 +417,246 @@ V_type value_iteration_with_heapGS(S_type S, R_type R, A_type A, P_type P, doubl
 
 	return result_tuple;
 }
+
+
+
+V_type value_iteration_with_heapGSPS(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon)
+
+{
+	// TODO if the arrays has A_max size, then a = A_max hs no entry as 0 is an action. One fix is to make it 1 bigger to have space for this index
+	int A_max = find_max_A(A) + 1;
+
+	// Find the maximum reward in the reward table
+	auto [r_star_min, r_star_max, r_star_values] = find_all_r_values(R);
+	// 1. Improved Upper Bound
+	double **V = new double *[1];
+	for (int i = 0; i < 1; ++i)
+	{
+		V[i] = new double[S];
+	}
+
+	for (int s = 0; s < S; s++)
+	{
+		V[0][s] = (gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
+	} 
+	// record actions eliminated in each iteration, where a pair is (state, action)
+	// push empty vector for 0-index. Iterations start with 1
+	vector<vector<pair<int, int>>> actions_eliminated;
+	actions_eliminated.push_back(vector<pair<int, int>>());
+	// keep track of work done in each iteration in microseconds
+	// start from iteration 1
+	vector<microseconds> work_per_iteration(1);
+
+	// pre-compute convergence criteria for efficiency to not do it in each iteration of while loop
+	// const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
+	//const double convergence_bound_precomputed = 0.0005;
+	const double convergence_bound_precomputed = (epsilon * (1.0 - gamma)) / gamma;
+
+	// HEAP INITIALIZATION
+	// q_action_pair_type s_heaps[S][A_max];
+	q_action_pair_type **s_heaps = new q_action_pair_type *[S];
+	for (int i = 0; i < S; ++i)
+	{
+		s_heaps[i] = new q_action_pair_type[A[i].size()];
+		// s_heaps[i] = new q_action_pair_type[A_max];
+	}
+
+	int *heap_size = new int[S];
+	double *V_current_iteration = V[0];
+	std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, ComparatorType> PriorityHeap(cmp);
+	std::vector<std::vector<int>> predecessor (S);
+	double *reverseV = new double [S];
+	vector<int> policy(S, 0);
+	performIterationUP(S,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV);
+
+	for (int s = 0; s < S; s++)
+	{
+		// Put the initial q(s,a) elements into the heap
+		// fill each one with the maximum value of each action
+		// vector<q_action_pair_type> s_h(A[s].size(),(R_max / (1 - gamma)));
+		q_action_pair_type *s_h = s_heaps[s];
+
+		for (int a_index = 0; a_index < A[s].size(); a_index++)
+		{
+			// get the action of the index
+			int a = A[s][a_index];
+
+			auto &[P_s_a, P_s_a_nonzero] = P[s][a];
+			// use the even iteration, as this is the one used in the i = 1 iteration, that we want to pre-do
+			// double q_1_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V[0], P_s_a_nonzero);
+			double q_1_s_a = V[0][s]; //(gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
+
+			q_action_pair_type q_a_pair = make_pair(q_1_s_a, a);
+			s_h[a_index] = q_a_pair;
+		}
+
+		// set the heap size
+		heap_size[s] = A[s].size();
+
+		// make it a heap for this state s
+		make_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+	}
+	int iterations = 0;
+	bool upper_convergence_criteria = false;
+	
+	int s;
+	double value;
+	while (!PriorityHeap.empty())
+	{
+		// Increment iteration counter i
+		s=PriorityHeap.top().second;
+		value=PriorityHeap.top().first;
+		PriorityHeap.pop();
+		if(abs(value-reverseV[s])>convergence_bound_precomputed)//outdaded value in heap.
+		continue;
+		
+		iterations++;
+
+	
+			// TODO if non-negative rewards, 0 is a lower bound of the maximization. to be changed if we want negative rewards
+			q_action_pair_type *s_h = s_heaps[s];
+
+			// update the top value
+			int top_action = s_h[0].second;
+			double oldv = s_h[0].first;
+			// the updated top value
+			auto &[P_s_top_action, P_s_top_action_nonzero] = P[s][top_action];
+			double updated_top_action_value = R[s][top_action] + gamma * sum_of_mult_nonzero_only(P_s_top_action, V_current_iteration, P_s_top_action_nonzero);
+
+			// The updated pair
+			q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+
+			// now, we update the value
+			pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+
+			// can set the last element of an vector with v.back()
+			// TODO check that -1 is correct
+			s_h[heap_size[s] - 1] = updated_pair;
+
+			// push the last element into the heap and keep the heap property
+			push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+
+			// the new top action
+			int updated_top_action = s_h[0].second;
+
+			while (top_action != updated_top_action)
+			{
+
+				// update the top value
+				top_action = s_h[0].second;
+
+				// the updated top value
+				auto &[P_s_top_action, P_s_top_action_nonzero] = P[s][top_action];
+				updated_top_action_value = R[s][top_action] + gamma * sum_of_mult_nonzero_only(P_s_top_action, V_current_iteration, P_s_top_action_nonzero);
+				// The updated pair
+				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+
+				// now, we update the value
+				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+
+				// can set the last element of an vector with v.back()
+				// TODO check that -1 is correct
+				s_h[heap_size[s] - 1] = updated_pair;
+
+				// push the last element into the heap and keep the heap property
+				push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
+
+				// the new top action
+				updated_top_action = s_h[0].second;
+			}
+			V_current_iteration[s] = s_h[0].first;
+			if (abs(oldv - V_current_iteration[s]) > convergence_bound_precomputed){
+				PriorityHeap.push({oldv-V_current_iteration[s],s});
+				reverseV[s]=oldv-V_current_iteration[s];
+			}
+
+			for (auto sa: predecessor[s]){
+
+				q_action_pair_type *s_h = s_heaps[sa];
+
+			// update the top value
+			int top_action = s_h[0].second;
+			double oldv = s_h[0].first;
+			// the updated top value
+			auto &[P_s_top_action, P_s_top_action_nonzero] = P[sa][top_action];
+			double updated_top_action_value = R[sa][top_action] + gamma * sum_of_mult_nonzero_only(P_s_top_action, V_current_iteration, P_s_top_action_nonzero);
+
+			// The updated pair
+			q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+
+			// now, we update the value
+			pop_heap(s_h, s_h + heap_size[sa], cmp_action_value_pairs);
+
+			// can set the last element of an vector with v.back()
+			// TODO check that -1 is correct
+			s_h[heap_size[sa] - 1] = updated_pair;
+
+			// push the last element into the heap and keep the heap property
+			push_heap(s_h, s_h + heap_size[sa], cmp_action_value_pairs);
+
+			// the new top action
+			int updated_top_action = s_h[0].second;
+
+			while (top_action != updated_top_action)
+			{
+
+				// update the top value
+				top_action = s_h[0].second;
+
+				// the updated top value
+				auto &[P_s_top_action, P_s_top_action_nonzero] = P[sa][top_action];
+				updated_top_action_value = R[sa][top_action] + gamma * sum_of_mult_nonzero_only(P_s_top_action, V_current_iteration, P_s_top_action_nonzero);
+				// The updated pair
+				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
+
+				// now, we update the value
+				pop_heap(s_h, s_h + heap_size[sa], cmp_action_value_pairs);
+
+				// can set the last element of an vector with v.back()
+				// TODO check that -1 is correct
+				s_h[heap_size[sa] - 1] = updated_pair;
+
+				// push the last element into the heap and keep the heap property
+				push_heap(s_h, s_h + heap_size[sa], cmp_action_value_pairs);
+
+				// the new top action
+				updated_top_action = s_h[0].second;
+			}
+			V_current_iteration[sa] = s_h[0].first;
+			if (abs(oldv - V_current_iteration[sa]) > convergence_bound_precomputed){
+				PriorityHeap.push({oldv-V_current_iteration[sa],s});
+				reverseV[sa]=oldv-V_current_iteration[sa];
+			}
+
+			}
+
+
+				
+
+
+
+	}
+	vector<double> result(V[(0)], V[(0)] + S);
+	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
+
+	// DEALLOCATE MEMORY
+	for (int i = 0; i < 1; ++i)
+	{
+		delete[] V[i];
+	}
+	delete[] V;
+
+	for (int i = 0; i < S; ++i)
+	{
+		delete[] s_heaps[i];
+	}
+	delete[] s_heaps;
+
+	delete[] heap_size;
+
+	return result_tuple;
+}
+
 
 V_type value_iteration_with_heapGSTM(S_type S, R_type R, A_type A, P_type P, double gamma, double epsilon, int D3)
 {

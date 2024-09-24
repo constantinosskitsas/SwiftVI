@@ -22,7 +22,7 @@ void performIteration(int S, A_type &A, R_type &R, P_type &P, double gamma, doub
             for (int ks : P_s_a_nonzero) {
                 cum_sum += (P_s_a[k] * V_current_iteration[ks]);
                 k++;
-                if (P_s_a[k] > 0.1) {
+                if (P_s_a[k] > 0.0009) {
                     if (predecessor[ks].empty())
                         predecessor[ks].push_back(s);
                     else if (predecessor[ks].back() != s)
@@ -84,7 +84,7 @@ void performIterationUP(int S, A_type &A, R_type &R, P_type &P, double gamma, do
             for (int ks : P_s_a_nonzero) {
                 cum_sum += (P_s_a[k] * V_current_iteration[ks]);
                 k++;
-                if (P_s_a[k] > 0.1) {
+                if (P_s_a[k] > 0.0009) {
                     if (predecessor[ks].empty())
                         predecessor[ks].push_back(s);
                     else if (predecessor[ks].back() != s)
