@@ -624,7 +624,7 @@ V_type value_iteration_with_heapGSPS(S_type S, R_type R, A_type A, P_type P, dou
 			}
 			V_current_iteration[sa] = s_h[0].first;
 			if (abs(oldv - V_current_iteration[sa]) > convergence_bound_precomputed){
-				PriorityHeap.push({oldv-V_current_iteration[sa],s});
+				PriorityHeap.push({oldv-V_current_iteration[sa],sa});
 				reverseV[sa]=oldv-V_current_iteration[sa];
 			}
 

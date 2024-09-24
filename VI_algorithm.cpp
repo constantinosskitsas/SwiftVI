@@ -1746,9 +1746,7 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 					policy[s] = a;
 				}
 			}
-			if (oldV- V_current_iteration[s]>0){
-				cout<<"I am so lonelyyy"<<endl;
-			}
+
 			if (abs(oldV - V_current_iteration[s]) > convergence_bound_precomputed)
 				upper_convergence_criteria = false;
 		}
@@ -1761,13 +1759,13 @@ V_type value_iterationGS(S_type S, R_type R, A_type A, P_type P, double gamma, d
 	}
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
-
+/*
 	std::cout << "V_star policy: ";
 	for (int i: policy) {
 		std::cout << i;
 	}
 	std::cout << std::endl;
-
+*/
 	// DEALLOCATE MEMORY
 	for (int i = 0; i < 1; ++i)
 	{
@@ -1905,13 +1903,13 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 
 	vector<double> result(V[0], V[0] + S);
 	V_type result_tuple = make_tuple(result, iterations, work_per_iteration, actions_eliminated);
-
+/*
 	std::cout << "V_star policy: ";
 	for (int i: policy) {
 		std::cout << i;
 	}
 	std::cout << std::endl;
-
+*/
 	// DEALLOCATE MEMORY
 	for (int i = 0; i < 1; ++i)
 	{

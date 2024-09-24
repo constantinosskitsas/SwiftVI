@@ -56,10 +56,10 @@ int main(int argc, char *argv[])
 	int expnum = 3;
 	int NOFexp = 3;
 	int States = 500;
-	int Actions = 50;
+	int Actions = 100;
 	int SS = 50;
 	int StartP = 100;  //7 for 40 S grid
-	int EndP = 200;
+	int EndP = 500;
 	int IncP = 100;
 	std::size_t pos;
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	int number_of_transitions = 0;
 	double mean = 0;
 	double variance = 0;
-	NOFexp = 3;
+	NOFexp = 50;
 	if (NOFexp == 1 || NOFexp == 2)
 	{
 		VMS(NOFexp, epsilon, gamma);
@@ -86,7 +86,10 @@ int main(int argc, char *argv[])
 		GSTM(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
 	}else if (NOFexp==12){
 		RLRS(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
+	}else if (NOFexp>12){
+		REXP_temp(file_prefix_number_of_states, NOFexp/10, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
 	}
+
 
 }
 
