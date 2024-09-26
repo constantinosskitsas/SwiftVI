@@ -54,13 +54,13 @@ int main(int argc, char *argv[])
 	double non_zero_transition = 0.5; // beta
 
 	int expnum = 3;
-	int NOFexp = 3;
+	int NOFexp = 12;
 	int States = 500;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 100;  //7 for 40 S grid
-	int EndP = 500;
-	int IncP = 100;
+	int StartP = 7;  //7 for 40 S grid
+	int EndP = 19;
+	int IncP = 3;
 	std::size_t pos;
 
 	string file_prefix_number_of_states_best = "number_of_states_best";
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	int number_of_transitions = 0;
 	double mean = 0;
 	double variance = 0;
-	NOFexp = 50;
+	//NOFexp = 50;
 	if (NOFexp == 1 || NOFexp == 2)
 	{
 		VMS(NOFexp, epsilon, gamma);

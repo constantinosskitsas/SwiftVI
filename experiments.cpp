@@ -53,7 +53,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
+	double epsilon = 0.005;
 	double delta = 0.05;
 	//nt m = 1;
 
@@ -112,7 +112,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 			MB.confidence();
 			policy = MB.swiftEVI();
 			do {
-				if (t%10000 == 0) {
+				if (t%1000000 == 0) {
 					std::cout << "swift_UCRL_GAMMA " << t << std::endl; 
 				}
 				//Act
@@ -183,7 +183,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 				/*if (j==0) {
 					std::cout << "UCRL_GAMMA ACTING" << t << "  H = " << MB.H << std::endl;
 				}*/
-				if (t%10000 == 0) {
+				if (t%1000000 == 0) {
 					std::cout << "Swift_UCRL_GAMMA " << t << std::endl; 
 				}
 				action = policy[state];
@@ -343,7 +343,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.1;
+	double epsilon = 0.005;
 	double delta = 0.05;
 	//nt m = 1;
 
@@ -402,7 +402,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 			MB.confidence();
 			policy = MB.EVI();
 			do {
-				if (t%10000 == 0) {
+				if (t%1000000 == 0) {
 					std::cout << "UCRL_GAMMA " << t << std::endl; 
 				}
 				//Act
@@ -473,7 +473,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 				/*if (j==0) {
 					std::cout << "UCRL_GAMMA ACTING" << t << "  H = " << MB.H << std::endl;
 				}*/
-				if (t%10000 == 0) {
+				if (t%1000000 == 0) {
 					std::cout << "UCRL_GAMMA " << t << std::endl; 
 				}
 				action = policy[state];
@@ -1214,7 +1214,7 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO UCRLg SWiftUCRLg" << endl;
 	avgstring_stream << "MBVI MBVIH MBBAO UCRLg SWiftUCRLg" << endl;
-	int repetitions = 1;
+	int repetitions = 10;
 	int siIter = ((endP - StartP) / IncP) + 1;
 	// int siIter= 5;
 	std::vector<std::vector<float>> VI(5,std::vector<float>(siIter, 0));
@@ -1235,12 +1235,12 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 100;
+				int nA = 4;
 				int FB = 1; //Gridworld block extension
-				//MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 1, SS, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);
-				S=ite;
-				//S = ite*ite-5-FB*4; 
+				MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				//MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 1, SS, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);
+				//S=ite;
+				S = ite*ite-5-FB*4; 
 				//MDP = ErgodicRiverSwim(ite);
 				//S=ite;
 				/**MDP CHANGES**/

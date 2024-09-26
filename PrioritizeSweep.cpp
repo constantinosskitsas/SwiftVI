@@ -7,6 +7,14 @@
  // for std::function
 #include <chrono> // for microseconds
 #include "PrioritizeSweep.h"
+
+/*bool cmp = [](std::pair<double, int> a, std::pair<double, int> b) {
+		if (a.first == b.first) {
+			return a.second > b.second; 
+		} else {
+			return a.first < b.first;
+	}
+    };*/
 void performIteration(int S, A_type &A, R_type &R, P_type &P, double gamma, double* V_current_iteration,
                       std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, ComparatorType>& PriorityHeap,
                       std::vector<int>& policy, std::vector<std::vector<int>>& predecessor,

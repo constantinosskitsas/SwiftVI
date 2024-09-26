@@ -31,14 +31,8 @@ using namespace std::chrono;
 using namespace std::chrono;
 using ComparatorType = std::function<bool(std::pair<double, int>, std::pair<double, int>)>;
 
-/*
-    auto cmp = [](std::pair<double, int> a, std::pair<double, int> b) {
-		if (a.first == b.first) {
-			return a.second > b.second; 
-		} else {
-			return a.first < b.first;
-	}
-    };*/
+
+    
 static void fill_segment(MBIE* mb, const int s, const int a, const int start, const int end) {
 	for (int i = start; i < end; i++) {
 		mb->max_p[i] = mb->hatP[s][a][i];

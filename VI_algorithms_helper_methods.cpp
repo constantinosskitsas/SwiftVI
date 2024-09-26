@@ -26,6 +26,7 @@ using namespace std;
 using namespace std::chrono;
 
 
+
 double abs_min_diff(std::vector<double> &V_one, std::vector<double> &V_two, int S)
 {
 	double abs_min = double(0);
