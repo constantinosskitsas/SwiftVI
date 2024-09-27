@@ -53,7 +53,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.01;
 	double delta = 0.05;
 	//nt m = 1;
 
@@ -343,7 +343,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.01;
 	double delta = 0.05;
 	//nt m = 1;
 

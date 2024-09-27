@@ -26,6 +26,7 @@
 #include "VIH_algorithm.h"
 #include "experiments.h"
 #include "PrioritizeSweep.h"
+#include "updateable_priority_queue.h"
 using namespace std;
 using namespace std::chrono;
 using namespace std::chrono;
@@ -1799,8 +1800,9 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 	vector<microseconds> work_per_iteration(1);
 	std::vector<std::vector<int>> predecessor (S);
 
-	std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, ComparatorType> PriorityHeap(cmp);
-
+	//std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, ComparatorType> PriorityHeap(cmp);
+	better_priority_queue::updatable_priority_queue<int, double> PriorityHeap;
+	PriorityHeap = better_priority_queue::updatable_priority_queue<int, double>();
 	//policy
 	vector<int> policy(S, 0);
 
@@ -1840,7 +1842,7 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 				double R_s_a = R[s][a] + gamma *cum_sum ;
 				if (R_s_a > V_current_iteration[s])
 				{
-					V_current_iteration[s] = R_s_a;
+					V_current_iteration[s]better_priority_queue::updatable_priority_queue<int, double> = R_s_a;
 					policy[s] = a;
 				}
 			}
@@ -1849,13 +1851,13 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 		}*/
 		int s;
 		double value;
-		performIteration(S,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV);
+		performIterationUPDprestep(S,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV);
 		while (!PriorityHeap.empty()){
-			s=PriorityHeap.top().second;
-			value=PriorityHeap.top().first;
+			s=PriorityHeap.top().key;
+			//value=PriorityHeap.top().first;
 			PriorityHeap.pop();
-			if(abs(value-reverseV[s])>convergence_bound_precomputed)//outdaded value in heap.
-			continue;
+			//if(abs(value-reverseV[s])>convergence_bound_precomputed)//outdaded value in heap.
+			//continue;
 
 			double oldV = V_current_iteration[s];
 			// ranged for loop over all actions in the action set of state s
@@ -1870,10 +1872,10 @@ V_type value_iterationGSPS(S_type S, R_type R, A_type A, P_type P, double gamma,
 				}
 			}
 			if(abs(oldV-V_current_iteration[s])>convergence_bound_precomputed){
-				PriorityHeap.push({V_current_iteration[s]-oldV,s});
+				PriorityHeap.push(s,V_current_iteration[s]-oldV);
 				reverseV[s]=V_current_iteration[s]-oldV;
 			}
-			performIterationPred(s,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV,convergence_bound_precomputed);
+			performIterationUPDPred(s,A,R,P,gamma,V_current_iteration,PriorityHeap,policy,predecessor,reverseV,convergence_bound_precomputed);
 			/*
 			for (auto sa: predecessor[s]){
 				double oldV = V_current_iteration[sa];
