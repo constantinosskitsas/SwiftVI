@@ -10,6 +10,7 @@
 #include <sstream>
 #include <memory.h>
 #include <algorithm>
+#include <iomanip>
 //#include <omp.h> /
 //#include <execution>
 #include <thread>
@@ -166,8 +167,8 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	t = 0; //1
 	k = 0; //1
 	gamma = _gamma;
-	r_delta = _delta / (2 * S * nA * 1); //TODO m 
-	r_max = 1.0+sqrt(log(2.0 / r_delta)/2.0);
+	r_delta = _delta;// / (2 * S * nA * 1);
+	r_max = 0;//1.0+sqrt(log(2.0 / r_delta)/2.0);
 	epsilon = _epsilon;
 	last_state_update = -1;
 	last_action_update = -1;
@@ -258,8 +259,9 @@ void UCLR::confidence() {
 		for (int a = 0; a < nA; a++)
 		{
 			double n = max(1.0, (double) Nsa[s][a]);
+			double delta2 = r_delta / (2 * nS * nA * max(1, Nsa[s][a]));//Nsa[s][a]);
 
-			confR[s][a] = sqrt(log(2.0 / r_delta) / (double) (2 * max(1, Nsa[s][a])));
+			confR[s][a] = sqrt(log(2.0 / delta2) / (double) (2 * max(1, Nsa[s][a])));
 			confP[s][a] = 0;
 			double max_p = -1;
 			for (int s2 = 0; s2 < nS; s2++)
@@ -269,6 +271,7 @@ void UCLR::confidence() {
 					max_p = p;
 					confP[s][a] = min(sqrt((2.0*L_one*p*(1.0-p))/n)+(2.0*L_one)/(3.0*n),sqrt(L_one/(2.0*n)));
 				}
+				//not used
 				confP_long[s][a][s2] = min(sqrt((2.0*L_one*p*(1.0-p))/n)+(2.0*L_one)/(3.0*n),sqrt(L_one/(2.0*n)));//sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
 			//std::cout << confR[s][a] << std::endl;
@@ -313,7 +316,7 @@ bool UCLR::end_act(int s, int action, bool verbose) {
 }
 
 void UCLR::reset(S_type init) {
-	r_max = 1.0+sqrt(log(2.0 / r_delta)/2.0);
+	r_max = 0; //1.0+sqrt(log(2.0 / r_delta)/2.0);
 	for (int i = 0; i < nS; i++)
 	{
 		StateSwift[i] = 0;
@@ -463,7 +466,7 @@ vector<int> UCLR::swiftEVI(){
 	vector<int> sorted_indices(nS);
 	
 	// Fill the vector with indices
-	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
@@ -595,15 +598,15 @@ vector<int> UCLR::swiftEVI(){
 				//	V1[s] = temp;
 				//	policy[s] = top_action;
 				//}
-				if (updated_top_action_value > old) {
+				if (updated_top_action_value > old+0.00000001) {
 			    	std::cout << "ILLEGAL UPGRADE "<< std::endl;
-					std::cout << "New val: " << updated_top_action_value <<"\n";
-					std::cout << "Old val: " << old <<"\n";
+					std::cout << "New val: " << std::setprecision(9) << updated_top_action_value <<"\n";
+					std::cout << "Old val: " << std::setprecision(9) << old <<"\n";
 					std::cout << "hatR: " << hatR[s][top_action] << "  confR: " << confR[s][top_action] << "\n";
 					std::cout << " vsa: " << vsa[s][top_action] << "\n";
 					std::cout << " NSA: " << Nsa[s][top_action] << "\n";
-					std::cout << " v2: " << sqrt(log(2.0 / r_delta) / (double) (2));
-					std::cout << " nsa: " << Nsa[s][top_action] <<" delta: " << r_delta <<  "\n";
+					//std::cout << " v2: " << sqrt(log(2.0 / r_delta) / (double) (2));
+					//std::cout << " nsa: " << Nsa[s][top_action] <<" delta: " << r_delta <<  "\n";
 					std::cout << std::endl;
 					for (auto i: sorted_indices) {
 						std::cout << V0[i] << " ";
@@ -719,7 +722,7 @@ vector<int> UCLR::EVI()
 	vector<int> sorted_indices(nS);
 	
 	// Fill the vector with indices
-	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
@@ -867,7 +870,7 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	epsilon = _epsilon;
 	// max(A[0].size();)
 	// or S*4;
-	delta = _delta / (2 * S * nA * m);
+	//delta = _delta / (2 * S * nA * m);
 	hatP = new double **[S];
 	Nsas = new int **[S];
 	Nsa = new int *[S];
@@ -929,6 +932,7 @@ std::tuple<int,std::vector<int>> MBIE::playbao(int state, double reward){
 
 	// conduct updatesresult[t] += 
 	confidence();
+	r_max = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
@@ -937,6 +941,9 @@ std::tuple<int,std::vector<int>> MBIE::playbao(int state, double reward){
 			for (int s2 = 0; s2 < nS; s2++)
 			{
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
+			}
+			if (r_max < hatR[s][a]+confR[s][a]) {
+				r_max = hatR[s][a]+confR[s][a];
 			}
 		}
 	}
@@ -966,6 +973,7 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 	// conduct updates
 	confidence();
 	float Conf_Sum=0;
+	r_max = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		Conf_Sum=0;
@@ -977,11 +985,15 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 			{
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
+			if (r_max < hatR[s][a]+confR[s][a]) {
+				r_max = hatR[s][a]+confR[s][a];
+			}
 		}if (Conf_Sum/(2*nA)>1){
 			//StateSwift[s]=1;
 		}else{
 			//StateSwift[s]=1;
 		}
+		
 	}
 	//Estimate equation 6
 	//policy = baoEVI();
@@ -1024,6 +1036,7 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 
 	// conduct updatesresult[t] += 
 	confidence();
+	r_max = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
@@ -1032,6 +1045,9 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 			for (int s2 = 0; s2 < nS; s2++)
 			{
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
+			}
+			if (r_max < hatR[s][a]+confR[s][a]) {
+				r_max = hatR[s][a]+confR[s][a];
 			}
 		}
 	}
@@ -1050,13 +1066,15 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 
 void MBIE::confidence()
 {
+	
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			confP[s][a] = sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta)) / (double) max(1, Nsa[s][a])));
+			double delta2 = delta / (2 * nS * nA * max(1, Nsa[s][a]));
+			confP[s][a] = sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta2)) / (double) max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
-			confR[s][a] = sqrt(log(2.0 / delta) / (double) (2 * max(1, Nsa[s][a])));
+			confR[s][a] = sqrt(log(2.0 / delta2) / (double) (2 * max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << std::endl;
 		}
 	}
@@ -1064,6 +1082,7 @@ void MBIE::confidence()
 
 void MBIE::reset(S_type init)
 {
+	r_max = 0;
 	for (int i = 0; i < nS; i++)
 	{
 		for (int j = 0; j < nA; j++)
@@ -1170,13 +1189,24 @@ vector<int> MBIE::swiftEVI()
 	vector<int> sorted_indices(nS);
 	
 	// Fill the vector with indices
-	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{	
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0) ;//(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0) ;//(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			if (r_bound > V0[i]) {
+				V0[i] = r_bound;
+			}
+		}
 	}
+
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		
 
 	// Initialize V1
 	vector<double> V1(nS, 1.0); // Initialize with ones
@@ -1286,14 +1316,14 @@ vector<int> MBIE::swiftEVI()
 				//	V1[s] = temp;
 				//	policy[s] = top_action;
 				//}
-				if (updated_top_action_value > old) {
-			    	std::cout << "ILLEGAL UPGRADE " << cnt << std::endl;
-					std::cout << "New val: " << updated_top_action_value <<"\n";
-					std::cout << "Old val: " << old <<"\n";
+				if (updated_top_action_value > old+0.00000001) {
+			    	std::cout << "ILLEGAL UPGRADE "<< std::endl;
+					std::cout << "New val: " << std::setprecision(9) << updated_top_action_value <<"\n";
+					std::cout << "Old val: " << std::setprecision(9) << old <<"\n";
 					std::cout << "hatR: " << hatR[s][top_action] << "  confR: " << confR[s][top_action] << "\n";
 					std::cout << " NSA: " << Nsa[s][top_action] << "\n";
-					std::cout << " v2: " << sqrt(log(2.0 / delta) / (double) (2));
-					std::cout << " nsa: " << Nsa[s][top_action] <<" delta: " << delta <<  "\n";
+					//std::cout << " v2: " << sqrt(log(2.0 / delta) / (double) (2));
+					//std::cout << " nsa: " << Nsa[s][top_action] <<" delta: " << delta <<  "\n";
 					std::cout << "Max proba sum: ";
 					double sum_max_p = 0.0;
 					for (int i = 0; i < max_p.size(); i++)
@@ -1402,14 +1432,25 @@ vector<int> MBIE::baoEVI(){
 	vector<int> sorted_indices(nS);
 	
 	// Fill the vector with indices
-	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			if (r_bound > V0[i]) {
+				V0[i] = r_bound;
+			}
+		}
 	}
-	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+
+	vector<double> V1(nS, 1.0);//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
 	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
 	double R_s_a=0;
 	double **Q_values_per_state = new double *[nS];
@@ -1532,7 +1573,7 @@ vector<int> MBIE::baoEVI(){
 			// no need
 			for (int i = 0; i < nS; i++)
 			{
-				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+				//V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 			}
 			//sorted indices
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);
@@ -1553,17 +1594,27 @@ vector<int> MBIE::EVI()
 	vector<int> sorted_indices(nS);
 	
 	// Fill the vector with indices
-	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
-		
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			if (r_bound > V0[i]) {
+				V0[i] = r_bound;
+			}
+		}
 	}
 
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+		
+
 	// Initialize V1
-	vector<double> V1(nS, (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0));//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
+	vector<double> V1(nS, 1.0);//(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0)); // Initialize with ones
 	
 	double _epsilon = epsilon * (1.0 - gamma) / (2.0 * gamma);
 	double R_s_a=0;
@@ -1631,7 +1682,7 @@ vector<int> MBIE::EVI()
 			//why? we dont need it the way you have  (a == 0 || R_s_a > V1[s]) 
 			for (int i = 0; i < nS; i++)
 			{
-				V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+				//V1[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta))/2)+1.0+sqrt(log(2.0 / delta))/2;//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 			}
 			//sorted indices
 			iota(sorted_indices.begin(), sorted_indices.end(), 0);

@@ -22,6 +22,7 @@ class MBIE {
 	int m;//; = 100;
 	int nA;// = 4;
 	int nS;
+	double r_max;
 	double gamma;
 	double epsilon;
 	vector<int> policy;
