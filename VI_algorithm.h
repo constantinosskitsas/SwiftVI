@@ -68,6 +68,11 @@ class UCLR {
 	int nS;
 	double gamma;
 	double epsilon;
+	int last_state_update;
+	int last_action_update;
+
+	int *StateSwift;
+	double r_max;
 	vector<int> policy;
 	double H;
 	double w_min;

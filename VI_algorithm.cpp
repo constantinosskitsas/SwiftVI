@@ -167,7 +167,10 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	k = 0; //1
 	gamma = _gamma;
 	r_delta = _delta / (2 * S * nA * 1); //TODO m 
+	r_max = 1.0+sqrt(log(2.0 / r_delta)/2.0);
 	epsilon = _epsilon;
+	last_state_update = -1;
+	last_action_update = -1;
 	vsa = new int *[S];
 	vsas = new int **[S];
 	hatP = new double **[S];
@@ -179,6 +182,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	confR = new double *[S];
 	confP = new double *[S];
 	confP_long = new double **[S];
+	StateSwift = new int [S];
 
 	H = 1.0/(1.0-gamma)*log((8*nS)/(epsilon*(1-gamma)));
 	w_min = (epsilon*(1-gamma))/(4*nS);
@@ -202,6 +206,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 		hatR[i] = new double[nA];
 		confR[i] = new double[nA];
 		confP[i] = new double[nA];
+		StateSwift[i] = 0;
 		memset(vsa[i], 0, sizeof(int) * nA);
 		memset(Nsa[i], 0, sizeof(int) * nA);
 		memset(Rsa[i], 0.0, sizeof(double) * nA);
@@ -247,6 +252,7 @@ void UCLR::confidence() {
 			}
 		}	
 	}
+	r_max = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
@@ -267,22 +273,30 @@ void UCLR::confidence() {
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
 			//std::cout << confR[s][a] << std::endl;
 			}
-		}
+			if (r_max < hatR[s][a]+confR[s][a]) {
+				r_max = hatR[s][a]+confR[s][a];
+			}
+		}	
 	}
 
 }
 
 void UCLR::update(int s, int a) {
-	/*for (int s = 0; s < nS; s++)
-	{
-		for (int a = 0; a < nA; a++)
+		/*for (int a = 0; a < nA; a++)
 		{*/
+			last_state_update = s;
+			last_action_update = a;
 			Rsa[s][a] += vRsa[s][a]; //Non-fixed reward update
 			Nsa[s][a] += vsa[s][a];
 			vsa[s][a] = 0;
 			for (int s2 = 0; s2 < nS; s2++) {
+				StateSwift[s] = 0;
+				if (Nsas[s][a][s2]+vsas[s][a][s2] != 0) {
+					StateSwift[s] = 1;
+				}
 				Nsas[s][a][s2] += vsas[s][a][s2];
 				vsas[s][a][s2] = 0;
+				
 			}
 		/*}
 	}*/
@@ -299,8 +313,10 @@ bool UCLR::end_act(int s, int action, bool verbose) {
 }
 
 void UCLR::reset(S_type init) {
+	r_max = 1.0+sqrt(log(2.0 / r_delta)/2.0);
 	for (int i = 0; i < nS; i++)
 	{
+		StateSwift[i] = 0;
 		for (int j = 0; j < nA; j++)
 		{
 			vsa[i][j] = 0;
@@ -456,12 +472,19 @@ vector<int> UCLR::swiftEVI(){
 		//V0[i] = (gamma / (1.0 - gamma))*(1.0)+1.0;
 
 		//Non-fixed R
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
-		
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			if (r_bound > V0[i]) {
+				V0[i] = r_bound;
+			}
+		}
 	}
 	
-	//iota(sorted_indices.begin(), sorted_indices.end(), 0);
-	//sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
+	iota(sorted_indices.begin(), sorted_indices.end(), 0);
+	sort(sorted_indices.begin(), sorted_indices.end(), [&](int i,int j){return V0[i]<V0[j];} );
 		
 	// Initialize V1
 	vector<double> V1(nS, 1.0); // Initialize with ones
@@ -500,10 +523,11 @@ vector<int> UCLR::swiftEVI(){
 			//int a = A[s][a_index];
 			//(Currently a is always its index)
 
-			// auto& [P_s_a, P_s_a_nonzero] = P[s][a];
+			// aq_action_pair_type *s_h = s_heaps[s];uto& [P_s_a, P_s_a_nonzero] = P[s][a];
 			// use the even iteration, as this is the one used in the i = 1 iteration, that we want to pre-do
 			// double q_1_s_a = R[s][a] + gamma * sum_of_mult_nonzero_only(P_s_a, V[0], P_s_a_nonzero);
-			
+			//V0[s] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+hatR[s][a_index]+confR[s][a_index]; //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		
 			double q_1_s_a = V0[s]; //(gamma / (1.0 - gamma)) * r_star_max + r_star_values[s];
 
 			//q_action_pair_type q_a_pair = make_pair(q_1_s_a, a_index);
@@ -704,8 +728,14 @@ vector<int> UCLR::EVI()
 		//V0[i] = (gamma / (1.0 - gamma))*(1.0)+1.0;
 
 		//Non-fixed R
-		V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
-		
+		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+		for (int a_index = 0; a_index < nA; a_index++)
+		{
+			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			if (r_bound > V0[i]) {
+				V0[i] = r_bound;
+			}
+		}
 	}
 
 	iota(sorted_indices.begin(), sorted_indices.end(), 0);
@@ -948,9 +978,9 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 				hatP[s][a][s2] = ((double) Nsas[s][a][s2])/max(1, Nsa[s][a]);		
 			}
 		}if (Conf_Sum/(2*nA)>1){
-			StateSwift[s]=1;
+			//StateSwift[s]=1;
 		}else{
-			StateSwift[s]=1;
+			//StateSwift[s]=1;
 		}
 	}
 	//Estimate equation 6

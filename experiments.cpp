@@ -57,7 +57,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	//nt m = 1;
 
-	int T = 10000000;
+	int T = 30000000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -347,7 +347,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	double delta = 0.05;
 	//nt m = 1;
 
-	int T = 10000000;
+	int T = 30000000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -1207,9 +1207,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	ofstream output_stream;
 	ofstream avgoutput_stream;
 	string file_name_VI = "Skitsas//RLRS.txt";
-	file_name_VI = "Skitsas//RLRS_100_400_0.001.txt";
+	file_name_VI = "Skitsas//RLRSmodif_100_200_0.05.txt";
 	string file_name_VIAVG = "Skitsas//avgRLRS.txt";
-	file_name_VIAVG = "Skitsas//avgRLRS_100_400_0.001.txt";
+	file_name_VIAVG = "Skitsas//avgRLRSmodif_100_200_0.05.txt";
 	string_stream << "Experiment ID: " << expnum << endl;
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO UCRLg SWiftUCRLg" << endl;
