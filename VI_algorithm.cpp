@@ -259,8 +259,7 @@ void UCLR::confidence() {
 		for (int a = 0; a < nA; a++)
 		{
 			double n = max(1.0, (double) Nsa[s][a]);
-			double delta2 = r_delta / (2 * nS * nA * max(1, Nsa[s][a]));//Nsa[s][a]);
-			
+			double delta2 = r_delta / (2 * nS * nA * max(1.0, (double) Nsa[s][a]));//Nsa[s][a]);  
 
 			confR[s][a] = sqrt(log(2.0 / delta2) / (double) (2 * max(1, Nsa[s][a])));
 			confP[s][a] = 0;
@@ -576,7 +575,7 @@ vector<int> UCLR::swiftEVI(){
 				
 				std::cout << std::endl;*/
 				if (heap_loops > 4000000) {
-					std::cout << heap_loops << "   "<< old << std::endl;
+					std::cout << heap_loops << "   " << old << "   " << top_action << std::endl;
 				}
 				//std::cout << top_action << st
 				max_proba(sorted_indices, s, top_action);
@@ -596,14 +595,34 @@ vector<int> UCLR::swiftEVI(){
 				//if (updated_top_action_value != updated_top_action_value) {
 				//	std::cout << std::endlR_s_a;
 				//} 
-				if (updated_top_action_value < old+0.000000000002 && updated_top_action_value >= old) {
+				/*if (updated_top_action_value < old+0.000000000002 && updated_top_action_value >= old) {
 					break;
+				}*/
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "  1 " << s_h[0].first << "   " << s_h[0].second << std::endl;
 				}
 				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
 				double temp_top_val = s_h[0].first;
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "  2 " << s_h[heap_size[s] - 1].first << "   " << s_h[heap_size[s] - 1].second << std::endl;
+				}
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "  3 " << s_h[0].first << "   " << s_h[0].second << std::endl;
+				}
 				s_h[heap_size[s] - 1] = updated_pair;
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "  4 " << s_h[heap_size[s] - 1].first << "   " << s_h[heap_size[s] - 1].second << std::endl;
+				}
 				push_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
-
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "  5 " << s_h[0].first << "   " << s_h[0].second << std::endl;
+				}
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "  6 " << s_h[heap_size[s] - 1].first << "   " << s_h[heap_size[s] - 1].second << std::endl;
+				}
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "   " << s_h[0].first << "   " << s_h[1].first<< "   " << s_h[2].first<< "   " << s_h[3].first << std::endl;
+				}
 				int new_action = s_h[0].second;
 				//if (top_action == 0 || temp > V1[s])
 				//{
