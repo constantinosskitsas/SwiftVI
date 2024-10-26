@@ -260,6 +260,7 @@ void UCLR::confidence() {
 		{
 			double n = max(1.0, (double) Nsa[s][a]);
 			double delta2 = r_delta / (2 * nS * nA * max(1, Nsa[s][a]));//Nsa[s][a]);
+			
 
 			confR[s][a] = sqrt(log(2.0 / delta2) / (double) (2 * max(1, Nsa[s][a])));
 			confP[s][a] = 0;
@@ -572,7 +573,11 @@ vector<int> UCLR::swiftEVI(){
 				{
 					std::cout << sorted_indices[l] << " ";
 				}
+				
 				std::cout << std::endl;*/
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "   "<< old << std::endl;
+				}
 				//std::cout << top_action << st
 				max_proba(sorted_indices, s, top_action);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
@@ -580,6 +585,10 @@ vector<int> UCLR::swiftEVI(){
 				//double updated_top_action_value = std::min(hatR[s][top_action] + confR[s][top_action],1.0) + gamma * sum_of_mult(max_p, V0);
 				double updated_top_action_value = hatR[s][top_action]+confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
 				
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "   "<< updated_top_action_value << "   "<< old << std::endl;
+				}
+
 				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
 				/*if (cnt >= 119) {
 			    	std::cout << updated_top_action_value << "  " << hatR[s][top_action] << "  " << confR[s][top_action] << std::endl;;
@@ -587,6 +596,9 @@ vector<int> UCLR::swiftEVI(){
 				//if (updated_top_action_value != updated_top_action_value) {
 				//	std::cout << std::endlR_s_a;
 				//} 
+				if (updated_top_action_value < old+0.000000000002 && updated_top_action_value >= old) {
+					break;
+				}
 				pop_heap(s_h, s_h + heap_size[s], cmp_action_value_pairs);
 				double temp_top_val = s_h[0].first;
 				s_h[heap_size[s] - 1] = updated_pair;
@@ -598,7 +610,7 @@ vector<int> UCLR::swiftEVI(){
 				//	V1[s] = temp;
 				//	policy[s] = top_action;
 				//}
-				if (updated_top_action_value > old+0.00000001) {
+				if (updated_top_action_value > old+0.0000000000002) {
 			    	std::cout << "ILLEGAL UPGRADE "<< std::endl;
 					std::cout << "New val: " << std::setprecision(9) << updated_top_action_value <<"\n";
 					std::cout << "Old val: " << std::setprecision(9) << old <<"\n";
@@ -629,6 +641,10 @@ vector<int> UCLR::swiftEVI(){
 						std::cout << heap_loops << std::endl;
 					}*/
 					break;
+				}
+				if (heap_loops > 4000000) {
+					std::cout << heap_loops << "   " << updated_top_action_value << "   " << old << "   " << (updated_top_action_value==old) << "   " << new_action << "   " << top_action << "   " << (temp_top_val == updated_pair.first) << std::endl;
+					
 				}
 			}
 			V1[s] = s_h[0].first;
