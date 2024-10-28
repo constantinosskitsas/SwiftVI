@@ -53,11 +53,11 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.1;
 	double delta = 0.01;
 	//nt m = 1;
 
-	int T = 10000000;
+	int T = 100000000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -343,11 +343,11 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.1;
 	double delta = 0.01;
 	//nt m = 1;
 
-	int T = 10000000;
+	int T = 100000000;
 	int k = 0;
 	int t = 0;
 	//T=10000;
@@ -634,11 +634,11 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.01;
 	double delta = 0.01;
 	int m = 1; //inf
 
-	int T = 10000;
+	int T = 1000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -676,11 +676,11 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 				std::cout << "MBIEBAO " << t << std::endl;
 			}
 			
-			if (t%10000 == 0) {
+			if (t%1000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
-					std::tie(action, policy) = MB.playbao(state, reward);
+				std::tie(action, policy) = MB.playbao(state, reward);
 				//}
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
@@ -830,11 +830,11 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.02;
 	double delta = 0.01;
 	int m = 1; //inf
 
-	int T = 10000;
+	int T = 1000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -872,7 +872,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 				std::cout << "MBIEH " << t << std::endl;
 			}
 			
-			if (t%10000 == 0) {
+			if (t%1000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -1021,7 +1021,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.005;
+	double epsilon = 0.01;
 	double delta = 0.01;
 	int m = 1; //inf
 
@@ -1070,7 +1070,7 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			
-			if (t%10000 == 0) {
+			if (t%1000 == 0) {
 				std::tie(action, policy) = MB.play(state, reward);
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
@@ -1207,9 +1207,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	ofstream output_stream;
 	ofstream avgoutput_stream;
 	string file_name_VI = "Skitsas//RLRS.txt";
-	file_name_VI = "Skitsas//RLRS_grid_uc_16_0_005.txt";
+	file_name_VI = "Skitsas//RLRS_rand_uc_100m_100_0_1.txt";
 	string file_name_VIAVG = "Skitsas//avgRLRS.txt";
-	file_name_VIAVG = "Skitsas//avgRLRS_grid_uc_16_0_005.txt";
+	file_name_VIAVG = "Skitsas//avgRLRS_rand_uc_100m_100_0_1.txt";
 	string_stream << "Experiment ID: " << expnum << endl;
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO UCRLg SWiftUCRLg" << endl;
@@ -1235,12 +1235,12 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 4;
+				int nA = 100;
 				int FB = 1; //Gridworld block extension
-				MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				//MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 1, SS, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);
-				//S=ite;
-				S = ite*ite-5-FB*4; 
+				//MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 1.0, SS, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);
+				S=ite;
+				//S = ite*ite-5-FB*4; 
 				//MDP = ErgodicRiverSwim(ite);
 				//S=ite;
 				/**MDP CHANGES**/

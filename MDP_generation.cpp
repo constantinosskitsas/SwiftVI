@@ -576,7 +576,7 @@ MDP_type readMDPS(string Rseed, string S)
 	return MDP;
 }*/
 
-MDP_type ExpandMDP(const MDP_type MDP, int &nS, int nA) {
+/*MDP_type ExpandMDP(const MDP_type MDP, int &nS, int nA) {
 
 	int S2 = nS;
 	R_type R = get<0>(MDP);
@@ -590,7 +590,7 @@ MDP_type ExpandMDP(const MDP_type MDP, int &nS, int nA) {
 	
 
 	//Update P and add new states
-	vector<pair<vector<double>, vector<int>>> P_s();
+	vector<pair<vector<double>, vector<int>>> P_s;
 	int skip = 0;
 	//Real state 0 is still state 0 in expanded mdp.
 	for (int ps = 0; ps < P.size(); ps++) {
@@ -652,7 +652,7 @@ MDP_type ExpandMDP(const MDP_type MDP, int &nS, int nA) {
 
 	MDP_type MDP2;
 	return MDP2;
-}
+}*/
 
 
 

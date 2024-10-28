@@ -1106,7 +1106,7 @@ void MBIE::confidence()
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			double delta2 = delta / (2 * nS * nA * max(1, Nsa[s][a]));
+			double delta2 = delta / (2 * nS * nA * (double) max(1, Nsa[s][a]));
 			confP[s][a] = sqrt((2.0 * (log(pow(2, nS) - 2) - log(delta2)) / (double) max(1, Nsa[s][a])));
 			//std::cout << confR[s][a] << " " << Nsa[s][a] << " " << 2*Nsa[s][a] <<  std::endl;
 			confR[s][a] = sqrt(log(2.0 / delta2) / (double) (2 * max(1, Nsa[s][a])));
