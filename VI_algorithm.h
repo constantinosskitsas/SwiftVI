@@ -23,6 +23,7 @@ class MBIE {
 	int nA;// = 4;
 	int nS;
 	double r_max;
+	double r_max_known;
 	double gamma;
 	double epsilon;
 	vector<int> policy;
@@ -74,6 +75,7 @@ class UCLR {
 
 	int *StateSwift;
 	double r_max;
+	double r_max_known;
 	vector<int> policy;
 	double H;
 	double w_min;

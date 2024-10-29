@@ -169,6 +169,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	gamma = _gamma;
 	r_delta = _delta;// / (2 * S * nA * 1);
 	r_max = 0;//1.0+sqrt(log(2.0 / r_delta)/2.0);
+	r_max_known = 0;
 	epsilon = _epsilon;
 	last_state_update = -1;
 	last_action_update = -1;
@@ -184,6 +185,7 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 	confP = new double *[S];
 	confP_long = new double **[S];
 	StateSwift = new int [S];
+	
 
 	H = 1.0/(1.0-gamma)*log((8*nS)/(epsilon*(1-gamma)));
 	w_min = (epsilon*(1-gamma))/(4*nS);
@@ -237,15 +239,18 @@ UCLR::UCLR(S_type S, int _nA, double _gamma, double _epsilon, double _delta) {
 }
 
 void UCLR::confidence() {
+	r_max_known = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
 		{
-			//Fixed R 
-			//hatR[s][a] = Rsa[s][a];
-
 			//Non-fixed 
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+
+			//Fixed known R
+			if (r_max_known < Rsa[s][a]) {
+				r_max_known = Rsa[s][a];
+			}
 			
 			for (int s2 = 0; s2 < nS; s2++)
 			{
@@ -289,7 +294,7 @@ void UCLR::update(int s, int a) {
 		{*/
 			last_state_update = s;
 			last_action_update = a;
-			Rsa[s][a] += vRsa[s][a]; //Non-fixed reward update
+			//Rsa[s][a] += vRsa[s][a]; //Non-fixed reward update (update should be 0 if R is considered known )
 			Nsa[s][a] += vsa[s][a];
 			vsa[s][a] = 0;
 			for (int s2 = 0; s2 < nS; s2++) {
@@ -317,6 +322,7 @@ bool UCLR::end_act(int s, int action, bool verbose) {
 
 void UCLR::reset(S_type init) {
 	r_max = 0; //1.0+sqrt(log(2.0 / r_delta)/2.0);
+	r_max_known = 0;
 	for (int i = 0; i < nS; i++)
 	{
 		StateSwift[i] = 0;
@@ -471,15 +477,15 @@ vector<int> UCLR::swiftEVI(){
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		//FIXED R
-		//V0[i] = (gamma / (1.0 - gamma))*(1.0)+1.0;
-
-		//Non-fixed R
-		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
 
 		for (int a_index = 0; a_index < nA; a_index++)
 		{
-			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			//FIXED R
+			double r_bound = (gamma / (1.0 - gamma))*r_max_known+Rsa[i][a_index];
+			
+			//Non-fixed R
+			//double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			
 			if (r_bound > V0[i]) {
 				V0[i] = r_bound;
 			}
@@ -582,7 +588,12 @@ vector<int> UCLR::swiftEVI(){
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
 
 				//double updated_top_action_value = std::min(hatR[s][top_action] + confR[s][top_action],1.0) + gamma * sum_of_mult(max_p, V0);
-				double updated_top_action_value = hatR[s][top_action]+confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
+				
+				//FIXED R
+				double updated_top_action_value = Rsa[s][top_action] + gamma * sum_of_mult(max_p, V0);
+				
+				//Non-fixed R
+				//double updated_top_action_value = hatR[s][top_action]+confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
 				
 				if (heap_loops > 4000000) {
 					std::cout << heap_loops << "   "<< updated_top_action_value << "   "<< old << std::endl;
@@ -762,14 +773,18 @@ vector<int> UCLR::EVI()
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		//FIXED R
-		//V0[i] = (gamma / (1.0 - gamma))*(1.0)+1.0;
-
-		//Non-fixed R
+		
+		
 		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / r_delta)/2.0))+1.0+sqrt(log(2.0 / r_delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+
 		for (int a_index = 0; a_index < nA; a_index++)
 		{
-			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			//FIXED R
+			double r_bound = (gamma / (1.0 - gamma))*r_max_known+Rsa[i][a_index];
+			
+			//Non-fixed R
+			//double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			
 			if (r_bound > V0[i]) {
 				V0[i] = r_bound;
 			}
@@ -801,10 +816,13 @@ vector<int> UCLR::EVI()
 				std::cout << std::endl;*/
 				max_proba(sorted_indices, s, a);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
+				
 				//Fixed R
-				//R_s_a = hatR[s][a] + gamma * sum_of_mult(max_p, V0);
+				R_s_a = Rsa[s][a] + gamma * sum_of_mult(max_p, V0);
+				
 				//Non-fixed R
-				R_s_a = hatR[s][a]+confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				//R_s_a = hatR[s][a]+confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				
 				//R_s_a = min(hatR[s][a] + confR[s][a],1.0) + gamma * sum_of_mult(max_p, V0);
 				
 				/*if (cnt > 110) {
@@ -915,6 +933,8 @@ MBIE::MBIE(S_type S, int _nA, double _gamma, double _epsilon, double _delta, int
 	confP = new double *[S];
 	StateSwift= new int [S];
 	cnt = 0;
+	r_max = 0;
+	r_max_known = 0;
 
 	vector<int> policy(S, 0);
 
@@ -962,16 +982,23 @@ std::tuple<int,std::vector<int>> MBIE::playbao(int state, double reward){
 	{	
 		cnt++;
 		Nsas[current_s][last_action][state] += 1;
-		Rsa[current_s][last_action] += reward;
+		Rsa[current_s][last_action] += reward; //update with 0 if fixed
 	}
 
 	// conduct updatesresult[t] += 
 	confidence();
+	r_max_known = 0;
 	r_max = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
 		{
+			//Fixed known R
+			if (r_max_known < Rsa[s][a]) {
+				r_max_known = Rsa[s][a];
+			}
+
+			//Unkown R
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
@@ -1002,19 +1029,27 @@ std::tuple<int,std::vector<int>> MBIE::playswift(int state, double reward) {
 	{
 		cnt++;
 		Nsas[current_s][last_action][state] += 1;
-		Rsa[current_s][last_action] += reward;
-	}
+		Rsa[current_s][last_action] += reward; //Update with zero if fixed
+	} 
 
 	// conduct updates
 	confidence();
 	float Conf_Sum=0;
 	r_max = 0;
+	r_max_known = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		Conf_Sum=0;
 		for (int a = 0; a < nA; a++)
 		{
+			//Fixed known R
+			if (r_max_known < Rsa[s][a]) {
+				r_max_known = Rsa[s][a];
+			}
+
+			//Unkown R
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
+			
 			Conf_Sum+=(confP[s][a]+confR[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
@@ -1066,16 +1101,23 @@ std::tuple<int,std::vector<int>> MBIE::play(int state, double reward) {
 	{	
 		cnt++;
 		Nsas[current_s][last_action][state] += 1;
-		Rsa[current_s][last_action] += reward;
+		Rsa[current_s][last_action] += reward; //update with 0 if fixed
 	}
 
 	// conduct updatesresult[t] += 
 	confidence();
+	r_max_known = 0;
 	r_max = 0;
 	for (int s = 0; s < nS; s++)
 	{
 		for (int a = 0; a < nA; a++)
 		{
+			//Fixed known R
+			if (r_max_known < Rsa[s][a]) {
+				r_max_known = Rsa[s][a];
+			}
+
+			//Unkown R
 			hatR[s][a] = Rsa[s][a]/(double)max(1, Nsa[s][a]);
 			for (int s2 = 0; s2 < nS; s2++)
 			{
@@ -1228,11 +1270,16 @@ vector<int> MBIE::swiftEVI()
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
-	{	
-		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0) ;//(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //assume r_max is 1 and we do not know specific r_star(s), hence we set them to r_max
+	{
+
 		for (int a_index = 0; a_index < nA; a_index++)
 		{
-			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			//FIXED R
+			double r_bound = (gamma / (1.0 - gamma))*r_max_known+Rsa[i][a_index];
+			
+			//Non-fixed R
+			//double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			
 			if (r_bound > V0[i]) {
 				V0[i] = r_bound;
 			}
@@ -1331,7 +1378,12 @@ vector<int> MBIE::swiftEVI()
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
 
 				//double updated_top_action_value = std::min(hatR[s][top_action] + confR[s][top_action],1.0) + gamma * sum_of_mult(max_p, V0);
-				double updated_top_action_value = hatR[s][top_action] + confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
+				
+				//FIXED R
+				double updated_top_action_value = Rsa[s][top_action]+ gamma * sum_of_mult(max_p, V0);
+				
+				//Non-fixed R
+				//double updated_top_action_value = hatR[s][top_action] + confR[s][top_action] + gamma * sum_of_mult(max_p, V0);
 				
 				q_action_pair_type updated_pair = make_pair(updated_top_action_value, top_action);
 				/*if (cnt >= 119) {
@@ -1472,10 +1524,15 @@ vector<int> MBIE::baoEVI(){
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
 	{
-		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+
 		for (int a_index = 0; a_index < nA; a_index++)
 		{
-			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			//FIXED R
+			double r_bound = (gamma / (1.0 - gamma))*r_max_known+Rsa[i][a_index];
+			
+			//Non-fixed R
+			//double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			
 			if (r_bound > V0[i]) {
 				V0[i] = r_bound;
 			}
@@ -1568,7 +1625,13 @@ vector<int> MBIE::baoEVI(){
 
 					// actually update this value Q(s,a)
 					max_proba(sorted_indices, s, a);
-					R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+					
+					//FIXED R
+					R_s_a = Rsa[s][a] + gamma * sum_of_mult(max_p, V0);
+
+					//Non-fixed R
+					//R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+					
 					Q_values_s[a] = R_s_a;
 
 					if (abs(old_q - Q_values_s[a]) > inner_delta)
@@ -1633,11 +1696,17 @@ vector<int> MBIE::EVI()
 	vector<int> policy(nS, 0);
 	std::vector<double> V0(nS);
 	for (int i = 0; i < nS; i++)
+	for (int i = 0; i < nS; i++)
 	{
-		//V0[i] = (gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0); //(gamma / (1.0 - gamma))*(1.0+sqrt(log(2.0 / delta)/2.0))+1.0+sqrt(log(2.0 / delta)/2.0);//(gamma / (1.0 - gamma))*1+1;//1.0 / (1.0 - gamma);
+
 		for (int a_index = 0; a_index < nA; a_index++)
 		{
-			double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			//FIXED R
+			double r_bound = (gamma / (1.0 - gamma))*r_max_known+Rsa[i][a_index];
+			
+			//Non-fixed R
+			//double r_bound = (gamma / (1.0 - gamma))*(r_max)+hatR[i][a_index]+confR[i][a_index];
+			
 			if (r_bound > V0[i]) {
 				V0[i] = r_bound;
 			}
@@ -1669,7 +1738,13 @@ vector<int> MBIE::EVI()
 				std::cout << std::endl;*/
 				max_proba(sorted_indices, s, a);
 				//auto &[P_s_a, P_s_a_nonzero] = hatP[s][a];
-				R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				
+				//FIXED R
+				R_s_a = Rsa[s][a] + gamma * sum_of_mult(max_p, V0);
+				
+				//Non-Fixed R
+				//R_s_a = hatR[s][a] + confR[s][a] + gamma * sum_of_mult(max_p, V0);
+				
 				//R_s_a = min(hatR[s][a] + confR[s][a],1.0) + gamma * sum_of_mult(max_p, V0);
 				
 				/*if (cnt > 110) {

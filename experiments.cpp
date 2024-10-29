@@ -91,12 +91,12 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 		MB.reset(state);
 
 		//Use known R
-		/*for (int s = 0; s < nS; s++) {
+		for (int s = 0; s < nS; s++) {
 			for (int a = 0; a < nA; a++) {
 				MB.Rsa[s][a] = R[s][a]; 
 			} 
 
-		}*/
+		}
 		t = 0;
 		k = 0;
 		reward = 0;
@@ -121,7 +121,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 				reward = R[state][action]; 
 				
 				//We update delayed reward trackers
-				MB.vRsa[state][action] += reward;  
+				//MB.vRsa[state][action] += reward;  
 
 				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
@@ -192,7 +192,7 @@ void runSwiftUCRLgamma(MDP_type &mdp, int S, int _nA)
 				reward = R[state][action];
 
 				//We update delayed reward trackers
-				MB.vRsa[state][action] += reward;  
+				//MB.vRsa[state][action] += reward;  
 				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
 				prev_state = state;
@@ -381,12 +381,12 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 		MB.reset(state);
 
 		//Use known R
-		/*for (int s = 0; s < nS; s++) {
+		for (int s = 0; s < nS; s++) {
 			for (int a = 0; a < nA; a++) {
 				MB.Rsa[s][a] = R[s][a]; 
 			} 
 
-		}*/
+		}
 		t = 0;
 		k = 0;
 		reward = 0;
@@ -411,7 +411,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 				reward = R[state][action]; 
 				
 				//We update delayed reward trackers
-				MB.vRsa[state][action] += reward;  
+				//MB.vRsa[state][action] += reward;  
 
 				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
@@ -481,7 +481,7 @@ void runUCRLgamma(MDP_type &mdp, int S, int _nA)
 				reward = R[state][action];
 
 				//We update delayed reward trackers
-				MB.vRsa[state][action] += reward;  
+				//MB.vRsa[state][action] += reward;  
 				auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 
 				prev_state = state;
@@ -634,7 +634,7 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.01;
+	double epsilon = 0.1;
 	double delta = 0.01;
 	int m = 1; //inf
 
@@ -647,6 +647,8 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 	R_type R = get<0>(MDP);
 	A_type A = get<1>(MDP);
 	P_type P = get<2>(MDP);
+
+	
 
 	V_type V_star_return = value_iterationGS(nS, R, A, P, gamma, epsilon);
 	vector<double> V_star = get<0>(V_star_return);
@@ -665,6 +667,15 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 		// Init game
 		int state = 0;
 		MB.reset(state);
+
+		//Use known R
+		for (int s = 0; s < nS; s++) {
+			for (int a = 0; a < nA; a++) {
+				MB.Rsa[s][a] = R[s][a]; 
+			} 
+
+		}
+
 		reward = 0;
 		vector<int> _policy(state, 0);
 		int action;
@@ -672,11 +683,11 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			if (t%10000 == 0) {
+			if (t%100000 == 0) {
 				std::cout << "MBIEBAO " << t << std::endl;
 			}
 			
-			if (t%1000 == 0) {
+			if (t%10000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -692,7 +703,9 @@ void runBaoMBIE(MDP_type &mdp, int S, int _nA)
 			// Run MBIE step
 			//auto [action, policy] = MB.playswift(state, reward);
 			// Get reward and next step from MDP
-			reward = R[state][action];
+
+			//Note R
+			//reward = R[state][action]; //Remove if known
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 /*
@@ -830,7 +843,7 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.02;
+	double epsilon = 0.1;
 	double delta = 0.01;
 	int m = 1; //inf
 
@@ -865,14 +878,23 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 		vector<int> _policy(state, 0);
 		int action;
 		std::vector<int> policy;
+
+		//Use known R
+		for (int s = 0; s < nS; s++) {
+			for (int a = 0; a < nA; a++) {
+				MB.Rsa[s][a] = R[s][a]; 
+			} 
+
+		}
+
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			if (t%10000 == 0) {
+			if (t%100000 == 0) {
 				std::cout << "MBIEH " << t << std::endl;
 			}
 			
-			if (t%1000 == 0) {
+			if (t%10000 == 0) {
 				/*if (t < T/12) {
 					std::tie(action, policy) = MB.play(state, reward);
 				} else {*/
@@ -884,8 +906,10 @@ void runSwiftMBIE(MDP_type &mdp, int S, int _nA)
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			//auto [action, policy] = MB.playswift(state, reward);
+
 			// Get reward and next step from MDP
-			reward = R[state][action];
+			//Collect R
+			//reward = R[state][action]; //Remove if known
 			
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 			#ifdef makeplots
@@ -1021,11 +1045,11 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 	int nS = S;
 	int nA = _nA;
 	double gamma = 0.99;
-	double epsilon = 0.01;
+	double epsilon = 0.1;
 	double delta = 0.01;
 	int m = 1; //inf
 
-	int T = 10000;
+	int T = 1000;
 	//T=10000;
 	int reps = 1; // replicates
 	bool make_plots = false;
@@ -1057,6 +1081,14 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 		reward = 0;
 		//swiftreward = 0;
 
+		//Use known R
+		for (int s = 0; s < nS; s++) {
+			for (int a = 0; a < nA; a++) {
+				MB.Rsa[s][a] = R[s][a]; 
+			} 
+
+		}
+
 		vector<int> _policy(state, 0);
 		vector<double> step_vector(nS,0.0);
 		int action;
@@ -1064,20 +1096,22 @@ void runMBIE(MDP_type &mdp, int S, int _nA)
 		// Run game
 		for (int t = 0; t < T; t++)
 		{
-			if (t%10000 == 0) {
+			if (t%100000 == 0) {
 				std::cout << "MBIE " << t << std::endl;
 			}
 			//std::cout << t << std::endl;
 			// Run MBIE step
 			
-			if (t%1000 == 0) {
+			if (t%10000 == 0) {
 				std::tie(action, policy) = MB.play(state, reward);
 			} else {
 				std::tie(action, policy) = MB.update_vals(state, reward);
 			}
 			//auto [action, policy] = MB.play(state, reward);
+
 			// Get reward and next step from MDP
-			reward = R[state][action];
+			//Collect R
+			//reward = R[state][action]; //Remove if known
 
 			auto &[P_s_a, P_s_a_nonzero] = P[state][action];
 			/*
@@ -1207,9 +1241,9 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 	ofstream output_stream;
 	ofstream avgoutput_stream;
 	string file_name_VI = "Skitsas//RLRS.txt";
-	file_name_VI = "Skitsas//RLRS_rand_uc_100m_100_0_1.txt";
+	file_name_VI = "Skitsas//RLRS_grid_ucrl_fixed_100m_0_1.txt";
 	string file_name_VIAVG = "Skitsas//avgRLRS.txt";
-	file_name_VIAVG = "Skitsas//avgRLRS_rand_uc_100m_100_0_1.txt";
+	file_name_VIAVG = "Skitsas//avgRLRS_grid_ucrl_fixed_100m_0_1.txt";
 	string_stream << "Experiment ID: " << expnum << endl;
 	avgstring_stream << "Experiment ID" << expnum << endl;
 	string_stream << "MBVI MBVIH MBBAO UCRLg SWiftUCRLg" << endl;
@@ -1235,12 +1269,12 @@ void RLRS(string filename, int expnum, int States, int Actions, int SS, int Star
 				std::cout <<"Repetition: " << iters <<"/"<< repetitions << "     Size: " << ite << "/" << endP << std::endl;
 				int seed = time(0);
 				/**MDP CHANGES**/
-				int nA = 100;
+				int nA = 4;
 				int FB = 1; //Gridworld block extension
-				//MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
-				MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 1.0, SS, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);
-				S=ite;
-				//S = ite*ite-5-FB*4; 
+				MDP = FixedGridWorld(ite,FB,true);//ErgodicRiverSwim(ite);//generate_random_MDP_normal_distributed_rewards(ite, nA, 0.5, 10, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);//ErgodicRiverSwim(ite);//ErgodicRiverSwim(ite);//GridWorld(ite,ite,123, 0); //Maze(ite,ite,123);// (ite);
+				//MDP=generate_random_MDP_normal_distributed_rewards(ite, nA, 1.0, SS, seed, 0.5, 0.05);//GridWorld(ite,ite,123, 0);
+				//S=ite;
+				S = ite*ite-5-FB*4; 
 				//MDP = ErgodicRiverSwim(ite);
 				//S=ite;
 				/**MDP CHANGES**/
