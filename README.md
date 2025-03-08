@@ -11,12 +11,19 @@ Markov decision process (MDPs) find application wherever a decision-making agent
       VIH : Value Iteration Heap(Proposed Algorithm)
       VIAE: Value Iteration Action Elimination
       VIAEH: Value Iteration Action Elimination Heap
-      VIAEHL: Value Iteration Action Elimination Heap Lower bound Approximatioi (Proposed Algorithm)
+      VIAEHL: Value Iteration Action Elimination Heap Lower bound Approximation
       BAO :Best Action Only Value Iteration
       
 
 ### How to run experiments :
 g++ -pthread -std=c++17 -o algo_test *.cpp && ./algo_test
+
+When done the program will override a file in /Skitas with a table including runtimes of algorithms included in the experiment.
+
+### How to change experiments :
+
+
+
 ## Additional Information : 
 
 ## Reference
