@@ -30,6 +30,25 @@ For faster results (different runtimes from the paper) compile with O3 flag
 g++ -pthread -std=c++17 -O3 -o algo_test *.cpp 
 ./algo_test -EID 3 -A 100 -SS 50 -SP 50 -IP 50 -EP 500 -R 10
 ```
+### Example output :
+Running above command with O3 flag on an Intel Xeon Silver 4316 machine produced following runtimes in Results//AVG_RandomGraphs_3.txt:
+
+|   VIH   |   VIAEHL  |   BAO   |
+|--------------|--------------|--------------|
+|     31.8     |     47.3     |    103.3     |
+|    115.2     |    171.3     |    270.5     |
+|    282.2     |    446.1     |    540.8     |
+|    600.1     |    910.4     |    956.5     |
+|    968.3     |   1481.2     |   1437.4     |
+|   1267.4     |   1961.9     |   1796.9     |
+|   1805.3     |   2840.2     |   2474.8     |
+|   2367.9     |    3769      |   3170.8     |
+|   2932.8     |   4734.9     |   3846.8     |
+|   3331.9     |   5488.6     |   4307.8     |
+
+It took ~10 min to run.
+
+
 ### How to change experiments :
 |   Parameter   |     Meaning     |   Command   |   Initial Value   |
 |:--------:|:------------:|:--------:|:--------:|
