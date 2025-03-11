@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 	double action_prob = 1.0;		  // alpha
 	double non_zero_transition = 0.5; // beta
 
-	int expnum = 1;
-	int NOFexp = 0;
+	int expnum = 3;
+	int NOFexp = 3;
 	int States = 500;
 	int Actions = 100;
 	int SS = 50;
@@ -64,31 +64,24 @@ int main(int argc, char *argv[])
 	int Repetitions=10;
 	for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-EID") == 0 && i + 1 < argc) {
-            NOFexp = std::atoi(argv[++i]); // --NOF <value>
+            NOFexp = std::atoi(argv[++i]); 
         } else if (strcmp(argv[i], "-S") == 0 && i + 1 < argc) {
-            States = std::atoi(argv[++i]); // -S <value>
+            States = std::atoi(argv[++i]); 
         } else if (strcmp(argv[i], "-A") == 0 && i + 1 < argc) {
-            Actions = std::atoi(argv[++i]); // -A <value>
+            Actions = std::atoi(argv[++i]); 
         } else if (strcmp(argv[i], "-SS") == 0 && i + 1 < argc) {
-            SS = std::atoi(argv[++i]); // -SS <value>
-        } else if (strcmp(argv[i], "SP") == 0 && i + 1 < argc) {
-            StartP = std::atoi(argv[++i]); // SP <value>
-        } else if (strcmp(argv[i], "EP") == 0 && i + 1 < argc) {
-            EndP = std::atoi(argv[++i]); // EP <value>
-        } else if (strcmp(argv[i], "IP") == 0 && i + 1 < argc) {
-            IncP = std::atoi(argv[++i]); // IP <value>
+            SS = std::atoi(argv[++i]); 
+        } else if (strcmp(argv[i], "-SP") == 0 && i + 1 < argc) {
+            StartP = std::atoi(argv[++i]); 
+        } else if (strcmp(argv[i], "-EP") == 0 && i + 1 < argc) {
+            EndP = std::atoi(argv[++i]); 
+        } else if (strcmp(argv[i], "-IP") == 0 && i + 1 < argc) {
+            IncP = std::atoi(argv[++i]); 
         }
-		else if (strcmp(argv[i], "R") == 0 && i + 1 < argc) {
-            Repetitions = std::atoi(argv[++i]); // IP <value>
+		else if (strcmp(argv[i], "-R") == 0 && i + 1 < argc) {
+            Repetitions = std::atoi(argv[++i]); 
         }
     }
-	cout<<"NOFexp "<<NOFexp<<endl;
-	cout<<"States "<<States<<endl;
-	cout<<"Actions "<<Actions<<endl;
-	cout<<"SS "<<SS<<endl;
-	cout<<"StartP "<<StartP<<endl;
-	cout<<"EndP "<<EndP<<endl;
-	cout<<"IncP "<<IncP<<endl;
 	std::size_t pos;
 	string file_prefix_number_of_states_best = "number_of_states_best";
 	string file_prefix_actions_touched = "";
@@ -96,21 +89,21 @@ int main(int argc, char *argv[])
 	int number_of_transitions = 0;
 	double mean = 0;
 	double variance = 0;
-	//NOFexp = 50;
+
 	if (NOFexp == 1 || NOFexp == 2)
-	{
+	{	
 		VMS(NOFexp, epsilon, gamma);
 	}
 	else if (NOFexp >= 3 && NOFexp <= 8)
 	{	
 		// expnum=3 States 4 BO, 5 Actions B0, 6 Supported States 7B0
-		REXP(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
+		REXP(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition,Repetitions);
 	}
 	// else if (NOFexp == 5)
 	//	create_data_tables_actions_touched(file_prefix_actions_touched, S, A_num, epsilon, gamma, action_prob, number_of_transitions, mean, variance);
 	else if (NOFexp == 9 || NOFexp == 10 || NOFexp == 11)
 	{
-		GSTM(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
+		GSTM(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition,Repetitions);
 	}else if (NOFexp==12){
 		RLRS(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
 	}else if (NOFexp>12){
