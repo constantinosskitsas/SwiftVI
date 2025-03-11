@@ -21,9 +21,15 @@ g++ -pthread -std=c++17 -o algo_test *.cpp && ./algo_test
 When done the program will override a file in /Skitas with a table including runtimes of algorithms included in the experiment.
 
 ### How to change experiments :
-
-
-
+|   Parameter   |     Meaning     |   Command   |   Initial Value   |
+|:--------:|:------------:|:--------:|:--------:|
+|  ExperimentID  |  Type of Experiment  |  -EID  |1|
+|  States   |  Number of States  | -S|500|
+|  Actions        |   Number of Actions    | -A|100|
+|  Suported States     |    Number of Supported States    | -SS|50|
+|  Start Position      |    Value of Start Position    | -SP|50|
+|  Incremental Position  |    Step for every iteration     | -IP|50|
+|  End Position     |    Value of end Position    | -EP|500|
 ## Additional Information : 
 
 ## Reference

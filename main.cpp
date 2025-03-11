@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
+#include <cstring>
 // My header files
 #include "MDP_type_definitions.h"
 #include "pretty_printing_MDP.h"
@@ -53,16 +53,43 @@ int main(int argc, char *argv[])
 	double action_prob = 1.0;		  // alpha
 	double non_zero_transition = 0.5; // beta
 
-	int expnum = 3;
-	int NOFexp = 12;
+	int expnum = 1;
+	int NOFexp = 0;
 	int States = 500;
 	int Actions = 100;
 	int SS = 50;
-	int StartP = 7;  //7 for 40 S grid
-	int EndP = 19;
-	int IncP = 3;
+	int StartP = 100;  //7 for 40 S grid
+	int EndP = 500;
+	int IncP = 50;
+	int Repetitions=10;
+	for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-EID") == 0 && i + 1 < argc) {
+            NOFexp = std::atoi(argv[++i]); // --NOF <value>
+        } else if (strcmp(argv[i], "-S") == 0 && i + 1 < argc) {
+            States = std::atoi(argv[++i]); // -S <value>
+        } else if (strcmp(argv[i], "-A") == 0 && i + 1 < argc) {
+            Actions = std::atoi(argv[++i]); // -A <value>
+        } else if (strcmp(argv[i], "-SS") == 0 && i + 1 < argc) {
+            SS = std::atoi(argv[++i]); // -SS <value>
+        } else if (strcmp(argv[i], "SP") == 0 && i + 1 < argc) {
+            StartP = std::atoi(argv[++i]); // SP <value>
+        } else if (strcmp(argv[i], "EP") == 0 && i + 1 < argc) {
+            EndP = std::atoi(argv[++i]); // EP <value>
+        } else if (strcmp(argv[i], "IP") == 0 && i + 1 < argc) {
+            IncP = std::atoi(argv[++i]); // IP <value>
+        }
+		else if (strcmp(argv[i], "R") == 0 && i + 1 < argc) {
+            Repetitions = std::atoi(argv[++i]); // IP <value>
+        }
+    }
+	cout<<"NOFexp "<<NOFexp<<endl;
+	cout<<"States "<<States<<endl;
+	cout<<"Actions "<<Actions<<endl;
+	cout<<"SS "<<SS<<endl;
+	cout<<"StartP "<<StartP<<endl;
+	cout<<"EndP "<<EndP<<endl;
+	cout<<"IncP "<<IncP<<endl;
 	std::size_t pos;
-
 	string file_prefix_number_of_states_best = "number_of_states_best";
 	string file_prefix_actions_touched = "";
 	string file_prefix_number_of_states = "";
@@ -75,7 +102,7 @@ int main(int argc, char *argv[])
 		VMS(NOFexp, epsilon, gamma);
 	}
 	else if (NOFexp >= 3 && NOFexp <= 8)
-	{
+	{	
 		// expnum=3 States 4 BO, 5 Actions B0, 6 Supported States 7B0
 		REXP(file_prefix_number_of_states, NOFexp, States, Actions, SS, StartP, EndP, IncP, epsilon, gamma, upper_reward, non_zero_transition);
 	}
