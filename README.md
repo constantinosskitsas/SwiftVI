@@ -19,7 +19,7 @@ Markov decision process (MDPs) find application wherever a decision-making agent
 g++ -pthread -std=c++17 -o algo_test *.cpp && ./algo_test
 
 ### Artifact Evaluation MLSys 2025:
-We recomend a sample experiment with States vs Runtime evaluation in random graph (Figure 1)
+We recommend a sample experiment with States vs Runtime evaluation in random graph (Figure 1)
 Results stored in Results//RandomGraphs_3.txt and Results//AVG_RandomGraphs_3.txt
 ```shell
 g++ -pthread -std=c++17 -o algo_test *.cpp 
