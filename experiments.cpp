@@ -1607,23 +1607,22 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			double sum = 0;
 			int S=States;
 			int counter = 0;
-			BO=false;
 			if (BO)
 			{
-				cout<<"one"<<endl;
+				
 				A_type A1 = copy_A(A);
 			auto start_VI = high_resolution_clock::now();
 			V_type V_approx_solution_tuple = value_iterationGS(S, R, A1, P, gamma, epsilon);
 			auto stop_VI = high_resolution_clock::now();
 			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
-				cout<<"two"<<endl;
+				
 			// VIU testing
 			A_type A6 = copy_A(A);
 			auto start_VIU = high_resolution_clock::now();
 			V_type V_approx_solution_upper_tuple = value_iteration_upperGS(S, R, A6, P, gamma, epsilon);
 			auto stop_VIU = high_resolution_clock::now();
 			auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
-			cout<<"3"<<endl;
+			
 			// VIH testing
 			
 
@@ -1632,13 +1631,13 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(S, R, A3, P, gamma, epsilon);
 			auto stop_BVI = high_resolution_clock::now();
 			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
-			cout<<"4"<<endl;
+			
 			A_type A4 = copy_A(A);
 			auto start_VIAE = high_resolution_clock::now();
 			V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(S, R, A4, P, gamma, epsilon);
 			auto stop_VIAE = high_resolution_clock::now();
 			auto duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
-			cout<<"5"<<endl;
+			
 			A_type A5 = copy_A(A);
 			auto start_VIAEH = high_resolution_clock::now();
 			V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(S, R, A5, P, gamma, epsilon);
@@ -1646,12 +1645,12 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			auto duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
 		}
 			A_type A2 = copy_A(A);
-			cout<<"6"<<endl;
+			
 			auto start_VIH = high_resolution_clock::now();
 			V_type V_heap_approx_tuple = value_iteration_with_heapGS(S, R, A2, P, gamma, epsilon);
 			auto stop_VIH = high_resolution_clock::now();
 			auto duration_VIH = duration_cast<milliseconds>(stop_VIH - start_VIH);
-			cout<<"7"<<endl;
+			
 			A_type A8 = copy_A(A);
 			auto start_VIAEHL = high_resolution_clock::now();
 			V_type VIAEHL_approx_solution_tuple = value_iteration_action_elimination_heaps_lower_bound_approxGS(S, R, A8, P, gamma, epsilon);
