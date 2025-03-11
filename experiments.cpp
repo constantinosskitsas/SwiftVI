@@ -1607,21 +1607,29 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			double sum = 0;
 			int S=States;
 			int counter = 0;
+
+			auto start_VI = high_resolution_clock::now();
+			auto stop_VI = high_resolution_clock::now();
+			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+			auto duration_VIU = duration_cast<milliseconds>(stop_VI - start_VI);
+			auto duration_BVI = duration_cast<milliseconds>(stop_VI - start_VI);
+			auto duration_VIAE = duration_cast<milliseconds>(stop_VI - start_VI);
+			auto duration_VIAEH = duration_cast<milliseconds>(stop_VI - start_VI);
 			if (BO)
 			{
 				
-				A_type A1 = copy_A(A);
+			A_type A1 = copy_A(A);
 			auto start_VI = high_resolution_clock::now();
 			V_type V_approx_solution_tuple = value_iterationGS(S, R, A1, P, gamma, epsilon);
 			auto stop_VI = high_resolution_clock::now();
-			auto duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
+			duration_VI = duration_cast<milliseconds>(stop_VI - start_VI);
 				
 			// VIU testing
 			A_type A6 = copy_A(A);
 			auto start_VIU = high_resolution_clock::now();
 			V_type V_approx_solution_upper_tuple = value_iteration_upperGS(S, R, A6, P, gamma, epsilon);
 			auto stop_VIU = high_resolution_clock::now();
-			auto duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
+			duration_VIU = duration_cast<milliseconds>(stop_VIU - start_VIU);
 			
 			// VIH testing
 			
@@ -1630,19 +1638,19 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			auto start_BVI = high_resolution_clock::now();
 			V_type V_bounded_approx_solution_tuple = bounded_value_iterationGS(S, R, A3, P, gamma, epsilon);
 			auto stop_BVI = high_resolution_clock::now();
-			auto duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
+			duration_BVI = duration_cast<milliseconds>(stop_BVI - start_BVI);
 			
 			A_type A4 = copy_A(A);
 			auto start_VIAE = high_resolution_clock::now();
 			V_type V_AE_approx_solution_tuple = value_iteration_action_eliminationGS(S, R, A4, P, gamma, epsilon);
 			auto stop_VIAE = high_resolution_clock::now();
-			auto duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
+			duration_VIAE = duration_cast<milliseconds>(stop_VIAE - start_VIAE);
 			
 			A_type A5 = copy_A(A);
 			auto start_VIAEH = high_resolution_clock::now();
 			V_type V_AE_H_approx_solution_tuple = value_iteration_action_elimination_heapsGS(S, R, A5, P, gamma, epsilon);
 			auto stop_VIAEH = high_resolution_clock::now();
-			auto duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
+			duration_VIAEH = duration_cast<milliseconds>(stop_VIAEH - start_VIAEH);
 		}
 			A_type A2 = copy_A(A);
 			
@@ -1667,13 +1675,14 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
 			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
 			vector<double> V_heap_approx = get<0>(V_heap_approx_tuple);
+			vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
+			vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
+			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
+			vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
+			vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
 			if (BO)
 			{	
-				vector<double> V_AE_H_approx_solution = get<0>(V_AE_H_approx_solution_tuple);
-				vector<double> V_AE_approx_solution = get<0>(V_AE_approx_solution_tuple);
-				vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
-				vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
-				vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
+				
 				if (true){
 				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
 				{
