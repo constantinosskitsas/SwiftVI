@@ -15,9 +15,12 @@ Markov decision process (MDPs) find application wherever a decision-making agent
       BAO :Best Action Only Value Iteration
       
 
-### How to run experiments :
+### How to run experiments 
+if -std=c++17 does not work, try c++17.
+```shell
 g++ -pthread -std=c++17 -o algo_test *.cpp && ./algo_test
-
+g++ -pthread -std=c++20 -o algo_test *.cpp && ./algo_test
+```
 ### Artifact Evaluation MLSys 2025:
 We recommend a sample experiment with States vs Runtime evaluation in random graph (Figure 1)
 Results stored in Results//RandomGraphs_3.txt and Results//AVG_RandomGraphs_3.txt
