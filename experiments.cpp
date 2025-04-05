@@ -41,6 +41,7 @@
 #include "VIH_actions_touched.h"
 #include "BAO_algorithm.h"
 #include "VIH_algorithm_custom_heaps.h"
+#include "AncVI-algorithm.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -1580,8 +1581,8 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 		avgstring_stream << "VI UVI BVI VIAE VIAEH ";
 	}
 
-	string_stream << "VIH VIAEHLB BAO" << endl;
-	avgstring_stream << "VIH VIAEHLB BAO" << endl;
+	string_stream << "VIH VIAEHLB BAO ANCVI" << endl;
+	avgstring_stream << "VIH VIAEHLB BAO ANCVI" << endl;
 	cout<<repetitions<<endl;
 	for (int iters = 0; iters < repetitions; iters++)
 	{	cout <<"Iteration: "<< iters << endl;
@@ -1671,6 +1672,12 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			auto stop_BAO = high_resolution_clock::now();
 			auto duration_BAO = duration_cast<milliseconds>(stop_BAO - start_BAO);
 
+			A_type A10 = copy_A(A);
+			auto start_AncVI = high_resolution_clock::now();
+			V_type AncVI_approx_solution_tuple = anc_valueiteration(S, R, A10, P, gamma, epsilon);
+			auto stop_AncVI = high_resolution_clock::now();
+			auto duration_AncVI = duration_cast<milliseconds>(stop_AncVI - start_AncVI);
+
 			// They should in theory all be epsilon from true value, and therefore, at most be 2 * epsilon from each other
 			vector<double> BAO_approx_solution = get<0>(BAO_approx_solution_tuple);
 			vector<double> VIAEHL_approx_solution = get<0>(VIAEHL_approx_solution_tuple);
@@ -1680,6 +1687,7 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			vector<double> V_bounded_approx_solution = get<0>(V_bounded_approx_solution_tuple);
 			vector<double> V_approx_solution = get<0>(V_approx_solution_tuple);
 			vector<double> V_approx_solution_upper = get<0>(V_approx_solution_upper_tuple);
+			vector<double> ancVI_approx_solution = get<0>(AncVI_approx_solution_tuple);
 			if (BO)
 			{	
 				
@@ -1715,6 +1723,10 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 				if (abs_max_diff_vectors(V_approx_solution, BAO_approx_solution) > (2 * epsilon))
 				{
 					printf("DIFFERENCE8\n");
+				}
+				if (abs_max_diff_vectors(V_approx_solution, ancVI_approx_solution) > (2 * epsilon))
+				{
+					printf("DIFFERENCE8\n");
 				}}
 				VI[0][k] += duration_VI.count();
 				VI[1][k] += duration_VIU.count();
@@ -1727,8 +1739,9 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 			VI[2][k] += duration_VIH.count();
 			VI[6][k] += duration_VIAEHL.count();
 			VI[7][k] += duration_BAO.count();
+			VI[8][k] += duration_AncVI.count();
 
-			string_stream << duration_VIH.count() << " " << duration_VIAEHL.count() << " " << duration_BAO.count() << endl;
+			string_stream << duration_VIH.count() << " " << duration_VIAEHL.count() << " " << duration_BAO.count() << " " << duration_AncVI.count() << endl;
 			k++;
 		}
 	}
@@ -1738,7 +1751,7 @@ void REXP(string filename, int expnum, int States, int Actions, int SS, int Star
 		{
 			avgstring_stream << VI[0][k] / repetitions << " " << VI[1][k] / repetitions << " " << VI[3][k] / repetitions << " " << VI[4][k] / repetitions << " " << VI[5][k] / repetitions << " ";
 		}
-		avgstring_stream << VI[2][k] / repetitions << " " << VI[6][k] / repetitions << " " << VI[7][k] / repetitions << endl;
+		avgstring_stream << VI[2][k] / repetitions << " " << VI[6][k] / repetitions << " " << VI[7][k] / repetitions << " " << VI[8][k] / repetitions << endl;
 	}
 	// WRITE ALL DATA TO THEIR RESPECTVIE FILES
 	write_stringstream_to_file(string_stream, output_stream, file_name_VI);
