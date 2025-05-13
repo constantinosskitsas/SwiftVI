@@ -124,6 +124,12 @@ Results stored in Results//Ter_Maze3D.txt and Results//avgTer_Maze3D.txt
 Please cite our work in your publications if it helps your research:
 
 ```
-The paper is accepted to MLsys2025. 
+The paper is accepted to MLsys2025. BibTeX to be added.
 ```  
+
+The project is based on and expands upon Emil Morre Christensen's master's thesis where the theoretical justification for the Swift methods were developed.
+You can find a repository for the master's thesis here: https://github.com/Dugtoud/Time-Efficient-VI-for-MDPs 
+ 
+
+
 
