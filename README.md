@@ -121,11 +121,24 @@ Results stored in Results//Ter_Maze3D.txt and Results//avgTer_Maze3D.txt
 ```
 ## Reference
 
-Please cite our work in your publications if it helps your research:
+Please cite our work in your publications if it helps your research.
+The paper is accepted to MLsys2025. 
 
+BibTeX:
 ```
-The paper is accepted to MLsys2025. BibTeX to be added.
-```  
+@inproceedings{
+mortensen2025swiftvi,
+title={Swift{VI}: Time-Efficient Planning and Learning with {MDP}s},
+author={Kasper Overgaard Mortensen and Konstantinos Skitsas and Emil Morre Christensen and Mohammad Sadegh Talebi and Andreas Pavlogiannis and Davide Mottin and Panagiotis Karras},
+booktitle={Eighth Conference on Machine Learning and Systems},
+year={2025},
+url={https://openreview.net/forum?id=ArP6dfc2Mx}
+}
+```
+
+Links to paper and material:  
+https://mlsys.org/virtual/2025/poster/3279  
+https://openreview.net/forum?id=ArP6dfc2Mx
 
 The project is based on and expands upon Emil Morre Christensen's master's thesis where the theoretical justification for the Swift methods were developed.
 You can find a repository for the master's thesis here: https://github.com/Dugtoud/Time-Efficient-VI-for-MDPs 
